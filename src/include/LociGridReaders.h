@@ -32,19 +32,22 @@ namespace Loci {
     REAL sada ; //area of the face
   } ;
 
-  typedef Area_t<real_t> Area ;
   //Overload ostream and istream (Input/Output) operators for struct Area
-  inline std::ostream & operator<<(std::ostream &s, const Area &v)
+  template<class REAL> 
+  inline std::ostream & operator<<(std::ostream &s, const Area_t<REAL> &v)
   {
     s << v.n << ' ' << v.sada << ' ' ;
     return s ;
   }
 
-  inline std::istream &operator>>(std::istream &s, Area &v)
+  template <class REAL>
+  inline std::istream &operator>>(std::istream &s, Area_t<REAL> &v)
   {
     s >> v.n >> v.sada  ;
     return s ;
   }
+
+  typedef Area_t<real_t> Area ;
 
   template<class T> struct data_schema_traits<Loci::Area_t<T> > {
     typedef IDENTITY_CONVERTER Schema_Converter ;
