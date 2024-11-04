@@ -48,8 +48,6 @@ using std::cout ;
 using std::vector ;
 using namespace Loci ;
 
-vector<string> fileNameStack ;
-
 bool is_name(istream &s) {
   int ch = s.peek() ;
   return isalpha(ch) || ch == '_' ;
@@ -599,7 +597,39 @@ void parseFile::setup_Type(std::ostream &outputFile) {
   line_no += nl ;
   for(int i=0;i<nl;++i)
     outputFile << endl ;
+  if(type_map.find(v) != type_map.end()) {
+    // check to see if the type is changing
+    std::map<Loci::variable,std::pair<std::string,std::string> >::const_iterator mi ;
+    mi = type_map.find(v) ;
+    if(mi->second.first != tin.name ||
+       mi->second.second !=tin.templ_args.str()) {
+      cerr << filename << ":" << line_no << ":1: warning: variable " << v << " retyped!" <<endl << "Did you intend to change the type of this variable?  If so, use $untype " << v << "; to silence warning" << endl ;
+    }
+  }
   type_map[v] = pair<string,string>(tin.name,tin.templ_args.str()) ;
+}
+
+void parseFile::setup_Untype(std::ostream &outputFile) {
+  var vin ;
+  vin.get(is) ;
+  while(is.peek() == ' ' || is.peek() == '\t') 
+    is.get() ;
+  if(is.peek() != ';')
+    throw parseError("syntax error, missing ';'") ;
+  is.get() ;
+  variable v(vin.str()) ;
+  v = convertVariable(v) ;
+  outputFile << "// $untype " << v << ";";
+  int nl = vin.num_lines() ;
+  line_no += nl ;
+  for(int i=0;i<nl;++i)
+    outputFile << endl ;
+  std::map<Loci::variable,std::pair<std::string,std::string> >::const_iterator mi ;
+  mi = type_map.find(v) ;
+  if(mi == type_map.end()) {
+    cerr << filename << ":" << line_no << ":1: warning: variable " << v << " not defined for untype directive!" <<endl ;
+  } else
+    type_map.erase(mi) ;
 }
 
 namespace {
@@ -1950,7 +1980,8 @@ void parseFile::setup_cudaRule(std::ostream &outputFile) {
     throw parseError("syntax error, expecting '{'") ;
 
   int startline = line_no ;
-  CPTR<AST_type> ap = parseBlock(is,line_no,typemap) ;
+
+  CPTR<AST_type> ap = parseBlock(is,line_no,filename,typemap) ;
   //    outputFile << "Parsed TEST:" << endl ;
   
   AST_errorCheck syntaxChecker ;
@@ -2824,14 +2855,14 @@ void parseFile::setup_Rule(std::ostream &outputFile) {
     throw parseError("need prelude to size output type!") ;
 }
 
-extern bool no_cuda ;
 
-void parseFile::processFile(string file, ostream &outputFile) {
+void parseFile::processFile(string file, ostream &outputFile,
+			    parseSharedInfo &parseInfo) {
   bool error = false ;
   filename = file ;
   line_no = 1 ;
 
-  fileNameStack.push_back(file) ;
+  parseInfo.fileNameStack.push_back(file) ;
   is.open(file.c_str(),ios::in) ;
   if(is.fail()) {
     list<string>::const_iterator li ;
@@ -2839,16 +2870,21 @@ void parseFile::processFile(string file, ostream &outputFile) {
       string s = *li + "/" + file ;
       is.clear() ;
       is.open(s.c_str(),ios::in) ;
-      if(!is.fail())
+      if(!is.fail()) {
+	parseInfo.dependFileList.push_back(s) ;
         break ;
+      }
     }
+    
     if(is.fail()) {
       string s = "can't open include file '" ;
       s += file ;
       s += "'" ;
-      fileNameStack.pop_back() ;
+      parseInfo.fileNameStack.pop_back() ;
       throw parseError(s) ;
     }
+  } else {
+    parseInfo.dependFileList.push_back(file) ;
   }
   char c ;
   syncFile(outputFile) ;
@@ -2868,35 +2904,43 @@ void parseFile::processFile(string file, ostream &outputFile) {
           std::string key = get_name(is) ;
           if(key == "type") {
             setup_Type(outputFile) ;
+          } else if(key == "untype") {
+            setup_Untype(outputFile) ;
           } else if(key == "rule") {
             setup_Rule(outputFile) ;
 	  } else if(key == "cudarule") {
-	    if(no_cuda)
+	    if(parseInfo.no_cuda)
 	      setup_Rule(outputFile) ;
 	    else
 	      setup_cudaRule(outputFile) ;
           } else if(key == "include") {
             killsp() ;
             if(!is_string(is)) {
-	      fileNameStack.pop_back() ;
+	      parseInfo.fileNameStack.pop_back() ;
               throw parseError("syntax error") ;
 	    }
             string newfile = get_string(is) ;
-            
-            parseFile parser ;
-            parser.processFile(newfile,outputFile) ;
-            syncFile(outputFile) ;
-            map<variable,pair<string,string> >::const_iterator mi ;
-            for(mi=parser.type_map.begin();mi!=parser.type_map.end();++mi)
-              type_map[mi->first] = mi->second ;
-            
+	    // check to see if the file was already included, if so then
+	    // don't perform the include repeatedly
+            if(parseInfo.includedFiles.find(newfile) ==
+	       parseInfo.includedFiles.end()) {
+	      parseInfo.includedFiles.insert(newfile) ;
+	      parseFile parser ;
+	      parser.processFile(newfile,outputFile,parseInfo) ;
+	      syncFile(outputFile) ;
+	      map<variable,pair<string,string> >::const_iterator mi ;
+	      for(mi=parser.type_map.begin();mi!=parser.type_map.end();++mi)
+		type_map[mi->first] = mi->second ;
+            } else {
+	      outputFile << "//$include \"" << newfile << '"' << endl ;
+	    }
             
           } else {
-	    fileNameStack.pop_back() ;
+	    parseInfo.fileNameStack.pop_back() ;
             throw parseError("syntax error: unknown key") ;
           }
         } else {
-	  fileNameStack.pop_back() ;
+	  parseInfo.fileNameStack.pop_back() ;
           throw parseError("unable to process '$' command") ;
         }
       } else {
@@ -2930,8 +2974,15 @@ void parseFile::processFile(string file, ostream &outputFile) {
     }
 
   } while(!is.eof()) ;
-  fileNameStack.pop_back() ;
+  parseInfo.fileNameStack.pop_back() ;
   if(error) 
     throw parseError("syntax error") ;
 
+  if(parseInfo.fileNameStack.empty()) {
+    outputFile << endl << "//DEPEND:" ;
+    
+    for(size_t i=1;i<parseInfo.dependFileList.size();++i)
+      outputFile << ' ' << parseInfo.dependFileList[i] ;
+    outputFile << endl ;
+  }
 }

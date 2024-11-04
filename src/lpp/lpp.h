@@ -34,7 +34,17 @@ struct parseError {
   std::string error_type ;
   parseError(std::string errs) : error_type(errs) {}
 } ;
+
+struct parseSharedInfo {
+  std::set<std::string> includedFiles ;
+  std::vector<std::string> fileNameStack ;
+  std::vector<std::string> dependFileList ;
+  bool no_cuda ;
+  parseSharedInfo() { no_cuda = true ; }
   
+} ;
+  
+
 class parseFile {
   int cnt ;
   std::string filename ;
@@ -70,6 +80,7 @@ class parseFile {
                          const std::map<Loci::variable,std::string> &vnames,
                          const std::set<std::list<Loci::variable> > & validate_set) ;
   void setup_Type(std::ostream &outputFile) ;
+  void setup_Untype(std::ostream &outputFile) ;
   void setup_Rule(std::ostream &outputFile) ;
   void setup_cudaRule(std::ostream &outputFile) ;
   void setup_Test(std::ostream &outputFile) ;
@@ -80,10 +91,10 @@ public:
     Loci::variable OUTPUT("OUTPUT") ;
     type_map[OUTPUT] = std::pair<std::string,std::string>("param","<bool>") ;
   }
-  void processFile(std::string file, std::ostream &outputFile) ;
+  void processFile(std::string file, std::ostream &outputFile,
+		   parseSharedInfo &parseInfo) ;
 } ;
 
 extern std::list<std::string> include_dirs ;
 
-extern std::vector<std::string> fileNameStack ;
 #endif
