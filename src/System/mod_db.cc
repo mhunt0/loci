@@ -24,7 +24,7 @@
 #include <distribute.h>
 #include <vector>
 #include <string>
-#define VERBOSE
+//#define VERBOSE
 namespace Loci {
   using std::vector ;
   using std::string ;
@@ -321,7 +321,9 @@ namespace Loci {
       }
     }
     if(module_rule != 0) {
-      std::string load  =  (module_rule)->using_nspace() ;
+      std::string load  =  module_rule->load_module() ;
+      if(load.size() == 0)
+        load = module_rule->using_nspace() ;
       std::vector<std::string> str_vec ;
       parse_str(load, str_vec) ;
       for(size_t i = 0; i < str_vec.size(); ++i) 
@@ -369,7 +371,9 @@ namespace Loci {
 	sub_str = sub_str.substr(tmp+1, sub_str.size()) ;
       }
       if(module_rule != 0) {
-        std::string load  =  module_rule->using_nspace() ;
+        std::string load = module_rule->load_module() ;
+        if(load.size() == 0)
+          load  =  module_rule->using_nspace() ;
         std::vector<std::string> str_vec ;
         parse_str(load, str_vec) ;
         load = module_rule->input_vars() ;
