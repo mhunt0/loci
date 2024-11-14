@@ -34,6 +34,7 @@ $type NIS_limiter Constraint;                 // [-] constraint for Nishikawa li
 $type NISc_limiter Constraint;                // [-] constraint for Nishikawa limiter, face center
 $type NISf_limiter Constraint;                // [-] constraint for Nishikawa limiter, cell center
 $type Venka_limiter Constraint;               // [-] constraint for Venkatakrishnan limiter functions
+$type NIS_limiter   Constraint;               // [-] constraint for Nishikawa limiter functions
 $type venkaFac store<Loci::real_t>;           // [-] Venkatakrishnan geometric factor
 $type nisPow param<Loci::real_t>;             // [-] order of Nishikawa limiter
 $type vecLimiter param<int>;                  // [-] input variable to set limiter for vectors based on highest gradient
