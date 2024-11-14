@@ -1,42 +1,45 @@
-//#############################################################################
-//#
-//# Copyright 2008-2019, Mississippi State University
-//#
-//# This file is part of the Loci Framework.
-//#
-//# The Loci Framework is free software: you can redistribute it and/or modify
-//# it under the terms of the Lesser GNU General Public License as published by
-//# the Free Software Foundation, either version 3 of the License, or
-//# (at your option) any later version.
-//#
-//# The Loci Framework is distributed in the hope that it will be useful,
-//# but WITHOUT ANY WARRANTY; without even the implied warranty of
-//# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//# Lesser GNU General Public License for more details.
-//#
-//# You should have received a copy of the Lesser GNU General Public License
-//# along with the Loci Framework.  If not, see <http://www.gnu.org/licenses>
-//#
-//#############################################################################
+/** ****************************************************************************
+ * @file      muscl.cc
+ * @authors   Ed Luke (MS State)
+ *            Raymond Fontenot (CFDRC)
+ * @date      LICENSE Date: 12-30-2023
+ * @copyright MS State/CFDRC
+ * @brief     Computes the reconstructed state for the left and right faces.
+ * @details   The following functions help to construct the flux terms and flux 
+ * Jacobian at the interface of the cell. In the finite volume approach, we need to 
+ * know the flux terms at the interface. The procedure to compute the flux is shown
+ * in the following functions. 1. compute primitive variables from conservative 
+ * variables in each cell; 2. extrapolate the primitive variables to face from 
+ * the cell (there are right and left values for each face). in the current code, 
+ * we employ the MUSCL extrapolation scheme; 3. construct the flux at the 
+ * interface based on right and left extrapolated conservative variables. 
+ * In the current code, we apply the Roe scheme; 4. numerical flux Jacobian
+ * matrix is calculated, which is a used to assemble matrix M in Mx = b, 
+ * the solution of which results in the completion of the implicit algorithm.
+ * This file presents two sets of reconstructions: the standard (k = 0) approach
+ * and Nishikawa's corrected UMUSCL scheme (k = 1/3) (cite). 
+ * 
+ * When doxygen is fully integrated, replace cite with bibtex reference:
+ *  Nishikawa, Hiroaki. "On the loss and recovery of second-order accuracy with 
+ *  U-MUSCL." Journal of Computational Physics 417 (2020): 109600.
+ * 
+ * @attention This file is a part of the Loci Framework, a free software.
+ * You can redistribute it and/or modify it under the terms of the Lesser
+ * GNU General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * The Loci Framework is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * Lesser GNU General Public License for more details.
+ *
+ * You should have received a copy of the Lesser GNU General Public License
+ * along with the Loci Framework.  If not, see <http://www.gnu.org/licenses>
+ ******************************************************************************/
 #include <Loci>
 #include <Tools/tools.h>
 #include "FVMMod/slope_rescale.h"
 $include "FVM.lh"
-
-// The following functions help to construct the flux terms 
-// and flux Jacobian at the interface of the cell.
-// Notes: In the finite volume approach, we need to know the flux
-// terms at the interface. The procedure to compute the flux is shown
-// in the following functions. 1. compute primitive variables from 
-// conservative variables in each cell; 2. extrapolate the primitive 
-// variables to face from the cell (there are right and left values for
-// each face). in the current code, we employ the MUSCL extrapolation
-// scheme; 3. construct the flux at the interface based on right and left 
-// extrapolated conservative variables. In the current code, we apply the Roe 
-// scheme; 4. numerical flux Jacobian matrix is calculated, which is a used to
-// assemble matrix M in Mx = b (The solution of which results in the completion
-// of the implicit algorithm).
-
 namespace Loci {
 
   typedef vector3d<real_t> vect3d ;
@@ -45,137 +48,659 @@ namespace Loci {
 
   $type X store<real> ;
   $type M param<real> ;
+  /** ****************************************************************************
+ * @brief Unstructured Muscl Coefficient
+ * @retval kUMUSCL            Unstructured MUSCL coefficient, default 1/3
+ ******************************************************************************/
+$rule default(kUMUSCL),
+      comments("Parameter for Unstructured MUSCL scheme according to Nishikawa, "
+               "default 0, which uses the standard UMUSCL scheme. 1/3 is "
+               "recommended for Nishikawa")
+{
+  $kUMUSCL = 0;
+}
+
+/** ****************************************************************************
+ * @brief  UMUSCL constraint rule
+ * @retval nUMUSCL               [-] Nishikawa's UMUSCL constraint
+ * @retval sUMUSCL               [-] standard (non paramter) UMUSCL constraint
+ * @param  kUMUSCL               [-] MUSCL constant
+ ******************************************************************************/
+$rule constraint(nUMUSCL,sUMUSCL<-kUMUSCL)
+{
+  $sUMUSCL = ~EMPTY;
+  $nUMUSCL = EMPTY;
+  if ($kUMUSCL>0) 
+  {
+    $sUMUSCL = EMPTY;
+    $nUMUSCL = ~EMPTY;
+  }
+}
   
-  $rule pointwise(lefts(X)<-facecenter,
-		  cl->(X,grads(X),limiters(X),cellcenter)),
-    constraint(cl->(X,geom_cells)) {
+/** ****************************************************************************
+ * @brief  Standard UMUSCL reconstruction on the left faces, scalar
+ * @retval lefts(X)          [-] scalar reconstruction from the left
+ * @param  facecenter        [m] face center coordinates
+ * @param  cl->X             [-] scalar from left
+ * @param  cl->grads(X)      [-] cell gradient from left
+ * @param  cl->limiters(X)   [-] limiter from the left
+ * @param  cl->cellcenter    [m] cell center coordinates from the left
+ ******************************************************************************/
+  $rule pointwise(lefts(X)<-facecenter,cl->(X,grads(X),limiters(X),cellcenter)),
+        constraint(cl->(X,geom_cells)) 
+  {
     const vect3d drl = $facecenter - $cl->$cellcenter ;
     $lefts(X) = $cl->$X + $cl->$limiters(X)*dot($cl->$grads(X),drl) ;
   }
 
-  $rule pointwise(rights(X)<-facecenter,
-		  cr->(X,grads(X),limiters(X),cellcenter)),
-    constraint(cr->(X,geom_cells)) {
+/** ****************************************************************************
+ * @brief  Standard UMUSCL reconstruction on the right faces, scalar
+ * @retval rights(X)         [-] scalar reconstruction from the right
+ * @param  facecenter        [m] face center coordiantes
+ * @param  cr->X             [-] scalar from right
+ * @param  cr->grads(X)      [-] cell gradient from right
+ * @param  cr->limiters(X)   [-] limiter from the right
+ * @param  cr->cellcenter    [m] cell center coordinates from the right
+ ******************************************************************************/
+  $rule pointwise(rights(X)<-facecenter,cr->(X,grads(X),limiters(X),cellcenter)),
+        constraint(cr->(X,geom_cells)) 
+  {
     const vect3d drl = $facecenter - $cr->$cellcenter ;
     $rights(X) = $cr->$X + $cr->$limiters(X)*dot($cr->$grads(X),drl) ;
   }
+/** ****************************************************************************
+ * @brief  Nishikawa's UMUSCL scheme for the left faces, scalar, interior faces
+ * @retval lefts(X)          [-] scalar reconstruction from the left
+ * @param  facecenter        [-] face center coordinates
+ * @param  cl->X             [-] scalar from left
+ * @param  cl->grads(X)      [-] cell gradient from left
+ * @param  cl->limiters(X)   [-] limiter from the left
+ * @param  cl->cellcenter    [m] cell center coordinates from the left
+ * @param  cr->X             [-] scalar from right
+ * @param  cr->grads(X)      [-] cell gradient from right
+ * @param  cr->limiters(X)   [-] limiter from the right
+ * @param  cr->cellcenter    [m] cell center coordinates from the right
+ * @param  kUMUSCL           [-] UMUSCL constant
+ ******************************************************************************/
+$rule pointwise(lefts(X)<-facecenter,cl->(X,grads(X),limiters(X),cellcenter),
+                          cr->(X,grads(X),limiters(X),cellcenter),kUMUSCL),
+      constraint((cr,cl)->(X,geom_cells),interior_faces,nUMUSCL) 
+{
+  // Base MUSCL
+  const vect3d drl = $facecenter - $cl->$cellcenter;
+  $lefts(X) = $cl->$X + $cl->$limiters(X)*dot($cl->$grads(X),drl);
+  // Nishikawa Correction
+  const vect3d drp = $facecenter + drl - $cr->$cellcenter;
+  const real Xp = $cr->$X + dot($cr->$grads(X),drp);
+  $lefts(X) += $kUMUSCL*$cl->$limiters(X)*(0.5*(Xp-$cl->$X)-dot($cl->$grads(X),drl));
+}
 
+/** ****************************************************************************
+ * @brief  Nishikawa's UMUSCL scheme for the left faces at boundaries, scalars
+ * @retval lefts(X)          [-] scalar reconstruction from the left
+ * @param  facecenter        [-] face center coordinates
+ * @param  cl->X             [-] scalar from left
+ * @param  cl->grads(X)      [-] cell gradient from left
+ * @param  cl->limiters(X)   [-] limiter from the left
+ * @param  cl->cellcenter    [m] cell center coordinates from the left
+ ******************************************************************************/
+$rule pointwise(lefts(X)<-facecenter,cl->(X,grads(X),limiters(X),cellcenter)),
+      constraint(cl->(X,geom_cells),boundary_faces,nUMUSCL) 
+{
+  const vect3d drl = $facecenter - $cl->$cellcenter;
+  $lefts(X) = $cl->$X + $cl->$limiters(X)*dot($cl->$grads(X),drl);
+}
+
+/** ****************************************************************************
+ * @brief  Nishikawa's UMUSCL scheme for the right faces, scalar
+ * @retval rights(X)         [-] scalar reconstruction from the left
+ * @param  facecenter        [-] face center coordinates
+ * @param  cr->X             [-] scalar from right
+ * @param  cr->grads(X)      [-] cell gradient from right
+ * @param  cr->limiters(X)   [-] limiter from the right
+ * @param  cr->cellcenter    [m] cell center coordinates from the right
+ * @param  cl->X             [-] scalar from left
+ * @param  cl->grads(X)      [-] cell gradient from left
+ * @param  cl->limiters(X)   [-] limiter from the left
+ * @param  cl->cellcenter    [m] cell center coordinates from the left
+ * @param  kUMUSCL           [-] UMUSCL constant
+ ******************************************************************************/
+$rule pointwise(rights(X)<-facecenter,cr->(X,grads(X),limiters(X),cellcenter),
+                           cl->(X,grads(X),limiters(X),cellcenter),kUMUSCL),
+      constraint((cr,cl)->(X,geom_cells),nUMUSCL) 
+{
+  const vect3d drl = $facecenter - $cr->$cellcenter;
+  $rights(X) = $cr->$X + $cr->$limiters(X)*dot($cr->$grads(X),drl);
+  // Nishikawa Correction
+  const vect3d drp = $facecenter + drl - $cl->$cellcenter;
+  const real Xp = $cl->$X + dot($cl->$grads(X),drp);
+  $rights(X) += $kUMUSCL*$cr->$limiters(X)*(0.5*(Xp-$cr->$X)-dot($cr->$grads(X),drl));
+}
+
+/** ****************************************************************************
+ * @brief  UMUSCL reconstruction on the right faces, periodic boundary
+ * @retval rights(X)         [-] scalar reconstruction from the right
+ * @param  pmaps->lefts(X)   [-] scalar reconstruction from the left, periodic face
+ ******************************************************************************/
   $rule pointwise(rights(X)<-pmap->lefts(X)),constraint(periodicFaces) {
     $rights(X) = $pmap->$lefts(X) ;
   }
 
   $type Zero param<real> ;
+/** ****************************************************************************
+ * @brief Set Zero as a parameter
+ * @retval Zero           [-] 0
+ ******************************************************************************/
   $rule singleton(Zero),constraint(UNIVERSE) { $Zero = 0.0; }
+
   $type minPg param<real> ;
   $type Pambient param<real> ;
+/** ****************************************************************************
+ * @brief Set the minimum pressure as the ambient pressure
+ * @retval minPg          [-] minimum pressure
+ * @param  Pambient       [-] ambient pressure
+ ******************************************************************************/
   $rule singleton(minPg<-Pambient) { $minPg = -$Pambient ;  }
 
-  $rule pointwise(leftsP(X,M)<-facecenter,M,
-		  cl->(X,grads(X),limiters(X),cellcenter)),
-    constraint(cl->(X,geom_cells)) {
+/** ****************************************************************************
+ * @brief  Standard UMUSCL reconstruction on the left faces, scalar, minimum
+ * @retval leftsP(X,M)       [-] scalar reconstruction from the left
+ * @param  facecenter        [m] face center coordinates
+ * @param  M                 [-] minimum value allowed in reconstruction
+ * @param  cl->X             [-] scalar from left
+ * @param  cl->grads(X)      [-] cell gradient from left
+ * @param  cl->limiters(X)   [-] limiter from the left
+ * @param  cl->cellcenter    [m] cell center coordinates from the left
+ ******************************************************************************/
+  $rule pointwise(leftsP(X,M)<-facecenter,M,cl->(X,grads(X),limiters(X),cellcenter)),
+        constraint(cl->(X,geom_cells)) 
+  {
     const vect3d drl = $facecenter - $cl->$cellcenter ;
     const real Xl = $cl->$X ;
     const real XP = Xl + $cl->$limiters(X)*dot($cl->$grads(X),drl) ;
     $leftsP(X,M) = (XP<$M)?Xl:XP ;
   }
 
-  $rule pointwise(rightsP(X,M)<-facecenter,M,
-		  cr->(X,grads(X),limiters(X),cellcenter)),
-    constraint(cr->(X,geom_cells)) {
+/** ****************************************************************************
+ * @brief  Standard UMUSCL reconstruction on the right faces, scalar, minimum
+ * @retval rightsP(X,M)      [-] scalar reconstruction from the right
+ * @param  facecenter        [m] face center coordiantes
+ * @param  M                 [-] minimum value allowed in reconstruction
+ * @param  cr->X             [-] scalar from right
+ * @param  cr->grads(X)      [-] cell gradient from right
+ * @param  cr->limiters(X)   [-] limiter from the right
+ * @param  cr->cellcenter    [m] cell center coordinates from the right
+ ******************************************************************************/
+  $rule pointwise(rightsP(X,M)<-facecenter,M,cr->(X,grads(X),limiters(X),cellcenter)),
+        constraint(cr->(X,geom_cells)) 
+  {
     const vect3d drl = $facecenter - $cr->$cellcenter ;
     const real Xr = $cr->$X ;
     const real XP = Xr + $cr->$limiters(X)*dot($cr->$grads(X),drl) ;
     $rightsP(X,M) = (XP<$M)?Xr:XP ;
   }
 
-  $rule pointwise(rightsP(X,M)<-pmap->leftsP(X,M)),constraint(periodicFaces) {
-    $rightsP(X,M) = $pmap->$leftsP(X,M) ;
-  }
+/** ****************************************************************************
+ * @brief Nishikawa's UMUSCL scheme for the left faces, scalar, interior faces,
+ *        minimum
+ * @retval leftsP(X,M)       [-] scalar reconstruction from the left
+ * @param  facecenter        [-] face center coordinates
+ * @param  M                 [-] minimum value allowed in reconstruction
+ * @param  cl->X             [-] scalar from left
+ * @param  cl->grads(X)      [-] cell gradient from left
+ * @param  cl->limiters(X)   [-] limiter from the left
+ * @param  cl->cellcenter    [m] cell center coordinates from the left
+ * @param  cr->X             [-] scalar from right
+ * @param  cr->grads(X)      [-] cell gradient from right
+ * @param  cr->limiters(X)   [-] limiter from the right
+ * @param  cr->cellcenter    [m] cell center coordinates from the right
+ * @param  kUMUSCL           [-] UMUSCL constant
+ ******************************************************************************/
+$rule pointwise(leftsP(X,M)<-facecenter,M,cl->(X,grads(X),limiters(X),cellcenter),
+                             cr->(X,grads(X),limiters(X),cellcenter),kUMUSCL),
+      constraint((cr,cl)->(X,geom_cells),interior_faces,nUMUSCL) 
+{
+  // Baseline 
+  const vect3d drl = $facecenter - $cl->$cellcenter;
+  const real Xl = $cl->$X;
+  real Xf = Xl + $cl->$limiters(X)*dot($cl->$grads(X),drl);
+  // Nishikawa's Correction
+  const vect3d drp = $facecenter + drl - $cr->$cellcenter;
+  const real Xp = $cr->$X + dot($cr->$grads(X),drp);
+  Xf += $kUMUSCL*$cl->$limiters(X)*(0.5*(Xp-$cl->$X)-dot($cl->$grads(X),drl));
+  $leftsP(X,M) = (Xf<$M)?Xl:Xf;
+}
 
-  $type X store<vect3d> ;
-  
-  $rule pointwise(leftv3d(X)<-facecenter,
-		  cl->(X,gradv3d(X),limiterv3d(X),cellcenter)),
-    constraint(cl->(X,geom_cells)) {
-    const vect3d drl = $facecenter - $cl->$cellcenter ;
-    $leftv3d(X) = $cl->$X +
-      vect3d($cl->$limiterv3d(X).x*dot($cl->$gradv3d(X).x,drl),
-	     $cl->$limiterv3d(X).y*dot($cl->$gradv3d(X).y,drl),
-	     $cl->$limiterv3d(X).z*dot($cl->$gradv3d(X).z,drl)) ;
-  }
+/** ****************************************************************************
+ * @brief  Nishikawa's UMUSCL scheme for the left faces at boundaries, scalars
+ * @retval leftsP(X,M)       [-] scalar reconstruction from the left
+ * @param  facecenter        [-] face center coordinates
+ * @param  M                 [-] minimum value allowed in reconstruction
+ * @param  cl->X             [-] scalar from left
+ * @param  cl->grads(X)      [-] cell gradient from left
+ * @param  cl->limiters(X)   [-] limiter from the left
+ * @param  cl->cellcenter    [m] cell center coordinates from the left
+ ******************************************************************************/
+$rule pointwise(leftsP(X,M)<-facecenter,M,cl->(X,grads(X),limiters(X),cellcenter)),
+      constraint(cl->(X,geom_cells),boundary_faces,nUMUSCL) 
+{
+  const vect3d drl = $facecenter - $cl->$cellcenter;
+  const real Xl = $cl->$X;
+  const real XP = Xl + $cl->$limiters(X)*dot($cl->$grads(X),drl);
+  $leftsP(X,M) = (XP<$M)?Xl:XP;
+}
 
-  $rule pointwise(rightv3d(X)<-facecenter,
-		  cr->(X,gradv3d(X),limiterv3d(X),cellcenter)),
-    constraint(cr->(X,geom_cells)) {
-    const vect3d drl = $facecenter - $cr->$cellcenter ;
-    $rightv3d(X) = $cr->$X +
-      vect3d($cr->$limiterv3d(X).x*dot($cr->$gradv3d(X).x,drl),
-	     $cr->$limiterv3d(X).y*dot($cr->$gradv3d(X).y,drl),
-	     $cr->$limiterv3d(X).z*dot($cr->$gradv3d(X).z,drl)) ;
-  }
+/** ****************************************************************************
+ * @brief  Nishikawa's UMUSCL scheme for the right faces, scalar
+ * @retval rightsP(X,M)      [-] scalar reconstruction from the left
+ * @param  facecenter        [-] face center coordinates
+ * @param  M                 [-] minimum value allowed in reconstruction
+ * @param  cr->X             [-] scalar from right
+ * @param  cr->grads(X)      [-] cell gradient from right
+ * @param  cr->limiters(X)   [-] limiter from the right
+ * @param  cr->cellcenter    [m] cell center coordinates from the right
+ * @param  cl->X             [-] scalar from left
+ * @param  cl->grads(X)      [-] cell gradient from left
+ * @param  cl->limiters(X)   [-] limiter from the left
+ * @param  cl->cellcenter    [m] cell center coordinates from the left
+ * @param  kUMUSCL           [-] UMUSCL constant
+ ******************************************************************************/
+$rule pointwise(rightsP(X,M)<-facecenter,M,cr->(X,grads(X),limiters(X),cellcenter),
+                              cl->(X,grads(X),limiters(X),cellcenter),kUMUSCL),
+      constraint((cl,cr)->(X,geom_cells),nUMUSCL) 
+{
+  const vect3d drl = $facecenter - $cr->$cellcenter;
+  const real Xr = $cr->$X;
+  real Xf = Xr + $cr->$limiters(X)*dot($cr->$grads(X),drl);
+  // Nishikawa Correction
+  const vect3d drp = $facecenter + drl - $cl->$cellcenter;
+  const real Xp = $cl->$X + dot($cl->$grads(X),drp);
+  Xf += $kUMUSCL*$cr->$limiters(X)*(0.5*(Xp-$cr->$X)-dot($cr->$grads(X),drl));
+  $rightsP(X,M) = (Xf<$M)?Xr:Xf;
+}
 
-  $type periodicTransform store<rigid_transform> ;
-  $rule pointwise(rightv3d(X)<-pmap->leftv3d(X),pmap->ref->periodicTransform),
-    constraint(periodicFaces) {
-    const rigid_transform &frame = $pmap->$ref->$periodicTransform ;
-    $rightv3d(X) = frame.rotate_vec($pmap->$leftv3d(X)) ;
-  }
-  
-  
+/** ****************************************************************************
+ * @brief  UMUSCL reconstruction on the right faces, periodic boundary
+ * @retval rightsP(X.M)         [-] scalar reconstruction from the right
+ * @param  pmaps->lefts(X,M)    [-] scalar reconstruction from the left, periodic face
+ ******************************************************************************/
+$rule pointwise(rightsP(X,M)<-pmap->leftsP(X,M)),constraint(periodicFaces) 
+{
+  $rightsP(X,M) = $pmap->$leftsP(X,M) ;
+}
+
+$type X store<vect3d> ;
+/** ****************************************************************************
+ * @brief  Standard UMUSCL reconstruction on the left faces, vect3d
+ * @retval leftv3d(X)        [-] vect3d reconstruction from the left
+ * @param  facecenter        [m] face center coordinates
+ * @param  cl->X             [-] vect3d from left
+ * @param  cl->gradv3d(X)    [-] cell gradient from left
+ * @param  cl->limiterv3d(X) [-] limiter from the left
+ * @param  cl->cellcenter    [m] cell center coordinates from the left
+ ******************************************************************************/
+$rule pointwise(leftv3d(X)<-facecenter,cl->(X,gradv3d(X),limiterv3d(X),cellcenter)),
+      constraint(cl->(X,geom_cells)) 
+{
+  const vect3d drl = $facecenter - $cl->$cellcenter ;
+  $leftv3d(X) = $cl->$X +
+                vect3d($cl->$limiterv3d(X).x*dot($cl->$gradv3d(X).x,drl),
+                        $cl->$limiterv3d(X).y*dot($cl->$gradv3d(X).y,drl),
+                        $cl->$limiterv3d(X).z*dot($cl->$gradv3d(X).z,drl)) ;
+}
+
+/** ****************************************************************************
+ * @brief  Standard UMUSCL reconstruction on the right faces, vect3d
+ * @retval rightv3d(X)       [-] vect3d reconstruction from the right
+ * @param  facecenter        [m] face center coordiantes
+ * @param  cr->X             [-] vect3d from right
+ * @param  cr->gradv3d(X)    [-] cell gradient from right
+ * @param  cr->limiterv3d(X) [-] limiter from the right
+ * @param  cr->cellcenter    [m] cell center coordinates from the right
+ ******************************************************************************/
+$rule pointwise(rightv3d(X)<-facecenter,cr->(X,gradv3d(X),limiterv3d(X),cellcenter)),
+      constraint(cr->(X,geom_cells)) 
+{
+  const vect3d drl = $facecenter - $cr->$cellcenter ;
+  $rightv3d(X) = $cr->$X +
+                  vect3d($cr->$limiterv3d(X).x*dot($cr->$gradv3d(X).x,drl),
+                        $cr->$limiterv3d(X).y*dot($cr->$gradv3d(X).y,drl),
+                        $cr->$limiterv3d(X).z*dot($cr->$gradv3d(X).z,drl)) ;
+}
+
+/** ****************************************************************************
+ * @brief  Nishikawa's UMUSCL scheme for the left faces, vect3d, interior faces
+ * @retval leftv3d(X)        [-] vect3d reconstruction from the left
+ * @param  facecenter        [-] face center coordinates
+ * @param  cl->X             [-] vect3d from left
+ * @param  cl->gradv3d(X)    [-] cell gradient from left
+ * @param  cl->limiterv3d(X) [-] limiter from the left
+ * @param  cl->cellcenter    [m] cell center coordinates from the left
+ * @param  cr->X             [-] vect3d from right
+ * @param  cr->gradv3d(X)    [-] cell gradient from right
+ * @param  cr->limiterv3d(X) [-] limiter from the right
+ * @param  cr->cellcenter    [m] cell center coordinates from the right
+ * @param  kUMUSCL           [-] UMUSCL constant
+ ******************************************************************************/
+$rule pointwise(leftv3d(X)<-facecenter,cl->(X,gradv3d(X),limiterv3d(X),cellcenter),
+                            cr->(X,gradv3d(X),limiterv3d(X),cellcenter),kUMUSCL),
+      constraint((cr,cl)->(X,geom_cells),interior_faces,nUMUSCL) 
+{
+  // Baseline
+  const vect3d drl = $facecenter - $cl->$cellcenter;
+  const vect3d recon = vect3d($cl->$limiterv3d(X).x*dot($cl->$gradv3d(X).x,drl),
+                              $cl->$limiterv3d(X).y*dot($cl->$gradv3d(X).y,drl),
+                              $cl->$limiterv3d(X).z*dot($cl->$gradv3d(X).z,drl));
+  $leftv3d(X) = $cl->$X + recon;
+  // Nishikawa's Correction
+  const vect3d drp = $facecenter + drl - $cr->$cellcenter;
+  const vect3d Xp = $cr->$X + dot($cr->$gradv3d(X),drp);
+  const vect3d delX = 0.5*(Xp-$cl->$X);
+  const vect3d lavg = vect3d($cl->$limiterv3d(X).x*delX.x,
+                             $cl->$limiterv3d(X).y*delX.y,
+                             $cl->$limiterv3d(X).z*delX.z);
+  $leftv3d(X) += $kUMUSCL*(lavg-recon);
+}
+
+/** ****************************************************************************
+ * @brief  Nishikawa's UMUSCL scheme for the left faces at boundaries, vect3d
+ * @retval leftv3d(X)        [-] vect3d reconstruction from the left
+ * @param  facecenter        [-] face center coordinates
+ * @param  cl->X             [-] vect3d from left
+ * @param  cl->gradv3d(X)    [-] cell gradient from left
+ * @param  cl->limiters(X)   [-] limiter from the left
+ * @param  cl->cellcenter    [m] cell center coordinates from the left
+ ******************************************************************************/
+$rule pointwise(leftv3d(X)<-facecenter,cl->(X,gradv3d(X),limiterv3d(X),cellcenter)),
+      constraint(cl->(X,geom_cells),boundary_faces,nUMUSCL) 
+{
+  const vect3d drl = $facecenter - $cl->$cellcenter;
+  $leftv3d(X) = $cl->$X +
+                vect3d($cl->$limiterv3d(X).x*dot($cl->$gradv3d(X).x,drl),
+                       $cl->$limiterv3d(X).y*dot($cl->$gradv3d(X).y,drl),
+                       $cl->$limiterv3d(X).z*dot($cl->$gradv3d(X).z,drl));
+}
+
+/** ****************************************************************************
+ * @brief  Nishikawa's UMUSCL scheme for the right faces, vect3d
+ * @retval rightv3d(X)       [-] vect3d reconstruction from the left
+ * @param  facecenter        [-] face center coordinates
+ * @param  cr->X             [-] vect3d from right
+ * @param  cr->gradv3d(X)    [-] cell gradient from right
+ * @param  cr->limiterv3d(X) [-] limiter from the right
+ * @param  cr->cellcenter    [m] cell center coordinates from the right
+ * @param  cl->X             [-] vect3d from left
+ * @param  cl->gradv3d(X)    [-] cell gradient from left
+ * @param  cl->limiterv3d(X) [-] limiter from the left
+ * @param  cl->cellcenter    [m] cell center coordinates from the left
+ * @param  kUMUSCL           [-] UMUSCL constant
+ ******************************************************************************/
+$rule pointwise(rightv3d(X)<-facecenter,cr->(X,gradv3d(X),limiterv3d(X),cellcenter),
+                             cl->(X,gradv3d(X),limiterv3d(X),cellcenter),kUMUSCL),
+      constraint((cr,cl)->(X,geom_cells),nUMUSCL) 
+{
+  const vect3d drl = $facecenter - $cr->$cellcenter;
+  const vect3d recon = vect3d($cr->$limiterv3d(X).x*dot($cr->$gradv3d(X).x,drl),
+                              $cr->$limiterv3d(X).y*dot($cr->$gradv3d(X).y,drl),
+                              $cr->$limiterv3d(X).z*dot($cr->$gradv3d(X).z,drl));
+  $rightv3d(X) = $cr->$X + recon;
+
+  // Nishikawa Correction
+  const vect3d drp = $facecenter + drl - $cl->$cellcenter;
+  const vect3d Xp = $cl->$X + dot($cl->$gradv3d(X),drp);
+  const vect3d delX = 0.5*(Xp-$cr->$X);
+  const vect3d lavg = vect3d($cl->$limiterv3d(X).x*delX.x,
+                             $cl->$limiterv3d(X).y*delX.y,
+                             $cl->$limiterv3d(X).z*delX.z);
+  $rightv3d(X) += $kUMUSCL*(lavg-recon);
+}
+
+/** ****************************************************************************
+ * @brief  UMUSCL reconstruction on the right faces, periodic boundary, vect3d
+ * @retval rightv3d(X)                  [-] vect3d reconstruction from the right
+ * @param  pmaps->leftv3d(X)            [-] vect3d reconstruction from the left, 
+ *                                          periodic face
+ * @param  pmap->ref->periodicTransform [-] coordinate transform for periodic 
+ *                                          boundaries
+ ******************************************************************************/
+$type periodicTransform store<rigid_transform>;
+$rule pointwise(rightv3d(X)<-pmap->leftv3d(X),pmap->ref->periodicTransform),
+      constraint(periodicFaces) 
+{
+  const rigid_transform &frame = $pmap->$ref->$periodicTransform;
+  $rightv3d(X) = frame.rotate_vec($pmap->$leftv3d(X));
+}
+
+
   $type X storeVec<real> ;
-  $rule pointwise(leftvM(X)<-facecenter,
-		  cl->(X,gradv(X),limiterv(X),cellcenter)),
-    constraint(cl->(X,geom_cells)),
-    prelude {
-    $leftvM(X).setVecSize($X.vecSize()) ;
-  } compute {
-    const vect3d drl = $facecenter - $cl->$cellcenter ;
-    const int vs = $*X.vecSize() ;
-    tmp_array<real> slopes(vs) ;
+/** ****************************************************************************
+ * @brief  Standard UMUSCL reconstruction on the left faces, vector
+ * @retval leftvM(X)         [-] vector reconstruction from the left
+ * @param  facecenter        [m] face center coordinates
+ * @param  cl->X             [-] vector from left
+ * @param  cl->gradv(X)      [-] cell gradient from left
+ * @param  cl->limiterv(X)   [-] limiter from the left
+ * @param  cl->cellcenter    [m] cell center coordinates from the left
+ ******************************************************************************/
+  $rule pointwise(leftvM(X)<-facecenter,cl->(X,gradv(X),limiterv(X),cellcenter)),
+        constraint(cl->(X,geom_cells)),,prelude 
+{
+  $leftvM(X).setVecSize($X.vecSize());
+} 
+compute 
+{
+  const vect3d drl = $facecenter - $cl->$cellcenter;
+  const int vs = $*X.vecSize();
+  tmp_array<real> slopes(vs);
 
-    for(int i=0;i<vs;++i) {
-      const real Xi = $cl->$X[i] ;
-      slopes[i] = $cl->$limiterv(X)[i]*dot($cl->$gradv(X)[i],drl) ;
-      if(Xi+slopes[i] < 0.0)
-	slopes[i] = -Xi ;
-      if(Xi-1.5*slopes[i] < 0.0)
-	slopes[i] = 0 ;
+  for(int i=0;i<vs;++i) 
+  {
+    const real Xi = $cl->$X[i];
+    slopes[i] = $cl->$limiterv(X)[i]*dot($cl->$gradv(X)[i],drl);
+    if(Xi+slopes[i] < 0.0) 
+    {
+      slopes[i] = -Xi;
     }
-    slope_rescale(slopes,vs) ;
-    for(int i=0;i<vs;++i) {
-      ($leftvM(X))[i] = $cl->$X[i] + slopes[i] ;
-    }
-  }
-
-  $rule pointwise(rightvM(X)<-facecenter,
-		  cr->(X,gradv(X),limiterv(X),cellcenter)),
-      constraint(cr->(X,geom_cells)), prelude {
-    $rightvM(X).setVecSize($X.vecSize()) ;
-  } compute {
-    const vect3d drl = $facecenter - $cr->$cellcenter ;
-    const int vs = $*X.vecSize() ;
-    tmp_array<real> slopes(vs) ;
-
-    for(int i=0;i<vs;++i) {
-      const real Xi = $cr->$X[i] ;
-      slopes[i] = $cr->$limiterv(X)[i]*dot($cr->$gradv(X)[i],drl) ;
-      if(Xi+slopes[i] < 0.0)
-	slopes[i] = -Xi ;
-      if(Xi-1.5*slopes[i] < 0.0)
-	slopes[i] = 0 ;
-    }
-    slope_rescale(slopes,vs) ;
-    for(int i=0;i<vs;++i) {
-      $rightvM(X)[i] = $cr->$X[i] + slopes[i] ;
+    if(Xi-1.5*slopes[i] < 0.0) 
+    {
+      slopes[i] = 0;
     }
   }
+  slope_rescale(slopes,vs);
+  for(int i=0;i<vs;++i) 
+  {
+    ($leftvM(X))[i] = $cl->$X[i] + slopes[i];
+  }
+}
 
-  $rule pointwise(rightvM(X)<-pmap->leftvM(X)),constraint(periodicFaces),
+/** ****************************************************************************
+ * @brief  Standard UMUSCL reconstruction on the right faces, vector
+ * @retval rightvM(X)        [-] vector reconstruction from the right
+ * @param  facecenter        [m] face center coordiantes
+ * @param  cr->X             [-] vector from right
+ * @param  cr->gradv(X)      [-] cell gradient from right
+ * @param  cr->limiterv(X)   [-] limiter from the right
+ * @param  cr->cellcenter    [m] cell center coordinates from the right
+ ******************************************************************************/
+$rule pointwise(rightvM(X)<-facecenter,cr->(X,gradv(X),limiterv(X),cellcenter)),
+      constraint(cr->(X,geom_cells),sUMUSCL), prelude 
+{
+  $rightvM(X).setVecSize($X.vecSize());
+} 
+compute 
+{
+  const vect3d drl = $facecenter - $cr->$cellcenter;
+  const int vs = $*X.vecSize();
+  tmp_array<real> slopes(vs);
+
+  for(int i=0;i<vs;++i) 
+  {
+    const real Xi = $cr->$X[i];
+    slopes[i] = $cr->$limiterv(X)[i]*dot($cr->$gradv(X)[i],drl);
+    if(Xi+slopes[i] < 0.0)
+    {
+      slopes[i] = -Xi;
+    }
+    if(Xi-1.5*slopes[i] < 0.0)
+    {
+      slopes[i] = 0;
+    }
+  }
+  slope_rescale(slopes,vs);
+  for(int i=0;i<vs;++i) 
+  {
+    $rightvM(X)[i] = $cr->$X[i] + slopes[i];
+  }
+}
+
+/** ****************************************************************************
+ * @brief  Nishikawa's UMUSCL scheme for the left faces, vector, interior faces
+ * @retval leftvM(X)         [-] vector reconstruction from the left
+ * @param  facecenter        [-] face center coordinates
+ * @param  cl->X             [-] vector from left
+ * @param  cl->gradv(X)      [-] cell gradient from left
+ * @param  cl->limiterv(X)   [-] limiter from the left
+ * @param  cl->cellcenter    [m] cell center coordinates from the left
+ * @param  cr->X             [-] vector from right
+ * @param  cr->gradv(X)      [-] cell gradient from right
+ * @param  cr->limiterv(X)   [-] limiter from the right
+ * @param  cr->cellcenter    [m] cell center coordinates from the right
+ * @param  kUMUSCL           [-] UMUSCL constant
+ ******************************************************************************/
+$rule pointwise(leftvM(X)<-facecenter,cl->(X,gradv(X),limiterv(X),cellcenter),
+                           cr->(X,gradv(X),limiterv(X),cellcenter),kUMUSCL),
+      constraint((cr,cl)->(X,geom_cells),interior_faces,nUMUSCL),prelude 
+{
+  $leftvM(X).setVecSize($X.vecSize());
+} 
+compute 
+{
+  const vect3d drl = $facecenter - $cl->$cellcenter;
+  const vect3d drp = $facecenter + drl - $cr->$cellcenter;
+  const int vs = $*X.vecSize();
+  tmp_array<real> slopes(vs);
+
+  for(int i=0;i<vs;++i) 
+  {
+    // Baseline
+    const real Xi = $cl->$X[i];
+    slopes[i] = $cl->$limiterv(X)[i]*dot($cl->$gradv(X)[i],drl);
+    // Nishikawa's Correction
+    const real Xp = $cr->$X[i] + dot($cr->$gradv(X)[i],drp);
+    slopes[i] += $kUMUSCL*$cl->$limiterv(X)[i]*(0.5*(Xp-$cl->$X[i])-
+                  dot($cl->$gradv(X)[i],drl));
+    if(Xi+slopes[i] < 0.0)
+    {
+      slopes[i] = -Xi;
+    }
+    if(Xi-1.5*slopes[i] < 0.0)
+    {
+      slopes[i] = 0;
+    }
+  }
+  slope_rescale(slopes,vs);
+  for(int i=0;i<vs;++i) 
+  {
+    ($leftvM(X))[i] = $cl->$X[i] + slopes[i];
+  }
+}
+
+/** ****************************************************************************
+ * @brief  Nishikawa's UMUSCL scheme for the left faces at boundaries, vectors
+ * @retval leftvM(X)         [-] vector reconstruction from the left
+ * @param  facecenter        [-] face center coordinates
+ * @param  cl->X             [-] vector from left
+ * @param  cl->gradv(X)      [-] cell gradient from left
+ * @param  cl->limiterv(X)   [-] limiter from the left
+ * @param  cl->cellcenter    [m] cell center coordinates from the left
+ ******************************************************************************/
+$rule pointwise(leftvM(X)<-facecenter,cl->(X,gradv(X),limiterv(X),cellcenter)),
+      constraint(cl->(X,geom_cells),boundary_faces,nUMUSCL),
   prelude {
-    $rightvM(X).setVecSize($leftvM(X).vecSize()) ;
-  } compute {
-    $rightvM(X) = $pmap->$leftvM(X) ;
+  $leftvM(X).setVecSize($X.vecSize());
+} compute {
+  const vect3d drl = $facecenter - $cl->$cellcenter;
+  const int vs = $*X.vecSize();
+  tmp_array<real> slopes(vs);
+
+  for(int i=0;i<vs;++i) {
+    const real Xi = $cl->$X[i];
+    slopes[i] = $cl->$limiterv(X)[i]*dot($cl->$gradv(X)[i],drl);
+    if(Xi+slopes[i] < 0.0)
+      slopes[i] = -Xi;
+    if(Xi-1.5*slopes[i] < 0.0)
+      slopes[i] = 0;
   }
+  slope_rescale(slopes,vs);
+  for(int i=0;i<vs;++i) {
+    ($leftvM(X))[i] = $cl->$X[i] + slopes[i];
+  }
+}
+
+/** ****************************************************************************
+ * @brief  Nishikawa's UMUSCL scheme for the right faces, vector
+ * @retval rightvM(X)        [-] vector reconstruction from the left
+ * @param  facecenter        [-] face center coordinates
+ * @param  cr->X             [-] vector from right
+ * @param  cr->gradv(X)      [-] cell gradient from right
+ * @param  cr->limiterv(X)   [-] limiter from the right
+ * @param  cr->cellcenter    [m] cell center coordinates from the right
+ * @param  cl->X             [-] vector from left
+ * @param  cl->gradv(X)      [-] cell gradient from left
+ * @param  cl->limiterv(X)   [-] limiter from the left
+ * @param  cl->cellcenter    [m] cell center coordinates from the left
+ * @param  kUMUSCL           [-] UMUSCL constant
+ ******************************************************************************/
+$rule pointwise(rightvM(X)<-facecenter,cr->(X,gradv(X),limiterv(X),cellcenter),
+                            cl->(X,gradv(X),limiterv(X),cellcenter),kUMUSCL),
+      constraint((cl,cr)->(X,geom_cells),nUMUSCL), prelude 
+{
+  $rightvM(X).setVecSize($X.vecSize());
+} 
+compute 
+{
+  const vect3d drl = $facecenter - $cr->$cellcenter;
+  const vect3d drp = $facecenter + drl - $cl->$cellcenter;
+  const int vs = $*X.vecSize();
+  tmp_array<real> slopes(vs);
+
+  for(int i=0;i<vs;++i) 
+  {
+    const real Xi = $cr->$X[i];
+    slopes[i] = $cr->$limiterv(X)[i]*dot($cr->$gradv(X)[i],drl);
+    const real Xp = $cl->$X[i] + dot($cl->$gradv(X)[i],drp);
+    slopes[i] += $kUMUSCL*$cr->$limiterv(X)[i]*(0.5*(Xp-$cr->$X[i])-
+                 dot($cr->$gradv(X)[i],drl));
+    if(Xi+slopes[i] < 0.0)
+    {
+      slopes[i] = -Xi;
+    } 
+    if(Xi-1.5*slopes[i] < 0.0)
+    {
+      slopes[i] = 0;
+    }
+  }
+  slope_rescale(slopes,vs);
+  for(int i=0;i<vs;++i) 
+  {
+    $rightvM(X)[i] = $cr->$X[i] + slopes[i];
+  }
+}
+
+/** ****************************************************************************
+ * @brief  UMUSCL reconstruction on the right faces, periodic boundary, vector
+ * @retval rightvM(X)         [-] scalar reconstruction from the right
+ * @param  pmaps->leftvM(X)   [-] scalar reconstruction from the left, periodic face
+ ******************************************************************************/
+$rule pointwise(rightvM(X)<-pmap->leftvM(X)),constraint(periodicFaces),
+prelude 
+{
+  $rightvM(X).setVecSize($leftvM(X).vecSize());
+} 
+compute 
+{
+  $rightvM(X) = $pmap->$leftvM(X);
+}
 
 }
 

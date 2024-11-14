@@ -62,6 +62,10 @@ $type rightvM(X) storeVec<Loci::real_t> ;
 $type leftv3d(X) store<Loci::vector3d<Loci::real_t> > ;
 $type rightv3d(X) store<Loci::vector3d<Loci::real_t> > ;
 
+$type kUMUSCL      param<Loci::real_t>;    // [-] UMUSCL Parameter
+$type nUMUSCL      constraint;             // [-] Constraint to activate Nishikawa's LP-UMUSCL
+$type sUMUSCL      constraint;             // [-] Constraint for standard UMUSCL
+
 $type cell2node(X) store<float > ;
 $type cell2node_v(X) storeVec<float > ;
 $type cell2node_v3d(X) store<Loci::vector3d<float> > ;
