@@ -61,7 +61,7 @@ namespace Loci {
     rule r = make_super_rule(sv,tv) ;
     if(verbose) {
       debugout << "----------------------------------------------------------------------------" << endl ;
-      debugout << "creating super node: " << r << endl ;
+      debugout << "multiLevelGraph: creating super node: " << r << endl ;
       ruleSet rset = extract_rules(g.graph_v) ;
       debugout << rset << endl ;
       debugout << "----------------------------------------------------------------------------" << endl ;
@@ -110,9 +110,10 @@ namespace Loci {
     variableSet sv = extract_vars(sg.incoming_v) ;
     variableSet tv = extract_vars(sg.outgoing_v) ;
     rule r = make_super_rule(sv,tv,cond_var) ;
+    
     if(verbose) {
       debugout << "----------------------------------------------------------------------------" << endl ;
-      debugout << "creating super node: " << r << endl ;
+      debugout << "mksnode: creating super node: " << r << endl ;
       ruleSet rset = extract_rules(sg.graph_v) ;
       debugout << rset << endl ;
       debugout << "----------------------------------------------------------------------------" << endl ;

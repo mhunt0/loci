@@ -1111,10 +1111,12 @@ namespace Loci {
     virtual ~register_module() {}
     virtual bool is_module_rule() const{ return true ; }
     virtual rule_implP get_func() const { return 0 ; }
-    virtual std::string using_nspace() const = 0 ;
+    virtual std::string load_module() const ;
+    virtual std::string using_nspace() const ;
     virtual std::string input_vars() const = 0 ;
     virtual std::string output_vars() const = 0 ;
     virtual std::string load_nspace() const ;
+    virtual std::string disable_compute_vars() const ;
   } ;
   
   class rule_db {
