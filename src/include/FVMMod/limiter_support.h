@@ -156,7 +156,7 @@ namespace Loci {
  * @param eps2     [-] cell volume function
  * @return real    [-] limiter
  */
-real vlimit(real Xcc, real qmin, real qmax, real qdif, real eps2);
+inline real vlimit(real Xcc, real qmin, real qmax, real qdif, real eps2);
 
 
 /**
@@ -181,7 +181,7 @@ real barth_limit(real Xcc, real qdif, real qmax, real qmin);
  * @param nisPow   [-] order of the limiter
  * @return real    [-] limiter
  */
-  real nis_limit(real Xcc, real qmin, real qmax, real qdif, real epsp, real nisPow);
+real nis_limit(real Xcc, real qmin, real qmax, real qdif, real epsp, real nisPow);
 
   /**
    * @brief Register for stenMaxMinNorm class
