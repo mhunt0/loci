@@ -1,24 +1,25 @@
-//#############################################################################
-//#
-//# Copyright 2008-2019, Mississippi State University
-//#
-//# This file is part of the Loci Framework.
-//#
-//# The Loci Framework is free software: you can redistribute it and/or modify
-//# it under the terms of the Lesser GNU General Public License as published by
-//# the Free Software Foundation, either version 3 of the License, or
-//# (at your option) any later version.
-//#
-//# The Loci Framework is distributed in the hope that it will be useful,
-//# but WITHOUT ANY WARRANTY; without even the implied warranty of
-//# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//# Lesser GNU General Public License for more details.
-//#
-//# You should have received a copy of the Lesser GNU General Public License
-//# along with the Loci Framework.  If not, see <http://www.gnu.org/licenses>
-//#
-//#############################################################################
+/** ****************************************************************************
+ * @file      limiter.cc
+ * @authors   Ed Luke (MS State)
+ *            Raymond Fontenot (CFDRC)
+ * @date      LICENSE Date: 12-30-2023
+ * @copyright MS State/CFDRC
+ * @brief     Limiter functions for finite volume methods
+ * @details   This file is a part of the Loci Framework, a free software. 
+ * You can redistribute it and/or modify it under the terms of the Lesser 
+ * GNU General Public License as published by the Free Software Foundation, 
+ * either version 3 of the License, or (at your option) any later version.
+ * 
+ * The Loci Framework is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * Lesser GNU General Public License for more details.
+ * 
+ * You should have received a copy of the Lesser GNU General Public License
+ * along with the Loci Framework.  If not, see <http://www.gnu.org/licenses>
+ ******************************************************************************/
 #include <Loci.h>
+$include "FVMMod/limiter.lh"
 $include "FVM.lh"
 
 using std::cerr ;
@@ -66,29 +67,15 @@ namespace Loci {
     }
   }
     
-  
-  
-
-  $type Kl param<real> ;
   $rule default(Kl),comments("This parameter is a smoothness parameter for the venkatakrishnan limiter.  A value of zero will not allow overshoots, while a larger value may allow some overshoots to ensure accuracy in locally smooth regions.  The typical values for this parameter range from .1 to 100") {
     $Kl = 1.0 ;
   }
 
-  $type limiter param<std::string> ;
-  
   $rule default(limiter),comments("Limiter used in face extrapolations.  This function can take the values of 'venkatakrishnan', 'barth', 'none' for second order solutions, and 'zero' for first order solutions") {
     $limiter = "venkatakrishnan" ;
   }
 
 
-  $type V_limiter Constraint ;
-  $type B_limiter Constraint ;
-  $type N_limiter Constraint ;
-  $type Z_limiter Constraint ;
-  $type NB_limiter Constraint ;
-  $type V2_limiter Constraint ;
-  $type limiter param<std::string> ;
-  
   $rule constraint(V_limiter,B_limiter,N_limiter,Z_limiter,NB_limiter,V2_limiter<-limiter) {
     $V_limiter = EMPTY ;
     $V2_limiter = EMPTY ;
