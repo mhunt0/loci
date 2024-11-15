@@ -113,6 +113,17 @@ namespace Loci {
     $Kl = 1.0 ;
   }
 
+/** ****************************************************************************
+ * @brief Default rule to define the order of the Nishikawa limiter
+ * @retval nisPow      [-] real, nishikawa order
+ ******************************************************************************/
+$rule default(nisPow),
+      comments("This parameter specifies the order of the Nishikawa Limter. "
+               "Default is 3, acceptable values are 3, 4, and 5.")
+{
+  $nisPow = 3.0;
+}
+
   /** **************************************************************************
    * @brief Default rule to define limiters
    * @retval limiter     [-] string, limiter defintion
