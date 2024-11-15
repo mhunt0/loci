@@ -47,7 +47,7 @@ namespace Loci{
     // make the limiting case of 0/0 work as expected
     //const real e = (den >= 0.0?1.0e-30:-1.0e-30) ;
     real lim = num/den; //(num+e)/(den+e);
-    return max(0.0,min(1.0,lim)) ;
+    return max<real>(0.0,min<real>(1.0,lim)) ;
   }
 
   /**
@@ -67,7 +67,7 @@ namespace Loci{
     } else {
       lim = (qmin-Xcc)/(qdif-1e-30);
     }
-    return max(0.0,min(1.0,lim));
+    return max<real>(0.0,min<real>(1.0,lim));
   }
 
   /**
@@ -91,7 +91,7 @@ namespace Loci{
     if (a > 2*b) return 1.0; // save on computation 
     // numerator of limiter
     const real fun1 = pow(a,nisPow) + epsp;
-    real Sp;
+    real Sp = 2.0*b*b; // nisPow = 2
     if (nisPow == 3)
     {
       Sp = 4.0*b*b;
@@ -104,6 +104,6 @@ namespace Loci{
     // denominator of limiter
     const real den =  fun1 + b*(pow(delp,nisPow-1.0) + Sp);
     real lim = num/den;
-    return max(0.0,lim) ;
+    return max<real>(0.0,lim) ;
   }
 }

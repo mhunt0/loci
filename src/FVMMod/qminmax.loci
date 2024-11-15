@@ -482,32 +482,4 @@ prelude
       $epsilon2v(X)[j] = $venkaFac*pow(ref,$nisPow);
   }
 }
-
-/** ****************************************************************************
- * @brief MLP grid factor for vector limiters
- * @retval epsilon2v(X)        [-] MLP grid factor
- * @param  X                   [-] state
- * @param  mlpFac              [-] MLP geometric factor
- * @param  K1                  [-] MLP factor
- * @param  cellmaxminv(X)      [-] cell max and min for vector
- ******************************************************************************/
-$rule pointwise(epsilon2v(X)<-X,mlpFac,K1,cellmaxminv(X)),
-      constraint(geom_cells,MLPpwv_limiter), prelude
-{
-  $epsilon2v(X).setVecSize($X.vecSize());
-}
-  compute
-{
-  const int vs = $*X.vecSize();
-  for(int j=0;j<vs;++j)
-  {
-    real deltaq = $cellmaxminv(X)[j].max - $cellmaxminv(X)[j].min;
-    real deltaq2 = deltaq*deltaq;
-
-    // e^2 = K1/(1+theta)*dq^2, theta = dq/K2*dx^1.5
-    real theta = deltaq/$mlpFac;
-    $epsilon2v(X)[j] = $K1/(1.0+theta) * deltaq2;
-  }
-}
-
 }

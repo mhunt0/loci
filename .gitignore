@@ -1,0 +1,27 @@
+# Compilation related files & directories
+*.d
+*.o
+*.so*
+*.lcc~
+*.a
+OBJ/
+copy.out
+Makefile
+
+# Document files
+*.aux
+*.bbl
+*.blg
+*.log
+*.pdf
+*.toc
+Tutorial/docs/Makefile_ex.tex
+Tutorial/docs/entities_cc.tex
+Tutorial/docs/helpers_cc.tex
+
+# Workspace
+*.code-workspace
+.vscode/
+
+# Code Review files
+CodeReview.txt

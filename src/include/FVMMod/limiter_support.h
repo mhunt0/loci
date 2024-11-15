@@ -156,7 +156,7 @@ namespace Loci {
  * @param eps2     [-] cell volume function
  * @return real    [-] limiter
  */
-inline real vlimit(real Xcc, real qmin, real qmax, real qdif, real eps2);
+real vlimit(real Xcc, real qmin, real qmax, real qdif, real eps2);
 
 
 /**
