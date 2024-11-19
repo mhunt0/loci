@@ -60,7 +60,11 @@ namespace Loci {
 #endif
 #endif
   public:
-    void start() { // This method resets the clock
+    /** ************************************************************************
+     * @brief This method resets the clock
+     **************************************************************************/
+    void start() 
+    { // This method resets the clock
 #ifdef PROFILER
 #ifdef USE_PAPI
       start_time = PAPI_get_real_usec();
@@ -68,8 +72,23 @@ namespace Loci {
       start_time = MPI_Wtime() ;
 #endif
 #endif
-    }
-    double stop() { // This method returns time since last start call
+    } // end of start{}
+
+    /** ************************************************************************
+     * @brief Returns the value for start_time
+     * @return double
+     **************************************************************************/
+    double startTime()
+    {
+      return start_time;
+    } // end startTime
+
+    /** ************************************************************************
+     * @brief  This method returns time since last start call
+     * @return double
+     **************************************************************************/
+    double stop() 
+    { // This method returns time since last start call
 #ifdef PROFILER
 #ifdef USE_PAPI
       return 1e-6*double(PAPI_get_real_usec()-start_time) ;
@@ -79,8 +98,8 @@ namespace Loci {
 #else
       return 0 ;
 #endif
-    }
-  } ;
+    } // end of stop{}
+  } ; // end of class stopWatch
   
 
   // This object is responsible for counting time and events that occur for
