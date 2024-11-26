@@ -20,7 +20,13 @@
 #
 ###############################################################################
 
-INSTALL_PATH=$INSTALL_DIR/$LOCI_INSTALL_DIR
+# Install with or without the Loci build information appended if set 
+# at configure time
+if [ -z "${LOCI_INSTALL_DIR}" ]; then
+    INSTALL_PATH=$INSTALL_DIR
+else
+    INSTALL_PATH=$INSTALL_DIR/$LOCI_INSTALL_DIR
+fi
 
 echo INSTALL_PATH = $INSTALL_PATH
 

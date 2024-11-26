@@ -45,8 +45,17 @@ following commands:
 make
 make install
 
-This will compile and install Loci in the directory
-<install_directory>/Loci-*.  If there are any problems with compilation you
+This will compile and install Loci in the directory (and set LOCI_BASE to)
+<install_directory>/Loci-*.  
+
+If you do not want to automatically append your <install_directory> with the 
+Loci build information, then at the configure step specify:
+
+./configure --prefix=<install_directory> --no-sub-dir
+
+which will make LOCI_BASE = <install_directory>.
+
+If there are any problems with compilation you
 may need to edit the files OBJ/sys.conf (system configuration file) or
 OBJ/comp.conf (compiler configuration file) to accomodate variations
 on your system that the configure script did not detect. 
