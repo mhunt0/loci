@@ -1633,7 +1633,10 @@ namespace Loci {
   register_rule_impl_list register_rule_list ;
   rule_impl_list global_rule_list ;
 
+  std::string register_module::load_module() const { return string("") ; }
+  std::string register_module::using_nspace() const { return string("") ; }
   std::string register_module::load_nspace() const { return string("") ; }
+  std::string register_module::disable_compute_vars() const { return string("") ; }
 
   rule_impl_list::~rule_impl_list() {
     rule_list_ent *p,*v ;

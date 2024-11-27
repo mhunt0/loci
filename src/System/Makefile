@@ -45,18 +45,16 @@ OBJS = Initialize.o Loci_Datatypes.o \
        FVMGridReader.o FVMGridWriter.o FVMStuff.o kd_tree.o pnn.o orb.o \
        keyspace.o interpolate_tools.o thread.o gpusupport.o
 
-COPT = $(CC_LIB_FLAGS) $(CC_OPTIMIZE) -DLOCI_RPATH=\"$(LOCI_RPATH)\"
+#COPT = $(CC_LIB_FLAGS) $(CC_OPTIMIZE) -DLOCI_RPATH=\"$(LOCI_RPATH)\"
 #COPT = $(CC_LIB_FLAGS) $(COPTLESS) -DLOCI_RPATH=\"$(LOCI_RPATH)\"
-#COPT = $(CC_LIB_FLAGS) -g -O0 -DLOCI_RPATH=\"$(LOCI_RPATH)\" -DDEBUG
+#COPT = $(CC_LIB_FLAGS) -g -O0 -DLOCI_RPATH=\"$(LOCI_RPATH)\" #-DDEBUG
 
-default:
-	cd .. ; make -f Makefile System
 
 compile: $(TARGET)
 
-libLoci.a: $(OBJS) 
-	$(AR) $(ARFLAGS) libLoci.a $(OBJS) 
-	$(RANLIB) libLoci.a
+#libLoci.a: $(OBJS) 
+#	$(AR) $(ARFLAGS) libLoci.a $(OBJS) 
+#	$(RANLIB) libLoci.a
 
 LIB_OBJS=$(OBJS:.o=_lo.o)
 libLoci.$(LIB_SUFFIX): $(LIB_OBJS) Loci_version.cc

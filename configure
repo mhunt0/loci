@@ -97,6 +97,7 @@ METIS_BASE=/notselected
 METIS_LIBS=
 METIS_INCLUDE=
 USE_METIS=0
+NO_SUB_DIR=0
 
 while [ $# -ne 0 ]; do 
     case "$1" in
@@ -277,6 +278,9 @@ while [ $# -ne 0 ]; do
             USE_METIS=0
             INSTALL_METIS=0
 	    ;;
+	--no-sub-dir)
+		NO_SUB_DIR=1
+		;;
 	 --help)
 	    echo "configure usage:"
 	    echo "./configure <options>"
@@ -292,6 +296,7 @@ while [ $# -ne 0 ]; do
 	    echo "  --no-metis                      : tell configure not to install or use metis"
 	    echo "  --compiler <compiler name>      : tell configure what compiler to use"
 	    echo "  --obj-dir <OBJDIR name>         : tell configure where to put object files"
+	   	echo "  --no-sub-dir                    : tell configure to not add the build information after the prefix defintion"
 	    echo "  --help                          : output this help information"
 	    exit -1
 	    ;;
@@ -404,6 +409,8 @@ echo Setup for compiler \"$COMPILER\".
 echo INSTALL_DIR=$PREFIX > sys.conf
 echo >> sys.conf
 
+# put into 
+echo NO_SUB_DIR=$NO_SUB_DIR >> sys.conf
 #setup MPI
 
 HAS_MPI=1
