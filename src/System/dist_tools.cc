@@ -983,7 +983,7 @@ namespace Loci {
     int recv_sizes = 0 ;
     int totalSend = 0 ;
     int totalRecv = 0 ;
-    vector<int> sendSizes(sendSets.size()) ;
+    vector<int> sendSizes(d->xmit.size()) ;
     for(size_t i=0;i<d->xmit.size();++i) {
       int jsend = 0 ;
       for(int j=0;j<nsets;++j)
