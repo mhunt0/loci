@@ -98,6 +98,7 @@ METIS_LIBS=
 METIS_INCLUDE=
 USE_METIS=0
 NO_SUB_DIR=0
+BOUNDS_CHECK=0
 
 while [ $# -ne 0 ]; do 
     case "$1" in
@@ -237,7 +238,6 @@ while [ $# -ne 0 ]; do
 	    tmp=$1
 	    TEC360PATH=${tmp#--with-tec360\=}
 	    ;;
-
 	--mpi-dir)
 	    shift
 	    MPI_BASE=$1
@@ -254,7 +254,7 @@ while [ $# -ne 0 ]; do
 	    tmp=$1
 	    MPI_BASE=${tmp#--with-mpi\=}
 	    ;;
-        --no-mpi-driver)
+    --no-mpi-driver)
 	    NO_MPI_DRIVER=1
 	    ;;
 	--compiler)
@@ -281,6 +281,9 @@ while [ $# -ne 0 ]; do
 	--no-sub-dir)
 		NO_SUB_DIR=1
 		;;
+	--bounds-check)
+		BOUNDS_CHECK=1
+		;;
 	 --help)
 	    echo "configure usage:"
 	    echo "./configure <options>"
@@ -297,6 +300,7 @@ while [ $# -ne 0 ]; do
 	    echo "  --compiler <compiler name>      : tell configure what compiler to use"
 	    echo "  --obj-dir <OBJDIR name>         : tell configure where to put object files"
 	   	echo "  --no-sub-dir                    : tell configure to not add the build information after the prefix defintion"
+	  	echo "  --bounds-check                  : tell configure to add bounds checking to the compiler flags"
 	    echo "  --help                          : output this help information"
 	    exit -1
 	    ;;
@@ -413,6 +417,21 @@ echo >> sys.conf
 echo NO_SUB_DIR=$NO_SUB_DIR >> sys.conf
 #setup MPI
 
+# ################################################################################
+# # Check for debug variable and print to screen. Set to 7 if doesn't exist.
+# ################################################################################
+# if [[ ${LOCI_DEBUG-7} -eq 0 || ${LOCI_DEBUG-7} -eq 1 || ${LOCI_DEBUG-7} -eq 2 || \
+#       ${LOCI_DEBUG-7} -eq 3 ]]; then
+#   echo -e "Compiling in ${ESC}0;31;1m\"DEBUG\"${NC} Mode."
+# fi
+
+################################################################################
+# Push to sys.conf bounds checking if activated
+echo -e "BOUNDS_CHECK=$BOUNDS_CHECK" >>sys.conf
+
+################################################################################
+#setup MPI
+################################################################################
 HAS_MPI=1
 MPIEXEC=mpirun
 if [ $MPI_BASE == "/notselected" ]; then
