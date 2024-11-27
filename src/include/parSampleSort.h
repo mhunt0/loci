@@ -58,8 +58,15 @@ namespace Loci {
     std::vector<int> bsizes(p) ;
     int psz = tot_size/p ;
     int rem = tot_size%p ;
-    for(int i=0;i<p;++i)
+    for(int i=0;i<p;++i) 
       bsizes[i] = psz + (i<rem?1:0) ;
+#ifdef DEBUG
+    int sum = 0 ;
+    for(int i=0;i<p;++i) 
+      sum += bsizes[i] ;
+    
+    FATAL(sum != tot_size) ;
+#endif
     int r=0 ;
     MPI_Comm_rank(comm,&r) ;
     std::vector<T> recv(bsizes[r]) ;
@@ -70,43 +77,68 @@ namespace Loci {
       sdist[i+1] = sizes[i]+sdist[i] ;
       rdist[i+1] = bsizes[i]+rdist[i] ;
     }
+    
     FATAL(sdist[p] != rdist[p]) ;
+#ifdef DEBUG
+    if(r == 0) {
+      debugout << "balanceDistribution: ssplits=" ;
+      for(int i=0;i<p+1;++i)  
+        debugout << " " << sdist[i] ;
+      debugout << endl ;
+      debugout << "balanceDistribution: rsplits=" ;
+      for(int i=0;i<p+1;++i)  
+        debugout << " " << rdist[i] ;
+      debugout << endl ;
+    }
+#endif
+    
     // Perform Irecvs
     std::vector<MPI_Request> requests(p) ;
     int req = 0 ;
     long long i1 = rdist[r] ;
-    long long i2 = rdist[r+1]-1 ;
+    long long i2 = rdist[r+1] ;
     for(int i=0;i<p;++i) {
-      if(sdist[i]<=i2 && sdist[i+1]-1>=i1) { // intersection
+      if(sdist[i]<i2 && sdist[i+1]>i1) { // intersection
         long long li = std::max(i1,sdist[i]) ;
-        long long ri = std::min(i2,sdist[i+1]-1) ;
-        int len = ri-li+1 ;
+        long long ri = std::min(i2,sdist[i+1]) ;
+        int len = ri-li ;
         FATAL(len <= 0) ;
         int s2 = li-rdist[r] ;
+        FATAL(s2 < 0) ;
         if(i == r) { // local copy
           int s1 = li-sdist[r] ;
           FATAL(s1 < 0 || s2 < 0) ;
+          FATAL(s2+len>bsizes[r]) ;
+          FATAL(size_t(s1+len)>list.size()) ;
           for(int j=0;j<len;++j)
             recv[s2+j] = list[s1+j] ;
         } else {
+          WARN(s2+len>bsizes[r]) ;
           MPI_Irecv(&recv[s2],len,bytearray,i,55,comm,
                     &requests[req++]) ;
+#ifdef DEBUG
+          debugout << "balanceDistribution: recving " << len << " items from " << i << endl ;
+#endif
         }
       }
     }
 
     // Perform sends
     i1 = sdist[r] ;
-    i2 = sdist[r+1]-1 ;
+    i2 = sdist[r+1] ;
     for(int i=0;i<p;++i) {
-      if(i != r && rdist[i]<=i2 && rdist[i+1]-1>=i1) { // intersection
+      if(i != r && rdist[i]<i2 && rdist[i+1]>i1) { // intersection
         long long li = std::max(i1,rdist[i]) ;
-        long long ri = std::min(i2,rdist[i+1]-1) ;
-        int len = ri-li+1 ;
+        long long ri = std::min(i2,rdist[i+1]) ;
+        int len = ri-li ;
         int s1 = li-sdist[r] ;
         FATAL(s1 < 0) ;
         FATAL(len <= 0) ;
+        FATAL(size_t(s1+len) > list.size()) ;
         MPI_Send(&list[s1],len,bytearray,i,55,comm) ;
+#ifdef DEBUG
+        debugout << "balanceDistribution: sending " << len << " items to " << i << endl ;
+#endif
       }
     }
 
@@ -244,6 +276,9 @@ namespace Loci {
     int target_p = max(1,int(floor(pow(double(tsz),1./3.)))) ;
 
     if(target_p < p) { // reduce to subset of processors
+#ifdef DEBUG
+      debugout << "target_p=" << target_p << endl ;
+#endif
       int r = 0 ;
       MPI_Comm_rank(comm,&r) ;
       int color = 1 ;
@@ -301,6 +336,7 @@ namespace Loci {
       MPI_Allreduce(&sz,&msz,1,MPI_INT,MPI_MIN,comm) ;
       if(msz < p)
         balanceDistribution(list,comm) ;
+
       // First sort list locally
       std::sort(list.begin(),list.end(),cmp) ;
       

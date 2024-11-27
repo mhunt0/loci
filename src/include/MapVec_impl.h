@@ -289,10 +289,17 @@ namespace Loci {
   //*************************************************************************/
   template <int M> int MapVecRepI<M>::pack_size( const entitySet &eset) {
     fatal((eset - domain()) != EMPTY);
-    int size ;
-    size = sizeof(int)*eset.size()*M  + sizeof(int);
+    int init_size = M;
+
+    int size = cpypacksize(&init_size,1) ;
+
+    entitySet::const_iterator ci;
+    for( ci = eset.begin(); ci != eset.end(); ++ci)
+      size += cpypacksize(&base_ptr[*ci][0],M) ;
+
     return size ;
   }
+
   //*************************************************************************/
   template <int M> int MapVecRepI<M>::estimated_pack_size( const entitySet &eset) {
    
@@ -307,8 +314,15 @@ namespace Loci {
   template<int M> int MapVecRepI<M>::
   pack_size(const entitySet& e, entitySet& packed) {
     packed = domain() & e ;
-    int size ;
-    size = sizeof(int)*packed.size()*M + sizeof(int) ;
+
+    int init_size = M;
+
+    int size = cpypacksize(&init_size,1) ;
+
+    entitySet::const_iterator ci;
+    for( ci = packed.begin(); ci != packed.end(); ++ci)
+      size += cpypacksize(&base_ptr[*ci][0],M) ;
+
     return size ;
   }
   //*************************************************************************/
@@ -316,13 +330,11 @@ namespace Loci {
                                             int &outcount, const entitySet &eset ) 
   {
     int init_size = M;
-    MPI_Pack( &init_size, 1,  MPI_INT, outbuf, outcount, &position, 
-              MPI_COMM_WORLD) ;
+    cpypack(outbuf,position,outcount,&init_size,1) ;
 
     entitySet::const_iterator ci;
-    for( ci = eset.begin(); ci != eset.end(); ++ci) 
-      MPI_Pack( &base_ptr[*ci][0], M, MPI_INT, outbuf, outcount, &position, 
-                MPI_COMM_WORLD);
+    for( ci = eset.begin(); ci != eset.end(); ++ci)
+      cpypack(outbuf,position,outcount,&base_ptr[*ci][0],M) ;
   }
   //*************************************************************************/
 
@@ -331,7 +343,7 @@ namespace Loci {
 
     int init_size;
 
-    MPI_Unpack(inbuf, insize, &position, &init_size, 1, MPI_INT, MPI_COMM_WORLD) ;
+    cpyunpack(inbuf,position,insize,&init_size,1) ;
 
     if(init_size != M) {
       std::cerr << " Invalid MapVec container for unpack data " << std::endl;
@@ -339,9 +351,8 @@ namespace Loci {
     }
 
     sequence::const_iterator ci;
-    for( ci = seq.begin(); ci != seq.end(); ++ci) 
-      MPI_Unpack( inbuf, insize, &position, &base_ptr[*ci][0], M, MPI_INT, 
-                  MPI_COMM_WORLD) ;
+    for( ci = seq.begin(); ci != seq.end(); ++ci)
+      cpyunpack(inbuf,position,insize,&base_ptr[*ci][0],M) ;
   }
   //*************************************************************************/
   
