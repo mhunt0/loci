@@ -66,6 +66,33 @@ and the <install_directory>/Loci-*/lib subdirectory to your
 LD_LIBRARY_PATH environment.  Also, you will need to set the LOCI_BASE
 environment variable to <install_directory>/Loci-*
 
+--------------------------------------------------------------------------------
+Notes for Debug Builds
+
+When debugging of Loci or associated codes is necessary, the user has two options.
+At configure time, one can include the following flag:
+
+./configure --prefix<install_directory> --bounds-check
+
+which enables compiler-specific directives to enable bound checking of vectors/arrays.
+
+To generate debugging information in the compiled object files, set the environment
+variable (for bash)
+
+export LOCI_DEBUG=<0,1,2,3>
+
+LOCI_DEBUG can be added to an environment module as well.
+LOCI_DEBUG will do two things: 
+   1. Enable debug compiler flags (-Wall -g3, and for gnu compilers, -ggdb and -fno-eliminate-unused-debug-symbols)
+   2. Change the optimization level of the compiled code:
+      a. LOCI_DEBUG=0: -O0
+      b. LOCI_DEBUG=1: -O1
+      c. LOCI_DEBUG=2: -O2
+      d. LOCI_DEBUG=3: -O3
+
+For gnu compilers, -ggdb should enable automatic traceback and reporting upon 
+code termination.
+
 -------------------------------------------------------------------------------
 Notes on installing packages required by Loci
 
