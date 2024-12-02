@@ -420,10 +420,9 @@ echo NO_SUB_DIR=$NO_SUB_DIR >> sys.conf
 # ################################################################################
 # # Check for debug variable and print to screen. Set to 7 if doesn't exist.
 # ################################################################################
-# if [[ ${LOCI_DEBUG-7} -eq 0 || ${LOCI_DEBUG-7} -eq 1 || ${LOCI_DEBUG-7} -eq 2 || \
-#       ${LOCI_DEBUG-7} -eq 3 ]]; then
-#   echo -e "Compiling in ${ESC}0;31;1m\"DEBUG\"${NC} Mode."
-# fi
+if [ $LOCI_DEBUG ]; then
+   echo -e "Compiling/configured in DEBUG Mode = $LOCI_DEBUG."
+fi
 
 ################################################################################
 # Push to sys.conf bounds checking if activated
