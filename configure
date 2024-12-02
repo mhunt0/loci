@@ -417,10 +417,10 @@ echo >> sys.conf
 echo NO_SUB_DIR=$NO_SUB_DIR >> sys.conf
 #setup MPI
 
-# ################################################################################
+# ##############################################################################
 # # Check for debug variable and print to screen. Set to 7 if doesn't exist.
-# ################################################################################
-if [ $LOCI_DEBUG ]; then
+# ##############################################################################
+if [ -v LOCI_DEBUG ] ; then
    echo -e "Compiling/configured in DEBUG Mode = $LOCI_DEBUG."
 fi
 
