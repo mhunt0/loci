@@ -968,6 +968,8 @@ namespace Loci {
     vector<entitySet> rev(nsets) ;
     if(!facts.isDistributed())
       return rev ;
+    if(nsets == 0) 
+      return rev ;
     
     if(nsets == 1) {
       rev[0] = fill_entitySet(ve[0],facts) ;
@@ -996,8 +998,10 @@ namespace Loci {
     vector<int> recvSizes(recvSetSizes.size()/nsets) ;
     for(size_t i=0;i<recvSizes.size();++i) {
       int jrecv = 0 ;
-      for(int j=0;j<nsets;++j)
+      for(int j=0;j<nsets;++j) {
+        FATAL(i*nsets+j>recvSetSizes.size()) ;
         jrecv += recvSetSizes[i*nsets+j] ;
+      }
       recvSizes[i] = jrecv ;
       totalRecv += jrecv ;
       if(jrecv != 0)
