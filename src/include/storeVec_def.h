@@ -71,7 +71,7 @@ namespace Loci {
 #endif
 #ifdef BOUNDS_CHECK
     const T &operator[](size_t idx) const {
-      fatal(idx >= size || idx < 0) ;
+      fatal(idx >= size_t(size) || idx < 0) ;
       return ptr[idx] ;
     }
 #else 
@@ -233,33 +233,33 @@ namespace Loci {
     }
     T &operator[](size_t idx) {
 #ifdef BOUNDS_CHECK
-      fatal(idx >= size || idx < 0) ;
+      fatal(idx >= (size_t)size || idx < 0) ;
 #endif
       return ptr[idx] ;
     }
 
     const T &operator[](size_t idx) const {
 #ifdef BOUNDS_CHECK
-      fatal(idx >= size || idx < 0) ;
+      fatal(idx >= (size_t)size || idx < 0) ;
 #endif
       return ptr[idx] ;
     }
     T &operator[](unsigned int idx) {
 #ifdef BOUNDS_CHECK
-      fatal(idx >= size || idx < 0) ;
+      fatal(idx >= (unsigned int)size || idx < 0) ;
 #endif
       return ptr[idx] ;
     }
 
     const T &operator[](unsigned int idx) const {
 #ifdef BOUNDS_CHECK
-      fatal(idx >= size || idx < 0) ;
+      fatal(idx >= (unsigned int)size || idx < 0) ;
 #endif
       return ptr[idx] ;
     }
     T &operator[](unsigned char idx) {
 #ifdef BOUNDS_CHECK
-      fatal(idx >= size || idx < 0) ;
+      fatal(idx >= (unsigned int)size || idx < 0) ;
 #endif
       return ptr[idx] ;
     }

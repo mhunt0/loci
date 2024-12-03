@@ -28,6 +28,7 @@
 #include <hdf5_readwrite.h>
 #include <Tools/hash_map.h>
 #include <distribute.h>
+#include <cstring>
 
 using std::cerr ;
 using std::endl ;
@@ -442,9 +443,8 @@ namespace Loci {
   //**************************************************************************/
   
   int dMapRepI::pack_size(const entitySet &e) {
-    int size ;
-    size = sizeof(int) * e.size() ;
-    return(size) ;
+    int *p = 0 ;
+    return cpypacksize(p,e.size()) ;
   }
 
   int dMapRepI::estimated_pack_size(const entitySet &e) {
@@ -455,8 +455,8 @@ namespace Loci {
   int dMapRepI::
   pack_size(const entitySet& e, entitySet& packed) {
     packed = domain() & e ;
-    int size = sizeof(int) * packed.size() ;
-    return size ;
+    int *p = 0 ;
+    return cpypacksize(p,packed.size()) ;
   }
   
   //**************************************************************************/
@@ -464,9 +464,9 @@ namespace Loci {
   void dMapRepI::pack(void *outbuf, int &position, int &outcount, const entitySet &eset) 
   {
     entitySet :: const_iterator ci;
-    for( ci = eset.begin(); ci != eset.end(); ++ci)
-      MPI_Pack( &attrib_data[*ci], 1, MPI_INT, outbuf,outcount,
-                &position, MPI_COMM_WORLD) ;
+    for( ci = eset.begin(); ci != eset.end(); ++ci) {
+      cpypack(outbuf,position,outcount,&attrib_data[*ci],1) ;
+    }
   }
   
 #ifdef DYNAMICSCHEDULING
@@ -476,7 +476,7 @@ namespace Loci {
     entitySet :: const_iterator ci;
     for( ci = eset.begin(); ci != eset.end(); ++ci) {
       int img = remap[attrib_data[*ci]] ;
-      MPI_Pack(&img,1,MPI_INT,outbuf,outcount,&position,MPI_COMM_WORLD) ;
+      cpypack(outbuf,position,outcount,&img,1) ;
     }
   }
 #endif  
@@ -485,9 +485,9 @@ namespace Loci {
   void dMapRepI::unpack(void *inbuf, int &position, int &insize, const sequence &seq) 
   {
     sequence:: const_iterator ci;
-    for( ci = seq.begin(); ci != seq.end(); ++ci)
-      MPI_Unpack( inbuf, insize, &position, &attrib_data[*ci],
-		  1, MPI_INT, MPI_COMM_WORLD) ;
+    for( ci = seq.begin(); ci != seq.end(); ++ci) {
+      cpyunpack(inbuf,position,insize,&attrib_data[*ci],1) ;
+    }
   }
   
 #ifdef DYNAMICSCHEDULING
@@ -496,8 +496,7 @@ namespace Loci {
   {
     sequence:: const_iterator ci;
     for( ci = seq.begin(); ci != seq.end(); ++ci) {
-      MPI_Unpack(inbuf,insize,&position,&attrib_data[*ci],
-                 1, MPI_INT, MPI_COMM_WORLD) ;
+      cpyunpack(inbuf,position,insize,&attrib_data[*ci],1) ;
     }
     // then remap
     for(ci=seq.begin();ci!=seq.end();++ci)

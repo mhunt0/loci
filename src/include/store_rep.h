@@ -37,6 +37,7 @@
 #include <istream>
 #include <ostream>
 #include <type_traits>
+#include <cstring>
 
 #include <data_traits.h>
 
@@ -594,7 +595,60 @@ namespace Loci {
 			 (rep->RepType() == Loci::GPUMAP) ||
 			 (rep->RepType() == Loci::GPUPARAMETER) )) ;
   }
+
+  /** ************************************************************************
+   *
+   * @brief cpypacksize() returns the 
+   * function behaves better with valgrind than the MPI_Pack facilities
+   *
+   * @param [p] pointer to array to be packed
+   * @param [num] number of elements in array to be packed
+   * @returns size of packed data
+   ** ************************************************************************/
+  template <class T> inline size_t cpypacksize(T *p, int num) {
+    return sizeof(T)*num ;
+  }
+
+  /** ************************************************************************
+   *
+   * @brief cpypack() is a replacement for MPI_Pack that uses memcpy.  This
+   * function behaves better with valgrind than the MPI_Pack facilities
+   *
+   * @param [buf] input pointer where data will be packed
+   * @param [position] input current location in buf
+   * @param [outcount] size of input buffer (used for checking overflow)
+   * @param [p] pointer to object ot be packed.
+   * @param [num] number of elements in array to be packed
+   *
+   ** ************************************************************************/
+  template <class T> inline void cpypack(void *buf, int &position, int outcount,
+                                         T *p, int num) {
+    std::memcpy((unsigned char *)buf+position,
+                reinterpret_cast<void *>(p), sizeof(T)*num) ;
+    position += sizeof(T)*num ;
+    WARN(position>outcount) ;
+  }
   
+  /** ************************************************************************
+   *
+   * @brief cpyunpack() is a replacement for MPI_Unpack that uses memcpy.  
+   * This function behaves better with valgrind than the MPI_Pack facilities
+   *
+   * @param [buf] input pointer where data will be extracted
+   * @param [position] input current location in buf
+   * @param [outcount] size of input buffer (used for checking overflow)
+   * @param [p] pointer to object ot be extracted
+   * @param [num] number of elements in array to be extracted
+   *
+   ** ************************************************************************/
+  template <class T> inline void cpyunpack(void *buf, int &position, int incount,
+                                           T *p, int num) {
+    std::memcpy(reinterpret_cast<void *>(p),
+                (unsigned char *)buf+position, sizeof(T)*num) ;
+    position += sizeof(T)*num ;
+    WARN(position>incount) ;
+  }
+
 }
 
 #endif
