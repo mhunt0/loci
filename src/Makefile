@@ -45,8 +45,9 @@ ifeq ($(INSTALL_METIS),1)
 	$(MAKE) -C ParMetis-4.0 LOCI_BASE="$(LOCI_BASE)"
 endif
 
-.PHONY : SPRNG
-SPRNG : 
+
+.PHONY : 
+SPRNG : FORCE
 	$(MAKE) -C sprng LOCI_BASE="$(LOCI_BASE)"
 
 .PHONY: FORCE
@@ -57,19 +58,19 @@ Tools/libTools.$(LIB_SUFFIX): FORCE
 System/libLoci.$(LIB_SUFFIX): FORCE
 	$(MAKE) -C System LOCI_BASE="$(LOCI_BASE)" libLoci.$(LIB_SUFFIX)
 
-lpp: Tools/libTools.$(LIB_SUFFIX) 
+lpp: Tools/libTools.$(LIB_SUFFIX) FORCE
 	$(MAKE) -C lpp LOCI_BASE="$(LOCI_BASE)" lpp
 
-FVMtools: library lpp FVMAdapt 
+FVMtools: library lpp FVMAdapt FORCE
 	$(MAKE) -C FVMtools LOCI_BASE="$(LOCI_BASE)" default
 
-FVMMod: lpp 
+FVMMod: lpp FORCE
 	$(MAKE) -C FVMMod LOCI_BASE="$(LOCI_BASE)" default
 
-FVMAdapt: lpp 
+FVMAdapt: lpp FORCE
 	$(MAKE) -C FVMAdapt LOCI_BASE="$(LOCI_BASE)" all
 
-FVMOverset: lpp
+FVMOverset: lpp FORCE
 	$(MAKE) -C FVMOverset LOCI_BASE="$(LOCI_BASE)" all
 
 JUNK =
@@ -79,6 +80,7 @@ test:
 	$(MAKE) -C quickTest LOCI_BASE="$(LOCI_BASE)" 
 
 .PHONY: clean
+
 clean:
 	rm -f $(JUNK)
 	$(MAKE) -C Tools clean LOCI_BASE="$(LOCI_BASE)" 

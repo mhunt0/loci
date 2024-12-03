@@ -439,7 +439,8 @@ namespace Loci {
   int dstoreRepI<T>::get_mpi_size( IDENTITY_CONVERTER c,
                                    const entitySet &eset)
   {
-    return ( sizeof(T)*eset.size() );
+    T *p = 0 ;
+    return cpypacksize(p,eset.size());
   }
   
 
@@ -449,7 +450,8 @@ namespace Loci {
   int dstoreRepI<T>::get_estimated_mpi_size( IDENTITY_CONVERTER c,
                                              const entitySet &eset)
   {
-    return ( sizeof(T)*eset.size() );
+    T *p = 0 ;
+    return cpypacksize(p,eset.size());
   }
   
   //*******************************************************************/
@@ -457,20 +459,18 @@ namespace Loci {
   int dstoreRepI<T>::get_mpi_size( USER_DEFINED_CONVERTER c,
                                    const entitySet &eset)
   {
-
-    int       size, numBytes=0;
-    entitySet  ecommon;
     entitySet :: const_iterator ci;
     typedef data_schema_traits<T> converter_traits;
 
+    int numBytes = 0 ;
     for( ci = eset.begin(); ci != eset.end(); ++ci) {
       typename converter_traits::Converter_Type cvtr(attrib_data[*ci]);
-      size      = cvtr.getSize();
-      numBytes += size*sizeof(typename converter_traits::Converter_Base_Type) ;
+      int size      = cvtr.getSize();
+      numBytes += cpypacksize(&size,1) ;
+      typename converter_traits::Converter_Base_Type *p=0 ;
+      numBytes += cpypacksize(p,size) ;
     }
-
-    numBytes  += eset.size()*sizeof(int);
-    return(numBytes) ;
+    return numBytes ;
   }
   //*******************************************************************/
   template <class T>
@@ -511,9 +511,8 @@ namespace Loci {
 
     entitySet :: const_iterator ci;
 
-    for( ci = eset.begin(); ci != eset.end(); ++ci) 
-      MPI_Pack( &attrib_data[*ci], sizeof(T), MPI_BYTE, outbuf,outcount, 
-                &position, MPI_COMM_WORLD) ;
+    for( ci = eset.begin(); ci != eset.end(); ++ci)
+      cpypack(outbuf,position,outcount,&attrib_data[*ci],1) ;
   }
 
   //*******************************************************************/
@@ -523,30 +522,24 @@ namespace Loci {
                                 int &position, int outcount, 
                                 const entitySet &eset )
   {
-    int  stateSize, incount;
     entitySet :: const_iterator ci;
 
     typedef  data_schema_traits<T> schema_traits; 
     typedef typename schema_traits::Converter_Base_Type dtype;
     std::vector<dtype>  inbuf;
 
-    int typesize = sizeof(dtype);
     //-------------------------------------------------------------------
     // Collect state data from each object and put into 1D array
     //-------------------------------------------------------------------
     for( ci = eset.begin(); ci != eset.end(); ++ci) {
       typename schema_traits::Converter_Type cvtr( attrib_data[*ci]);
 
-      stateSize    = cvtr.getSize();
+      int stateSize    = cvtr.getSize();
       if( stateSize > static_cast<int>(inbuf.size()) ) inbuf.resize(stateSize);
 
       cvtr.getState( &inbuf[0], stateSize);
-      MPI_Pack(&stateSize, 1, MPI_INT, outbuf, outcount,&position,
-               MPI_COMM_WORLD);
-
-      incount =  stateSize*typesize;
-      MPI_Pack(&inbuf[0], incount, MPI_BYTE, outbuf, outcount, &position, 
-               MPI_COMM_WORLD) ;
+      cpypack(outbuf,position,outcount,&stateSize,1) ;
+      cpypack(outbuf,position,outcount,&inbuf[0],stateSize) ;
     }
   }
 
@@ -570,32 +563,27 @@ namespace Loci {
   {
     sequence:: const_iterator ci;
 
-    for( ci = seq.begin(); ci != seq.end(); ++ci) 
-      MPI_Unpack( inbuf, insize, &position, &attrib_data[*ci],
-                  sizeof(T), MPI_BYTE, MPI_COMM_WORLD) ;
+    for( ci = seq.begin(); ci != seq.end(); ++ci)
+      cpyunpack(inbuf,position,insize,&attrib_data[*ci],1) ;
   }
   //*********************************************************************/
   template <class T> 
   void dstoreRepI<T>::unpackdata( USER_DEFINED_CONVERTER c, void *inbuf, 
                                   int &position, int insize, const sequence &seq) 
   {
-    int  stateSize, outcount;
     sequence :: const_iterator ci;
 
     typedef  data_schema_traits<T> schema_traits; 
     typedef typename schema_traits::Converter_Base_Type dtype;
     std::vector<dtype>  outbuf;
 
-    int typesize = sizeof(dtype);
     for( ci = seq.begin(); ci != seq.end(); ++ci) {
-      MPI_Unpack(inbuf, insize, &position, &stateSize, 1, 
-                 MPI_INT, MPI_COMM_WORLD) ;
+      int stateSize=0;
+      cpyunpack(inbuf,position,insize,&stateSize,1) ;
 
       if( stateSize > static_cast<int>(outbuf.size()) ) outbuf.resize(stateSize);
  
-      outcount = stateSize*typesize;
-      MPI_Unpack(inbuf, insize, &position, &outbuf[0], outcount, 
-                 MPI_BYTE, MPI_COMM_WORLD) ;
+      cpyunpack(inbuf,position,insize,&outbuf[0],stateSize) ;
 
       typename schema_traits::Converter_Type cvtr( attrib_data[*ci] );
       cvtr.setState( &outbuf[0], stateSize);

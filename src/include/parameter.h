@@ -29,7 +29,6 @@
 #include <istream>
 #include <ostream>
 
-
 #include <mpi.h>
 #include <Tools/debug.h>
 #include <store_rep.h>
@@ -615,7 +614,7 @@ namespace Loci {
   int paramRepI<T>::get_mpi_size( IDENTITY_CONVERTER c, const entitySet &eset)
   {
 
-    return( sizeof(T) ) ;
+    return cpypacksize(&attrib_data,1) ;
   }
   //**************************************************************************/
 
@@ -623,7 +622,7 @@ namespace Loci {
   int paramRepI<T>::get_estimated_mpi_size( IDENTITY_CONVERTER c, const entitySet &eset)
   {
 
-    return( sizeof(T) ) ;
+    return cpypacksize(&attrib_data,1) ;
   }
   //**************************************************************************/
 
@@ -634,15 +633,16 @@ namespace Loci {
 
     typename schema_traits::Converter_Type cvtr(attrib_data);
     int arraySize = cvtr.getSize() ;
-
-    return(arraySize*sizeof(typename schema_traits::Converter_Base_Type) + sizeof(int));
+    typename schema_traits::Converter_Base_Type *p=0 ;
+    return cpypacksize(&arraySize,1)+cpypacksize(p,arraySize) ;
   }
+
   //**************************************************************************/
 
   template <class T>
   int paramRepI<T>::get_estimated_mpi_size( USER_DEFINED_CONVERTER c, const entitySet &eset)
   {
-    return(50*sizeof(double) + sizeof(int));
+    return(256*sizeof(double) + sizeof(int));
   } 
   //**************************************************************************/
 
@@ -659,8 +659,7 @@ namespace Loci {
   void paramRepI<T>::packdata( IDENTITY_CONVERTER c, void *outbuf, int &position,
                                int outcount )
   {
-    MPI_Pack( &attrib_data, sizeof(T), MPI_BYTE, outbuf, outcount, &position,
-              MPI_COMM_WORLD) ;
+    cpypack(outbuf,position,outcount,&attrib_data,1) ;
   }
 
   //**************************************************************************/
@@ -674,19 +673,13 @@ namespace Loci {
     typedef data_schema_traits<T> schema_traits;
     typedef typename schema_traits::Converter_Base_Type dtype;
 
-    int typesize = sizeof(dtype);
-
     typename data_schema_traits<T>::Converter_Type cvtr( attrib_data );
 
     std::vector<dtype> inbuf(cvtr.getSize());
     cvtr.getState( &inbuf[0], stateSize);
 
-    MPI_Pack(&stateSize, 1, MPI_INT, outbuf, outcount,&position,
-             MPI_COMM_WORLD);
-    int incount =  stateSize*typesize;
-    MPI_Pack(&inbuf[0], incount, MPI_BYTE, outbuf, outcount, &position,
-             MPI_COMM_WORLD) ;
-
+    cpypack(outbuf,position,outcount,&stateSize,1) ;
+    cpypack(outbuf,position,outcount,&inbuf[0],stateSize) ;
   }
   //**************************************************************************/
 
@@ -705,15 +698,7 @@ namespace Loci {
   void paramRepI<T>::unpackdata( IDENTITY_CONVERTER c, void *inbuf, int &position,
                                  int &insize)
   {
-
-    /*
-      typedef data_schema_traits<T> traits_type;
-      DatatypeP    atom_type = traits_type::get_type();
-      MPI_Datatype datatype  = atom_type->get_mpi_type();
-    */
-    MPI_Unpack( inbuf, insize, &position, &attrib_data, sizeof(T),
-                MPI_BYTE, MPI_COMM_WORLD) ;
-
+    cpyunpack(inbuf,position,insize,&attrib_data,1) ;
   }
 
   //***********************************************************************/
@@ -722,21 +707,17 @@ namespace Loci {
                                  int &position, int &insize)
   {
 
-    int  stateSize, outcount;
+    int  stateSize ;
 
     typedef data_schema_traits<T> schema_traits;
     typedef typename schema_traits::Converter_Base_Type dtype;
 
-    MPI_Unpack( inbuf, insize, &position, &stateSize, 1,
-                MPI_INT, MPI_COMM_WORLD) ;
+    cpyunpack(inbuf,position,insize,&stateSize,1) ;
     std::vector<dtype> outbuf(stateSize);
-
-    outcount = stateSize*sizeof(dtype);
-    MPI_Unpack( inbuf, insize, &position, &outbuf[0], outcount,
-                MPI_BYTE, MPI_COMM_WORLD) ;
+    cpyunpack(inbuf,position,insize,&outbuf[0],stateSize) ;
+    
     typename schema_traits::Converter_Type  cvtr( attrib_data );
     cvtr.setState( &outbuf[0], stateSize);
-
   }
 
   //***********************************************************************/
