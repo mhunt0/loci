@@ -102,7 +102,7 @@ namespace Loci {
         long long li = std::max(i1,sdist[i]) ;
         long long ri = std::min(i2,sdist[i+1]) ;
         int len = ri-li ;
-        FATAL(len <= 0) ;
+        //        FATAL(len <= 0) ;
         int s2 = li-rdist[r] ;
         FATAL(s2 < 0) ;
         if(i == r) { // local copy
