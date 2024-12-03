@@ -71,7 +71,7 @@ namespace Loci {
 #endif
 #ifdef BOUNDS_CHECK
     const T &operator[](size_t idx) const {
-      fatal(idx >= size || idx < 0) ;
+      fatal(idx >= size_t(size) || idx < 0) ;
       return ptr[idx] ;
     }
 #else 
