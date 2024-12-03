@@ -883,7 +883,7 @@ namespace Loci {
     digraph::vertexSet visit ;
     for(vi=mlg.subgraphs.begin();vi!=mlg.subgraphs.end();++vi) {
       digraph::vertexSet vl = mlg.find(*vi)->graph_v ;
-      if((vl & visit) != EMPTY) {
+      if(extract_rules(vl & visit) != EMPTY) {
         cerr << "overlapping graphs in mlg" << endl ;
         cerr << "overlapping variables = " << extract_vars(vl&visit)<< endl ;
         cerr << "overlapping rules = " << extract_rules(vl&visit)<<endl ;

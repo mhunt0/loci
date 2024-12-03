@@ -27,30 +27,34 @@
 namespace Loci {
 
   //Define struct Area which data members of normal vector and area of the area
-  struct Area {
-    vector3d<real_t> n ;  //normal vector of the face
-    real_t sada ; //area of the face
+  template <class REAL> struct Area_t {
+    vector3d<REAL> n ;  //normal vector of the face
+    REAL sada ; //area of the face
   } ;
 
   //Overload ostream and istream (Input/Output) operators for struct Area
-  inline std::ostream & operator<<(std::ostream &s, const Area &v)
+  template<class REAL> 
+  inline std::ostream & operator<<(std::ostream &s, const Area_t<REAL> &v)
   {
     s << v.n << ' ' << v.sada << ' ' ;
     return s ;
   }
 
-  inline std::istream &operator>>(std::istream &s, Area &v)
+  template <class REAL>
+  inline std::istream &operator>>(std::istream &s, Area_t<REAL> &v)
   {
     s >> v.n >> v.sada  ;
     return s ;
   }
 
-  template<> struct data_schema_traits<Loci::Area> {
+  typedef Area_t<real_t> Area ;
+
+  template<class T> struct data_schema_traits<Loci::Area_t<T> > {
     typedef IDENTITY_CONVERTER Schema_Converter ;
     static DatatypeP get_type() {
-      CompoundDatatypeP ct = CompoundFactory(Loci::Area()) ;
-      LOCI_INSERT_TYPE(ct,Loci::Area,n) ;
-      LOCI_INSERT_TYPE(ct,Loci::Area,sada) ;
+      CompoundDatatypeP ct = CompoundFactory(Loci::Area_t<T>()) ;
+      LOCI_INSERT_TYPE(ct,Loci::Area_t<T>,n) ;
+      LOCI_INSERT_TYPE(ct,Loci::Area_t<T>,sada) ;
       return DatatypeP(ct) ;
     }
   } ;

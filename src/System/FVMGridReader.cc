@@ -1378,10 +1378,11 @@ namespace Loci {
       size_recv += recv_sizes[i] ;
     }
     //    outRep->allocate(new_alloc) ;
-    unsigned char *send_store = new unsigned char[size_send] ;
-    unsigned char *recv_store = new unsigned char[size_recv] ;
-    int *send_displacement = new int[MPI_processes] ;
-    int *recv_displacement = new int[MPI_processes] ;
+    vector<unsigned char> memspace(size_send+size_recv,0) ;
+    unsigned char *send_store = &memspace[0] ;
+    unsigned char *recv_store = &memspace[size_send] ;
+    vector<int> send_displacement(MPI_processes,0) ;
+    vector<int> recv_displacement(MPI_processes,0) ;
 
     send_displacement[0] = 0 ;
     recv_displacement[0] = 0 ;
@@ -1390,22 +1391,21 @@ namespace Loci {
       recv_displacement[i] = recv_displacement[i-1] + recv_sizes[i-1] ;
     }
     int loc_pack = 0 ;
-    for(int i = 0; i <  MPI_processes; ++i)
-      inRep->pack(send_store, loc_pack, size_send, ptn[i]) ;
+    for(int i = 0; i <  MPI_processes; ++i) 
+      inRep->pack(&send_store[0], loc_pack, size_send, ptn[i]) ;
 
-
-    MPI_Alltoallv(send_store,&send_sizes[0], send_displacement , MPI_PACKED,
-		  recv_store, &recv_sizes[0], recv_displacement, MPI_PACKED,
+    WARN(loc_pack != size_send) ;
+    
+    MPI_Alltoallv(&send_store[0], &send_sizes[0], &send_displacement[0],
+                  MPI_PACKED,
+		  &recv_store[0], &recv_sizes[0], &recv_displacement[0],
+                  MPI_PACKED,
 		  MPI_COMM_WORLD) ;
     loc_pack = 0 ;
-    for(int i = 0; i <  MPI_processes; ++i) {
-      outRep->unpack(recv_store, loc_pack, size_recv, rdom[i]) ;
-    }
+    for(int i = 0; i <  MPI_processes; ++i) 
+      outRep->unpack(&recv_store[0], loc_pack, size_recv, rdom[i]) ;
 
-    delete[] recv_displacement ;
-    delete[] send_displacement ;
-    delete[] recv_store ;
-    delete[] send_store ;
+    WARN(loc_pack != size_recv) ;
   }
 
   inline bool fieldSort(const std::pair<pair<Entity,Entity>,Entity> &p1,
@@ -1457,7 +1457,7 @@ namespace Loci {
     entitySet infaces = tmp_face2node.domain() ;
     count.allocate(infaces) ;
     for(entitySet::const_iterator ii=infaces.begin();ii!=infaces.end();++ii)
-      count[*ii] = tmp_face2node.end(*ii)-tmp_face2node.begin(*ii) ;
+      count[*ii] = tmp_face2node[*ii].size() ; 
     store<int> count_reorder ;
     count_reorder.allocate(faces) ;
     redistribute_container(face_ptn,face_ptn_t,faces,count.Rep(),count_reorder.Rep()) ;

@@ -218,14 +218,14 @@ namespace Loci {
   inline int storeRepI<T>::get_mpi_size( IDENTITY_CONVERTER c,
                                          const entitySet &eset)
   {
-    return ( sizeof(T)*eset.size() );
+    return cpypacksize(get_base_ptr(),eset.size()) ;
   }
   //*******************************************************************/
   template <class T>
   inline int storeRepI<T>::get_estimated_mpi_size( IDENTITY_CONVERTER c,
                                                    const entitySet &eset)
   {
-    return ( sizeof(T)*eset.size() );
+    return cpypacksize(get_base_ptr(),eset.size()) ;
   }
   //*******************************************************************/
   template <class T>
@@ -245,11 +245,11 @@ namespace Loci {
     for( ci = sdom.begin(); ci != sdom.end(); ++ci) {
       typename converter_traits::Converter_Type cvtr(base_ptr[*ci]);
       size      = cvtr.getSize();
-      numBytes += size*sizeof(typename converter_traits::Converter_Base_Type) ;
+      typename converter_traits::Converter_Base_Type *p=0 ;
+      numBytes += cpypacksize(&size,1)+cpypacksize(p,size) ;
     }
 
-    numBytes  += eset.size()*sizeof(int);
-    return(numBytes) ;
+    return numBytes ;
   }
   //*******************************************************************/
   template <class T>
@@ -259,7 +259,7 @@ namespace Loci {
     int numBytes = 0 ;
     numBytes = eset.size()*50*sizeof(double);
     numBytes  += eset.size()*sizeof(int);
-    return(numBytes) ;
+    return numBytes ;
   }
 
   //*******************************************************************/
@@ -298,8 +298,8 @@ namespace Loci {
     for( size_t i = 0; i < eset.num_intervals(); i++) {
       const Loci::int_type begin = eset[i].first ;
       int t = eset[i].second - eset[i].first + 1 ;
-      MPI_Pack( &base_ptr[begin], t*sizeof(T), MPI_BYTE, outbuf,outcount,
-                &position, MPI_COMM_WORLD) ;
+
+      cpypack(outbuf,position,outcount,&base_ptr[begin],t) ;
     }
   }
 
@@ -332,8 +332,6 @@ namespace Loci {
 
     typename schema_traits::Converter_Base_Type *inbuf;
 
-    int typesize = sizeof(typename schema_traits::Converter_Base_Type);
-
     inbuf = new typename schema_traits::Converter_Base_Type[maxStateSize];
 
     //-------------------------------------------------------------------
@@ -344,13 +342,8 @@ namespace Loci {
       typename schema_traits::Converter_Type cvtr( base_ptr[*ci]);
       cvtr.getState( inbuf, stateSize);
 
-      incount =  sizeof(int);
-      MPI_Pack(&stateSize, 1, MPI_INT, outbuf, outcount,&position,
-               MPI_COMM_WORLD);
-
-      incount =  stateSize*typesize;
-      MPI_Pack(inbuf, incount, MPI_BYTE, outbuf, outcount, &position,
-               MPI_COMM_WORLD) ;
+      cpypack(outbuf,position,outcount,&stateSize,1) ;
+      cpypack(outbuf,position,outcount,inbuf,stateSize) ;
     }
     delete [] inbuf;
   }
@@ -381,14 +374,13 @@ namespace Loci {
     for(size_t i = 0; i < seq.num_intervals(); ++i) {
       if(seq[i].first > seq[i].second) {
         const Loci::int_type stop = seq[i].second ;
-        for(Loci::int_type indx = seq[i].first; indx != stop-1; --indx)
-          MPI_Unpack( inbuf, insize, &position, &base_ptr[indx],
-                      sizeof(T), MPI_BYTE, MPI_COMM_WORLD) ;
+        for(Loci::int_type indx = seq[i].first; indx != stop-1; --indx) {
+          cpyunpack(inbuf,position,insize,&base_ptr[indx],1) ;
+        }
       } else {
         Loci::int_type indx = seq[i].first ;
         int t = seq[i].second - seq[i].first + 1 ;
-        MPI_Unpack( inbuf, insize, &position, &base_ptr[indx],
-                    t*sizeof(T), MPI_BYTE, MPI_COMM_WORLD) ;
+        cpyunpack(inbuf,position,insize,&base_ptr[indx],t) ;
       }
     }
   }
@@ -404,12 +396,11 @@ namespace Loci {
     // Get the sum of each object size and maximum size of object in the
     // container for allocation purpose
     //-------------------------------------------------------------------
-    int  stateSize, outcount;
+    int  stateSize;
 
     typedef  data_schema_traits<T> converter_traits;
     typename converter_traits::Converter_Base_Type *outbuf;
 
-    int typesize = sizeof(typename converter_traits::Converter_Base_Type);
     T *base_ptr = get_base_ptr() ;
 
     for( ci = seq.begin(); ci != seq.end(); ++ci) {
@@ -418,15 +409,9 @@ namespace Loci {
                   << *ci << std::endl;
         continue;
       }
-      outcount = sizeof(int);
-      MPI_Unpack(inbuf, insize, &position, &stateSize, 1,
-                 MPI_INT, MPI_COMM_WORLD) ;
-
+      cpyunpack(inbuf,position,insize,&stateSize,1) ;
       outbuf = new typename converter_traits::Converter_Base_Type[stateSize];
-
-      outcount = stateSize*typesize;
-      MPI_Unpack(inbuf, insize, &position, outbuf, outcount,
-                 MPI_BYTE, MPI_COMM_WORLD) ;
+      cpyunpack(inbuf,position,insize,outbuf,stateSize) ;
 
       typename converter_traits::Converter_Type cvtr( base_ptr[*ci] );
       cvtr.setState( outbuf, stateSize);

@@ -735,8 +735,7 @@ template <unsigned int M>
     int vsize = M;
     entitySet :: const_iterator ci;
     for( ci = eset.begin(); ci != eset.end(); ++ci)
-      MPI_Pack( &attrib_data[*ci], vsize, MPI_INT, outbuf,outcount,
-                &position, MPI_COMM_WORLD) ;
+      cpypack(outbuf,position,outcount,&attrib_data[*ci],vsize) ;
   }
 
   //------------------------------------------------------------------------
@@ -748,8 +747,7 @@ template <unsigned int M>
 
     int vsize = M;
     for( ci = seq.begin(); ci != seq.end(); ++ci)
-      MPI_Unpack( inbuf, insize, &position, &attrib_data[*ci],
-                  vsize, MPI_INT, MPI_COMM_WORLD) ;
+      cpyunpack(inbuf,position,insize,&attrib_data[*ci],vsize) ;
   }  
 
 
