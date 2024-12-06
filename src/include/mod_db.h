@@ -81,6 +81,7 @@ namespace Loci {
     } ;
   
     static mod_db *mdb ;
+    static void cleanup_db() { if(mdb) delete mdb ; }
     void create_mod_db() {if(0==mdb) mdb = new mod::mod_db ; }
   public:
     mod(const std::string& name) {
