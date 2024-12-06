@@ -939,6 +939,14 @@ namespace Loci {
 
   void Finalize() {
     call_closing_functions(0) ;
+    register_rule_list.clear() ;
+    global_rule_list.clear() ;
+    rule::rdb_cleanup() ;
+    register_key_space_list.clear() ;
+    global_key_space_list.clear() ;
+    //    storeAllocateData.clear() ;
+    //    GPUstoreAllocateData.clear() ;
+    exec_current_fact_db = 0 ;
 #ifdef USE_PETSC
     PetscFinalize() ;
 #else

@@ -877,12 +877,18 @@ namespace Loci {
     struct rule_db {
       std::vector<info> fiv ;
       std::map<std::string,int> fmap ;
+      rule_db() {
+        info no_rule ;
+        fiv.push_back(no_rule) ;
+        fmap[no_rule.name()] = -1 ;
+      }
       int get_id(const info &fi) {
         std::map<std::string,int>::iterator fmi ;
-        if((fmi = fmap.find(fi.name())) == fmap.end()) {
+        std::string fname = fi.name() ;
+        if((fmi = fmap.find(fname)) == fmap.end()) {
           fiv.push_back(fi) ;
-          int id = - fiv.size() ;
-          fmap[fi.name()] = id ;
+          int id = - int(fiv.size()) ;
+          fmap.insert(std::pair<std::string,int>(fname,id)) ;
           return id ;
         }
         return fmi->second ;
@@ -910,6 +916,9 @@ namespace Loci {
     rule(const rule::info& ri)
       { create_rdb(); id = rdb->get_id(ri) ; }
   public:
+    static void rdb_cleanup() { if(rdb) { delete rdb ; rdb = 0; } }
+    static int rdb_size()
+    { WARN(rdb->fiv.size() != rdb->fmap.size()) ; return rdb->fiv.size() ; }
     rule() { create_rdb() ; id = rdb->get_id(info()) ;}
     explicit rule(int i)
       { create_rdb(); id = i ; }
