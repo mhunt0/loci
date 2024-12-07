@@ -239,7 +239,7 @@ namespace Loci {
         limi = min(limi,(qmin-Xcc)/(qdif-1e-100)) ;
     }
     
-    $limiters(X) = limi ;
+    $limiters(X) = realToDouble(limi) ;
   }
 
   $type X store<vect3d> ;
@@ -334,7 +334,7 @@ namespace Loci {
         limi.z = min(limi.z,(qmin.z-Xcc.z)/(qdifz-1e-100)) ;
     }
     
-    $limiterv3d(X) = limi ;
+    $limiterv3d(X) = realToDouble(limi) ;
   }
 
   $type X storeVec<real> ;
@@ -394,7 +394,7 @@ namespace Loci {
 	  limi = min(limi,(qmin-Xcc)/(qdif-1e-100)) ;
       }
     
-      $limiterv(X)[j] = limi ;
+      $limiterv(X)[j] = realToDouble(limi) ;
     }
   }
 
@@ -606,7 +606,7 @@ namespace Loci {
       }
     }
 
-    $limiters(X) = limi ;
+    $limiters(X) = realToDouble(limi) ;
   }
 
   $type X store<vect3d> ;
@@ -674,7 +674,9 @@ namespace Loci {
       }
     }
 
-    $limiterv3d(X) = vect3d(limix,limiy,limiz);
+    $limiterv3d(X) = vect3d(realToDouble(limix),
+                            realToDouble(limiy),
+                            realToDouble(limiz));
   }
 
   $type X storeVec<real> ;
@@ -734,7 +736,7 @@ namespace Loci {
 	  limi = min(limi,(qmin-Xcc)/(qdif-1e-100)) ;
       }
     
-      $limiterv(X)[j] = limi ;
+      $limiterv(X)[j] = realToDouble(limi) ;
     }
   }
 
@@ -824,7 +826,7 @@ namespace Loci {
       limi = min(limi,vlimit(Xcc,qmin,qmax,qdif,epsilon2,ref)) ;
     }
     
-    $limiters(X) = limi ;
+    $limiters(X) = realToDouble(limi) ;
   }
 
   $type X store<vect3d> ;
@@ -906,7 +908,7 @@ namespace Loci {
       limi.z = min(limi.z,vlimit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2,ref)) ;
     }
     
-    $limiterv3d(X) = limi ;
+    $limiterv3d(X) = realToDouble(limi) ;
   }
   
   $type X storeVec<real> ;
@@ -966,7 +968,7 @@ namespace Loci {
 	limi = min(limi,vlimit(Xcc,qmin,qmax,qdif,epsilon2,ref)) ;
       }
       
-      $limiterv(X)[j] = limi ;
+      $limiterv(X)[j] = realToDouble(limi) ;
     }
   }
 		   
@@ -1038,7 +1040,7 @@ namespace Loci {
       limi = min(limi,vlimit(Xcc,qmin,qmax,qdif,epsilon2,ref)) ;
     }
     
-    $limiters(X) = limi ;
+    $limiters(X) = realToDouble(limi) ;
   }
 
   $type X store<vect3d> ;
@@ -1120,7 +1122,7 @@ namespace Loci {
       limi.z = min(limi.z,vlimit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2,ref)) ;
     }
     
-    $limiterv3d(X) = limi ;
+    $limiterv3d(X) = realToDouble(limi) ;
   }
   
   $type X storeVec<real> ;
@@ -1180,7 +1182,7 @@ namespace Loci {
 	limi = min(limi,vlimit(Xcc,qmin,qmax,qdif,epsilon2,ref)) ;
       }
       
-      $limiterv(X)[j] = limi ;
+      $limiterv(X)[j] = realToDouble(limi) ;
     }
   }
 
@@ -1235,7 +1237,7 @@ namespace Loci {
       limi = min(limi,vlimit(Xcc,qmin,qmax,qdif,epsilon2,ref)) ;
     }
 
-    $limiters(X) = limi ;
+    $limiters(X) = realToDouble(limi) ;
   }
 
   $type X store<vect3d> ;
@@ -1294,7 +1296,7 @@ namespace Loci {
       limi.z = min(limi.z,vlimit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2,ref)) ;
     }
 
-    $limiterv3d(X) = limi ;
+    $limiterv3d(X) = realToDouble(limi) ;
   }
   
   $type X storeVec<real> ;
@@ -1341,7 +1343,7 @@ namespace Loci {
 	limi = min(limi,vlimit(Xcc,qmin,qmax,qdif,epsilon2,ref)) ;
       }
       
-      $limiterv(X)[j] = limi ;
+      $limiterv(X)[j] = realToDouble(limi) ;
     }
   }
 }
