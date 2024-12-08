@@ -20,7 +20,7 @@
 #
 ###############################################################################
 
-# Install with or without the Loci build information appended if set 
+# Install with or without the Loci build information appended if set
 # at configure time
 if [ -z "${LOCI_INSTALL_DIR}" ]; then
     INSTALL_PATH=$INSTALL_DIR
@@ -92,8 +92,8 @@ cp FVMtools/ugrid2cgns $INSTALL_PATH/bin
 cp FVMtools/cgns2ugrid $INSTALL_PATH/bin
 cp FVMtools/cgns2vog $INSTALL_PATH/bin
 
-echo cp Loci.conf comp.conf sys.conf $INSTALL_PATH
-cp Loci.conf comp.conf sys.conf $INSTALL_PATH
+echo cp Loci.conf comp.conf sys.conf version.conf $INSTALL_PATH
+cp Loci.conf comp.conf sys.conf version.conf $INSTALL_PATH
 
 echo Installing \#include files
 mkdir -p $INSTALL_PATH/include
