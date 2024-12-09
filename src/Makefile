@@ -30,9 +30,9 @@ DEFINES = $(DEBUG) $(SYSTEM_DEFINES) $(MACHINE_SPECIFIC)
 .PHONEY: METIS SPRNG
 default: library lpp FVMtools FVMMod FVMAdapt FVMOverset METIS SPRNG
 
-library: version.conf Tools/libTools.$(LIB_SUFFIX) System/libLoci.$(LIB_SUFFIX)
+library: version Tools/libTools.$(LIB_SUFFIX) System/libLoci.$(LIB_SUFFIX)
 
-version.conf:
+version:
 	echo "GIT_INFO = $(GIT_INFO)" > $(LOCI_BASE)/version.conf
 	echo "GIT_BRANCH = $(GIT_BRANCH)" >> $(LOCI_BASE)/version.conf
 
@@ -116,9 +116,9 @@ endif
 	$(MAKE) -C System distclean LOCI_BASE="$(LOCI_BASE)"
 	$(MAKE) -C Tools distclean LOCI_BASE="$(LOCI_BASE)"
 
-tarball: version.conf
+tarball: version
 	cd $(LOCI_SRC) && \
-	git archive --format=tar --prefix=Loci-\$(LOCI_REVISION_NAME)/src/ \
+	git archive --format=tgz --prefix=Loci-$(LOCI_REVISION_NAME)/src/ \
 	            --add-file=${LOCI_BASE}/version.conf \
-	            --prefix=Loci-\$(LOCI_REVISION_NAME)/ \
-	            -o Loci-\$(LOCI_REVISION_NAME).tar HEAD
+	            --prefix=Loci-$(LOCI_REVISION_NAME)/ \
+	            -o Loci-$(LOCI_REVISION_NAME).tgz HEAD
