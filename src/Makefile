@@ -30,17 +30,15 @@ DEFINES = $(DEBUG) $(SYSTEM_DEFINES) $(MACHINE_SPECIFIC)
 .PHONEY: METIS SPRNG
 default: library lpp FVMtools FVMMod FVMAdapt FVMOverset METIS SPRNG
 
-library: version Tools/libTools.$(LIB_SUFFIX) System/libLoci.$(LIB_SUFFIX)
-
-version:
-	echo "GIT_INFO = $(GIT_INFO)" > $(LOCI_BASE)/version.conf
-	echo "GIT_BRANCH = $(GIT_BRANCH)" >> $(LOCI_BASE)/version.conf
+library: Tools/libTools.$(LIB_SUFFIX) System/libLoci.$(LIB_SUFFIX)
 
 docs:
 	$(MAKE) -C Tutorial/docs LOCI_BASE="$(LOCI_BASE)"
 
-install: default docs
-	INSTALL_DIR=$(INSTALL_DIR) LOCI_INSTALL_DIR=$(LOCI_INSTALL_DIR) INSTALL_METIS=$(INSTALL_METIS) bash Install.bash
+install: default #docs
+	INSTALL_DIR=$(INSTALL_DIR) LOCI_INSTALL_DIR=$(LOCI_INSTALL_DIR) \
+	INSTALL_METIS=$(INSTALL_METIS) GIT_INFO=$(GIT_INFO) \
+	GIT_BRANCH=$(GIT_BRANCH) bash Install.bash
 
 
 .PHONY: METIS
@@ -115,10 +113,3 @@ endif
 	$(MAKE) -C lpp distclean LOCI_BASE="$(LOCI_BASE)"
 	$(MAKE) -C System distclean LOCI_BASE="$(LOCI_BASE)"
 	$(MAKE) -C Tools distclean LOCI_BASE="$(LOCI_BASE)"
-
-tarball: version
-	cd $(LOCI_SRC) && \
-	git archive --format=tgz --prefix=Loci-$(LOCI_REVISION_NAME)/src/ \
-	            --add-file=${LOCI_BASE}/version.conf \
-	            --prefix=Loci-$(LOCI_REVISION_NAME)/ \
-	            -o Loci-$(LOCI_REVISION_NAME).tgz HEAD

@@ -436,7 +436,6 @@ fi
 echo Setup for compiler \"$COMPILER\".
 # Add key directories for the build process
 echo INSTALL_DIR=$PREFIX > sys.conf
-echo LOCI_SRC=`pwd` >> sys.conf
 echo >> sys.conf
 
 # Store sub directory option
@@ -902,9 +901,20 @@ INSTALL_METIS=$INSTALL_METIS ./tmpcopy --target $OBJDIR --compiler $COMPILER > c
 mv sys.conf ${OBJDIR}/sys.conf
 
 ################################################################################
+# Create the version.conf file
+################################################################################
+# Check if source directory is a git repo
+if [ -e .git ]; then
+	sed -i "s:unknown-version:\$(shell cd $(pwd); git describe --abbrev=6 --always --dirty --tags):g" ${OBJDIR}/version.conf
+	sed -i "s:unknown-branch:\$(shell cd $(pwd); git rev-parse --abbrev-ref HEAD):g" ${OBJDIR}/version.conf
+fi
+
+################################################################################
 # Make makefile
 ################################################################################
-echo "default:"                              >  Makefile
+echo "include ${OBJDIR}/version.conf"        >  Makefile
+echo                                         >> Makefile
+echo "default:"                              >> Makefile
 echo "	@\$(MAKE) -C ${OBJDIR} \$@"          >> Makefile
 echo "install:"                              >> Makefile
 echo "	@\$(MAKE) -C ${OBJDIR} \$@"          >> Makefile
@@ -912,9 +922,13 @@ echo "clean:"                                >> Makefile
 echo "	@\$(MAKE) -C ${OBJDIR} \$@"          >> Makefile
 echo "distclean:"                            >> Makefile
 echo "	rm -fr ${OBJDIR} copy.out Makefile"  >> Makefile
-echo "tarball:"                              >> Makefile
-echo "	@\$(MAKE) -C ${OBJDIR} \$@"          >> Makefile
-
+echo "tarball:"                                                                        >> Makefile
+echo "	version_string=\$\$(sed -e \"s:^GIT_INFO.*:GIT_INFO = \$(GIT_INFO):g\" \\"      >> Makefile
+echo "	                      -e \"s:^GIT_BRANCH.*:GIT_BRANCH = \$(GIT_BRANCH):g\" \\"  >> Makefile
+echo "	                      src/conf/version.conf); \\"                              >> Makefile
+echo "	git archive --format=tgz --prefix=Loci-\$(LOCI_REVISION_NAME)/ \\"             >> Makefile
+echo "	            --add-virtual-file=Loci-\$(LOCI_REVISION_NAME)/src/version.conf:\"\$\$version_string\" \\"  >> Makefile
+echo "	            -o Loci-\$(LOCI_REVISION_NAME).tgz HEAD"                           >> Makefile
 
 echo
 echo

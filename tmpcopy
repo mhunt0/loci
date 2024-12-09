@@ -155,6 +155,9 @@ if [ ! -e version.conf ]; then
   if [ -e $source/src/version.conf ]; then
     echo cp $source/src/version.conf version.conf
     cp $source/src/version.conf version.conf
+  else
+    echo cp $source/src/conf/version.conf version.conf
+    cp $source/src/conf/version.conf version.conf
   fi
 fi
 
