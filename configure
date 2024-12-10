@@ -444,7 +444,9 @@ echo NO_SUB_DIR=$NO_SUB_DIR >> sys.conf
 ##############################################################################
 # Check for debug variable and print to screen. Set to 7 if doesn't exist.
 ##############################################################################
-if [ -v LOCI_DEBUG ] ; then
+if [ -z ${LOCI_DEBUG+x} ] ; then
+    unset LOCI_DEBUG
+else
    echo -e "Compiling/configured in DEBUG Mode = $LOCI_DEBUG."
 fi
 
@@ -905,8 +907,7 @@ mv sys.conf ${OBJDIR}/sys.conf
 ################################################################################
 # Check if source directory is a git repo
 if [ -e .git ]; then
-	sed -i "s:unknown-version:\$(shell cd $(pwd); git describe --abbrev=6 --always --dirty --tags):g" ${OBJDIR}/version.conf
-	sed -i "s:unknown-branch:\$(shell cd $(pwd); git rev-parse --abbrev-ref HEAD):g" ${OBJDIR}/version.conf
+	cat src/conf/version.conf |sed "s:unknown-version:\$(shell cd $(pwd); git describe --abbrev=6 --always --dirty --tags):g" | sed  "s:unknown-branch:\$(shell cd $(pwd); git rev-parse --abbrev-ref HEAD):g" >${OBJDIR}/version.conf
 fi
 
 ################################################################################
