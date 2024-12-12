@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Compilation related files & directories
 *.d
 *.o
@@ -25,3 +26,19 @@ Tutorial/docs/helpers_cc.tex
 
 # Code Review files
 CodeReview.txt
+=======
+*.toc
+*.aux
+*.pdf
+*.log
+*~
+*.o
+*.d
+*.code-workspace
+copy.out
+OBJ
+/Makefile
+Tutorial/docs/Makefile_ex.tex
+Tutorial/docs/entities_cc.tex
+Tutorial/docs/helpers_cc.tex
+>>>>>>> dev

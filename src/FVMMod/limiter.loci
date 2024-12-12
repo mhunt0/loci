@@ -26,7 +26,8 @@ $include "FVM.lh"
 using std::cerr ;
 using std::endl ;
 
-namespace Loci {
+namespace Loci 
+{
   typedef vector3d<real_t> vect3d ;
   typedef tensor3d<real_t> tens3d ;
   typedef real_t real ;
@@ -48,7 +49,8 @@ namespace Loci {
  * @brief Unit rule to define first order cells
  * @retval firstOrderCells   [-] first-order cell list
  ******************************************************************************/
-  $rule unit(firstOrderCells),constraint(geom_cells) {
+  $rule unit(firstOrderCells),constraint(geom_cells) 
+  {
     $firstOrderCells = 0 ;
   }
 
@@ -60,7 +62,8 @@ namespace Loci {
   $rule apply((cl,cr)->firstOrderCells<-(cl,cr)->vol)[Loci::Maximum],
         constraint((cl,cr)->geom_cells) 
   {
-    if(max($cl->$vol,$cr->$vol) > 50.*min($cl->$vol,$cr->$vol)) {
+    if(max($cl->$vol,$cr->$vol) > 50.*min($cl->$vol,$cr->$vol)) 
+    {
       char tmp = 1 ;
       join($cl->$firstOrderCells,tmp) ;
       join($cr->$firstOrderCells,tmp) ;
@@ -109,43 +112,52 @@ namespace Loci {
    * @brief Default rule to define Venkatakrishnan limiter smoothness
    * @retval Kl          [-] smoothness parameter
    ****************************************************************************/
-  $rule default(Kl),comments("This parameter is a smoothness parameter for the venkatakrishnan limiter.  A value of zero will not allow overshoots, while a larger value may allow some overshoots to ensure accuracy in locally smooth regions.  The typical values for this parameter range from .1 to 100") {
+  $rule default(Kl),comments("This parameter is a smoothness parameter for the "
+                            "venkatakrishnan limiter.  A value of zero will not "
+                            "allow overshoots, while a larger value may allow some "
+                            "overshoots to ensure accuracy in locally smooth regions.  "
+                            "The typical values for this parameter range from .1 to 100") 
+  {
     $Kl = 1.0 ;
   }
 
-/** ****************************************************************************
- * @brief Default rule to define the order of the Nishikawa limiter
- * @retval nisPow      [-] real, nishikawa order
- ******************************************************************************/
-$rule default(nisPow),
-      comments("This parameter specifies the order of the Nishikawa Limter. "
-               "Default is 3, acceptable values are 3, 4, and 5.")
-{
-  $nisPow = 3.0;
-}
+  /** ****************************************************************************
+   * @brief Default rule to define the order of the Nishikawa limiter
+   * @retval nisPow      [-] real, nishikawa order
+   ******************************************************************************/
+  $rule default(nisPow),
+        comments("This parameter specifies the order of the Nishikawa Limter. "
+                "Default is 3, acceptable values are 3, 4, and 5.")
+  {
+    $nisPow = 3.0;
+  }
 
   /** **************************************************************************
    * @brief Default rule to define limiters
    * @retval limiter     [-] string, limiter defintion
    ****************************************************************************/
-  $rule default(limiter),comments("Limiter used in face extrapolations.  This function can take the values of 'venkatakrishnan', 'barth', 'nishikawa', 'none' for second order solutions, and 'zero' for first order solutions") {
+  $rule default(limiter),comments("Limiter used in face extrapolations.  "
+                                  "This function can take the values of 'venkatakrishnan', "
+                                  "'barth', 'nishikawa', 'none' for second order solutions, "
+                                  " and 'zero' for first order solutions") 
+  {
     $limiter = "venkatakrishnan" ;
   }
 
-/** ****************************************************************************
- * @brief Constraint rule to define the limiter rules activiated by the scheduler
- * @retval V_limiter
- * @retval B_limiter
- * @retval N_limiter
- * @retval Z_limiter
- * @retval NB_limiter
- * @retval V2_limiter
- * @retval NISc_limiter
- * @retval NISf_limiter
- * @retval Venka_limiter
- * @retval NIS_limiter
- * @param  limiter
- ******************************************************************************/
+  /** ****************************************************************************
+   * @brief Constraint rule to define the limiter rules activiated by the scheduler
+   * @retval V_limiter
+   * @retval B_limiter
+   * @retval N_limiter
+   * @retval Z_limiter
+   * @retval NB_limiter
+   * @retval V2_limiter
+   * @retval NISc_limiter
+   * @retval NISf_limiter
+   * @retval Venka_limiter
+   * @retval NIS_limiter
+   * @param  limiter
+   ******************************************************************************/
   $rule constraint(V_limiter,B_limiter,N_limiter,Z_limiter,NB_limiter,V2_limiter,
                     NISc_limiter,NISf_limiter,Venka_limiter,NIS_limiter<-limiter) 
   {
@@ -249,7 +261,8 @@ $rule default(nisPow),
  * @retval limiters(X)         [-] limiter
  * @param  X                   [-] scalar
  */
-  $rule pointwise(limiters(X)<-X),constraint(geom_cells,Z_limiter) {
+  $rule pointwise(limiters(X)<-X),constraint(geom_cells,Z_limiter) 
+  {
     $limiters(X) = 0.0 ;
   }
 
@@ -259,7 +272,8 @@ $rule default(nisPow),
  * @retval limiterv3d(X)       [-] limiter
  * @param  X                   [-] vect3d
  */
-  $rule pointwise(limiterv3d(X)<-X),constraint(geom_cells,Z_limiter) {
+  $rule pointwise(limiterv3d(X)<-X),constraint(geom_cells,Z_limiter) 
+  {
     $limiterv3d(X) = vect3d(0.0,0.0,0.0) ;
   }
     
@@ -269,9 +283,12 @@ $rule default(nisPow),
  * @retval limiterv(X)         [-] limiter
  * @param  X                   [-] vector
  */
-  $rule pointwise(limiterv(X)<-X),constraint(geom_cells,Z_limiter),prelude {
+  $rule pointwise(limiterv(X)<-X),constraint(geom_cells,Z_limiter),prelude 
+  {
     $limiterv(X).setVecSize($X.vecSize()) ;
-  } compute {
+  } 
+  compute 
+  {
     $limiterv(X) = mk_Scalar(0.) ;
   }
 
@@ -328,1825 +345,1496 @@ $rule default(nisPow),
   // Barth Limiter
   //
   //==========================================================================
-  
-$type X store<real>;
-/** ****************************************************************************
- * @brief Barth limiter for scalars
- * @retval limiters(X)       [-] scalar limiter parametric
- * @param  cellcenter        [-] cellcenter coordinates
- * @param  X                 [-] scalar value at cell center
- * @param  cellmaxmins(X)    [-] max and min for cell stencil
- * @param  grads(X)          [-] cell center gradient
- * @param  firstOrderCells   [-] flag for setting a cell to a locally zero limiter
- * @param  upper-facecenter  [-] face center coordinates, upper face
- * @param  lower->facecenter [-] face center coordinates, lower face
- ******************************************************************************/
-$rule pointwise(limiters(X)<-cellcenter,X,cellmaxmins(X),grads(X),firstOrderCells,
-                upper->facecenter,lower->facecenter),
-      constraint(geom_cells,B_limiter)
-{
-  const real   Xcc  = $X;
-  real         qmax = $cellmaxmins(X).max;
-  real         qmin = $cellmaxmins(X).min;
-  const vect3d Xgr  = $grads(X);
-  real         limi = ($firstOrderCells != 0) ? 0.0 : 1.0;
-  const int    usz  = $upper.size();
-  const int    lsz  = $lower.size();
-
-  for(int i=0;i<usz;++i)
+    
+  $type X store<real>;
+  /** ****************************************************************************
+   * @brief Barth limiter for scalars
+   * @retval limiters(X)       [-] scalar limiter parametric
+   * @param  cellcenter        [-] cellcenter coordinates
+   * @param  X                 [-] scalar value at cell center
+   * @param  cellmaxmins(X)    [-] max and min for cell stencil
+   * @param  grads(X)          [-] cell center gradient
+   * @param  firstOrderCells   [-] flag for setting a cell to a locally zero limiter
+   * @param  upper-facecenter  [-] face center coordinates, upper face
+   * @param  lower->facecenter [-] face center coordinates, lower face
+   ******************************************************************************/
+  $rule pointwise(limiters(X)<-cellcenter,X,cellmaxmins(X),grads(X),firstOrderCells,
+                  upper->facecenter,lower->facecenter),
+        constraint(geom_cells,B_limiter)
   {
-    const vect3d drl  = $upper[i]->$facecenter - $cellcenter;
-    real         qdif = dot(Xgr,drl);
-    limi              = min(limi,barth_limit(Xcc,qdif,qmax,qmin));
-  }
-
-  for(int i=0;i<lsz;++i)
-  {
-    const vect3d drl  = $lower[i]->$facecenter - $cellcenter;
-    real         qdif = dot(Xgr,drl);
-    limi              = min(limi,barth_limit(Xcc,qdif,qmax,qmin));
-  }
-
-  $limiters(X) = limi;
-// Zero out the sensitivity contribution of the limiter, since the limiter
-// function 'acts' more as a functional constant
-#if USE_AUTODIFF
-#if MULTIFAD
-for (int j=0;j<$limiters(X).maxN;j++)
-  { 
-    $limiters(X).grad[j] = 0.0;
-  }
-#else
-  $limiters(X).grad = 0.0;
-#if AUTODIFF2ND
-    $limiters(X).grad2 = 0.0;
-#endif
-#endif
-#endif
-}
-
-$type X store<vect3d>;
-/** ****************************************************************************
- * @brief Barth limiter for vect3d
- * @retval limiterv3d(X)       [-] vect3d limiter parametric
- * @param  cellcenter          [-] cellcenter coordinates
- * @param  X                   [-] vect3d value at cell center
- * @param  cellmaxminv3d(X)    [-] max and min for cell stencil
- * @param  gradv3d(X)          [-] cell center gradient
- * @param  firstOrderCells     [-] flag for setting a cell to a locally zero limiter
- * @param  upper-facecenter    [-] face center coordinates, upper face
- * @param  lower->facecenter   [-] face center coordinates, lower face
- * @param  vecLimiter          [-] flag to limit vectors consistently
- ******************************************************************************/
-$rule pointwise(limiterv3d(X)<-cellcenter,X,cellmaxminv3d(X),gradv3d(X),
-                firstOrderCells,upper->facecenter,lower->facecenter,vecLimiter),
-      constraint(geom_cells,B_limiter)
-{
-  const vect3d Xcc  = $X;
-  vect3d       qmax = $cellmaxminv3d(X).max;
-  vect3d       qmin = $cellmaxminv3d(X).min;
-  const tens3d Xgr  = $gradv3d(X);
-  vect3d       limi = ($firstOrderCells != 0)?vect3d(0.,0.,0.):vect3d(1.,1.,1.);
-  const int    usz  = $upper.size();
-  const int    lsz  = $lower.size();
-
-  for(int i=0;i<usz;++i)
-  {
-    const vect3d drl   = $upper[i]->$facecenter - $cellcenter;
-    real         qdifx = dot(Xgr.x,drl);
-    real         qdify = dot(Xgr.y,drl);
-    real         qdifz = dot(Xgr.z,drl);
-    limi.x             = min(limi.x,barth_limit(Xcc.x,qdifx,qmax.x,qmin.x));
-    limi.y             = min(limi.y,barth_limit(Xcc.y,qdify,qmax.y,qmin.y));
-    limi.z             = min(limi.z,barth_limit(Xcc.z,qdifz,qmax.z,qmin.z));
-  }
-
-  for(int i=0;i<lsz;++i)
-  {
-    const vect3d drl   = $lower[i]->$facecenter - $cellcenter;
-    real         qdifx = dot(Xgr.x,drl);
-    real         qdify = dot(Xgr.y,drl);
-    real         qdifz = dot(Xgr.z,drl);
-    limi.x             = min(limi.x,barth_limit(Xcc.x,qdifx,qmax.x,qmin.x));
-    limi.y             = min(limi.y,barth_limit(Xcc.y,qdify,qmax.y,qmin.y));
-    limi.z             = min(limi.z,barth_limit(Xcc.z,qdifz,qmax.z,qmin.z));
-  }
-
-  // limit vector based on strongest gradient (min velocity) direction
-  if($vecLimiter)
-  {
-    real limv = limi.x;
-    for(int i = 1;i<3;++i)
-    {
-      limv = min(limv,limi[i]);
-    }
-    $limiterv3d(X) = vect3d(limv,limv,limv);
-  }else
-  {
-    $limiterv3d(X) = limi;
-  }
-
-// Zero out the sensitivity contribution of the limiter, since the limiter
-// function 'acts' more as a functional constant
-#if USE_AUTODIFF
-for (int i = 0; i<3;i++)
-{
-  #if MULTIFAD
-  for (int j=0;j<$limiterv3d(X)[i].maxN;j++)
-  { 
-    $limiterv3d(X)[i].grad[j] = 0.0;
-  }
-  #else
-  $limiterv3d(X)[i].grad = 0.0;
-  #if AUTODIFF2ND
-  $limiterv3d(X)[i].grad2 = 0.0;
-  #endif
-  #endif
-}
-#endif
-}
-
-$type X storeVec<real>;
-/** ****************************************************************************
- * @brief Barth limiter for vectors
- * @retval limiterv(X)         [-] vector limiter parametric
- * @param  cellcenter          [-] cellcenter coordinates
- * @param  X                   [-] vector value at cell center
- * @param  cellmaxminv(X)      [-] max and min for cell stencil
- * @param  gradv(X)            [-] cell center gradient
- * @param  firstOrderCells     [-] flag for setting a cell to a locally zero limiter
- * @param  upper-facecenter    [-] face center coordinates, upper face
- * @param  lower->facecenter   [-] face center coordinates, lower face
- * @param  vecLimiter          [-] flag to limit vectors consistently
- ******************************************************************************/
-$rule pointwise(limiterv(X)<-cellcenter,X,cellmaxminv(X),gradv(X),firstOrderCells,
-                upper->facecenter,lower->facecenter,vecLimiter),
-      constraint(geom_cells,B_limiter),prelude
-{
-  $limiterv(X).setVecSize($X.vecSize());
-}compute
-{
-  const int vs = $*X.vecSize();
-  real      limi[vs];
-  for(int j=0;j<vs;++j)
-  {
-    const real   Xcc  = $X[j];
-    real         qmax = $cellmaxminv(X)[j].max;
-    real         qmin = $cellmaxminv(X)[j].min;
-    const vect3d Xgr  = $gradv(X)[j];
+    const real   Xcc  = $X;
+    real         qmax = $cellmaxmins(X).max;
+    real         qmin = $cellmaxmins(X).min;
+    const vect3d Xgr  = $grads(X);
+    real         limi = ($firstOrderCells != 0) ? 0.0 : 1.0;
     const int    usz  = $upper.size();
     const int    lsz  = $lower.size();
-    limi[j]           = ($firstOrderCells != 0)?0.0:1.0;
 
     for(int i=0;i<usz;++i)
     {
       const vect3d drl  = $upper[i]->$facecenter - $cellcenter;
       real         qdif = dot(Xgr,drl);
-      limi[j]           = min(limi[j],barth_limit(Xcc,qdif,qmax,qmin));
+      limi              = min(limi,barth_limit(Xcc,qdif,qmax,qmin));
     }
 
     for(int i=0;i<lsz;++i)
     {
       const vect3d drl  = $lower[i]->$facecenter - $cellcenter;
       real         qdif = dot(Xgr,drl);
-      limi[j]           = min(limi[j],barth_limit(Xcc,qdif,qmax,qmin));
-    }
-
-// Zero out the sensitivity contribution of the limiter, since the limiter
-// function 'acts' more as a functional constant
-#if USE_AUTODIFF
-    #ifdef MULTIFAD
-    for (int i=0;i<$limiterv(X)[j].maxN;j++)
-    { 
-      limi[j].grad[i] = 0.0;
-    }
-    #else
-    limi[j].grad = 0.0;
-    #ifdef AUTODIFF2ND
-    limi[j].grad2 = 0.0;
-    #endif
-    #endif
-#endif
-    $limiterv(X)[j] = limi[j];
-  }
-
-  // Apply limiter in direction of strongest gradient
-  if($vecLimiter)
-  {
-    real limv = limi[0];
-    for(int j = 1; j < vs; j++)
-    {
-      limv = min(limv,limi[j]);
-    }
-    for(int j = 0; j < vs; j++)
-    {
-      $limiterv(X)[j] = limv;
-    }
-  }
-}
-
-//==========================================================================
-//
-// Nodal Barth Limiter
-//
-// Like Barth except limiting to nodal max/min rather than at face centers
-//
-//==========================================================================
-$type X store<real>;
-/** ****************************************************************************
- * @brief Nodal Barth limiter for scalars
- * @retval limiters(X)                                [-] scalar limiter parametric
- * @param  cellcenter                                 [-] cellcenter coordinates
- * @param  X                                          [-] scalar value at cell center
- * @param  grads(X)                                   [-] cell center gradient
- * @param  firstOrderCells                            [-] flag for setting a cell to a locally zero limiter
- * @param  upper->face2node->pos                      [-] upper face nodal coordinates
- * @param  lower->facecenter->pos                     [-] lower face nodal coordinates
- * @param  upper->face2node->cell2nodemaxmins(X)      [-] upper face max/mins
- * @param  lower->facecenter-cell2nodemaxmins(X)      [-] lower face max/mins
- ******************************************************************************/
-$rule pointwise(limiters(X)<-cellcenter,X,grads(X),firstOrderCells,
-                upper->face2node->(pos,cell2nodemaxmins(X)),
-                lower->face2node->(pos,cell2nodemaxmins(X))),
-      constraint(geom_cells,NB_limiter)
-{
-  const real   Xcc  = $X;
-  const vect3d Xgr  = $grads(X);
-  const vect3d cent = $cellcenter;
-  const int    usz  = $upper.size();
-  const int    lsz  = $lower.size();
-  real         limi = ($firstOrderCells != 0)?0.0:1.0;
-
-  for(int i=0;i<usz;++i)
-  {
-    const int fsz = $upper[i]->$face2node.size();
-    for(int f=0;f<fsz;++f)
-    {
-      const vect3d drl  = $upper[i]->$face2node[f]->$pos - cent;
-      const real   qdif = dot(Xgr,drl);
-      real         qmax = $upper[i]->$face2node[f]->$cell2nodemaxmins(X).max;
-      real         qmin = $upper[i]->$face2node[f]->$cell2nodemaxmins(X).min;
       limi              = min(limi,barth_limit(Xcc,qdif,qmax,qmin));
     }
+
+  // Zero out the sensitivity contribution of the limiter, since the limiter
+  // function 'acts' more as a functional constant
+    $limiters(X) = realToDouble(limi);
   }
 
-  for(int i=0;i<lsz;++i)
+  $type X store<vect3d>;
+  /** ****************************************************************************
+   * @brief Barth limiter for vect3d
+   * @retval limiterv3d(X)       [-] vect3d limiter parametric
+   * @param  cellcenter          [-] cellcenter coordinates
+   * @param  X                   [-] vect3d value at cell center
+   * @param  cellmaxminv3d(X)    [-] max and min for cell stencil
+   * @param  gradv3d(X)          [-] cell center gradient
+   * @param  firstOrderCells     [-] flag for setting a cell to a locally zero limiter
+   * @param  upper-facecenter    [-] face center coordinates, upper face
+   * @param  lower->facecenter   [-] face center coordinates, lower face
+   * @param  vecLimiter          [-] flag to limit vectors consistently
+   ******************************************************************************/
+  $rule pointwise(limiterv3d(X)<-cellcenter,X,cellmaxminv3d(X),gradv3d(X),
+                  firstOrderCells,upper->facecenter,lower->facecenter,vecLimiter),
+        constraint(geom_cells,B_limiter)
   {
-    const int fsz = $lower[i]->$face2node.size();
-    for(int f=0;f<fsz;++f)
+    const vect3d Xcc  = $X;
+    vect3d       qmax = $cellmaxminv3d(X).max;
+    vect3d       qmin = $cellmaxminv3d(X).min;
+    const tens3d Xgr  = $gradv3d(X);
+    vect3d       limi = ($firstOrderCells != 0)?vect3d(0.,0.,0.):vect3d(1.,1.,1.);
+    const int    usz  = $upper.size();
+    const int    lsz  = $lower.size();
+
+    for(int i=0;i<usz;++i)
     {
-      const vect3d drl  = $lower[i]->$face2node[f]->$pos - cent;
-      const real   qdif = dot(Xgr,drl);
-      real         qmax = $lower[i]->$face2node[f]->$cell2nodemaxmins(X).max;
-      real         qmin = $lower[i]->$face2node[f]->$cell2nodemaxmins(X).min;
-      limi              = min(limi,barth_limit(Xcc,qdif,qmax,qmin));
-    }
-  }
-
-  $limiters(X) = limi;
-
-// Zero out the sensitivity contribution of the limiter, since the limiter
-// function 'acts' more as a functional constant
-#if USE_AUTODIFF
-#if MULTIFAD
-for (int j=0;j<$limiters(X).maxN;j++)
-  { 
-    $limiters(X).grad[j] = 0.0;
-  }
-#else
-  $limiters(X).grad = 0.0;
-#if AUTODIFF2ND
-    $limiters(X).grad2 = 0.0;
-#endif
-#endif
-#endif
-}
-
-$type X store<vect3d>;
-/** ****************************************************************************
- * @brief Nodal Barth limiter for vect3d
- * @retval limiterv3d(X)                              [-] vect3d limiter parametric
- * @param  cellcenter                                 [-] cellcenter coordinates
- * @param  X                                          [-] vect3d value at cell center
- * @param  gradv3d(X)                                 [-] cell center gradient
- * @param  firstOrderCells                            [-] flag for setting a cell to a locally zero limiter
- * @param  upper->face2node->pos                      [-] upper face nodal coordinates
- * @param  lower->facecenter->pos                     [-] lower face nodal coordinates
- * @param  upper->face2node->cell2nodemaxminv3d(X)    [-] upper face max/mins
- * @param  lower->facecenter-cell2nodemaxminv3d(X)    [-] lower face max/mins
- * @param  vecLimiter                                 [-] flag to limit vectors consistently
- ******************************************************************************/
-$rule pointwise(limiterv3d(X)<-cellcenter,X,gradv3d(X),firstOrderCells,
-                upper->face2node->(pos,cell2nodemaxminv3d(X)),
-                lower->face2node->(pos,cell2nodemaxminv3d(X)),vecLimiter),
-      constraint(geom_cells,NB_limiter)
-{
-  const vect3d Xcc  = $X;
-  const tens3d Xgr  = $gradv3d(X);
-  const vect3d cent = $cellcenter;
-  const int    usz  = $upper.size();
-  const int    lsz  = $lower.size();
-  vect3d       limi = ($firstOrderCells != 0)?vect3d(0.,0.,0.):vect3d(1.,1.,1.);
-
-  for(int i=0;i<usz;++i)
-  {
-    const int fsz = $upper[i]->$face2node.size();
-    for(int f=0;f<fsz;++f)
-    {
-      vect3d       qmax  = $upper[i]->$face2node[f]->$cell2nodemaxminv3d(X).max;
-      vect3d       qmin  = $upper[i]->$face2node[f]->$cell2nodemaxminv3d(X).min;
-      const vect3d drl   = $upper[i]->$face2node[f]->$pos - cent;
-      const real   qdifx = dot(Xgr.x,drl);
-      const real   qdify = dot(Xgr.y,drl);
-      const real   qdifz = dot(Xgr.z,drl);
+      const vect3d drl   = $upper[i]->$facecenter - $cellcenter;
+      real         qdifx = dot(Xgr.x,drl);
+      real         qdify = dot(Xgr.y,drl);
+      real         qdifz = dot(Xgr.z,drl);
       limi.x             = min(limi.x,barth_limit(Xcc.x,qdifx,qmax.x,qmin.x));
       limi.y             = min(limi.y,barth_limit(Xcc.y,qdify,qmax.y,qmin.y));
       limi.z             = min(limi.z,barth_limit(Xcc.z,qdifz,qmax.z,qmin.z));
     }
-  }
 
-  for(int i=0;i<lsz;++i)
-  {
-    const int fsz = $lower[i]->$face2node.size();
-    for(int f=0;f<fsz;++f)
+    for(int i=0;i<lsz;++i)
     {
-      vect3d       qmax  = $lower[i]->$face2node[f]->$cell2nodemaxminv3d(X).max;
-      vect3d       qmin  = $lower[i]->$face2node[f]->$cell2nodemaxminv3d(X).min;
-      const vect3d drl   = $lower[i]->$face2node[f]->$pos - cent;
-      const real   qdifx =  dot(Xgr.x,drl);
-      const real   qdify = dot(Xgr.y,drl);
-      const real   qdifz = dot(Xgr.z,drl);
+      const vect3d drl   = $lower[i]->$facecenter - $cellcenter;
+      real         qdifx = dot(Xgr.x,drl);
+      real         qdify = dot(Xgr.y,drl);
+      real         qdifz = dot(Xgr.z,drl);
       limi.x             = min(limi.x,barth_limit(Xcc.x,qdifx,qmax.x,qmin.x));
       limi.y             = min(limi.y,barth_limit(Xcc.y,qdify,qmax.y,qmin.y));
       limi.z             = min(limi.z,barth_limit(Xcc.z,qdifz,qmax.z,qmin.z));
     }
-  }
 
-  // limit vector based on strongest gradient (min velocity) direction
-  if($vecLimiter)
-  {
-    real limv = limi.x;
-    for(int i = 1;i<3;++i)
+    // limit vector based on strongest gradient (min velocity) direction
+    if($vecLimiter)
     {
-      limv = min(limv,limi[i]);
+      real limv = limi.x;
+      for(int i = 1;i<3;++i)
+      {
+        limv = min(limv,limi[i]);
+      }
+      $limiterv3d(X) = realToDouble(vect3d(limv,limv,limv));
+    }else
+    {
+      $limiterv3d(X) = realToDouble(limi);
     }
-    $limiterv3d(X) = vect3d(limv,limv,limv);
-  }else
-  {
-    $limiterv3d(X) = limi;
   }
 
-// Zero out the sensitivity contribution of the limiter, since the limiter
-// function 'acts' more as a functional constant
-#if USE_AUTODIFF
-for (int i = 0; i<3;i++)
-{
-  #if MULTIFAD
-  for (int j=0;j<$limiterv3d(X)[i].maxN;j++)
-  { 
-    $limiterv3d(X)[i].grad[j] = 0.0;
-  }
-  #else
-  $limiterv3d(X)[i].grad = 0.0;
-  #if AUTODIFF2ND
-  $limiterv3d(X)[i].grad2 = 0.0;
-  #endif
-  #endif
-}
-#endif
-}
-
-$type X storeVec<real>;
- /** ****************************************************************************
- * @brief Nodal Barth limiter for vectors
- * @retval limiterv(X)                                [-] vector limiter parametric
- * @param  cellcenter                                 [-] cellcenter coordinates
- * @param  X                                          [-] vector value at cell center
- * @param  gradv(X)                                   [-] cell center gradient
- * @param  firstOrderCells                            [-] flag for setting a cell to a locally zero limiter
- * @param  upper->face2node->pos                      [-] upper face nodal coordinates
- * @param  lower->facecenter->pos                     [-] lower face nodal coordinates
- * @param  upper->face2node->cell2nodemaxminv(X)      [-] upper face max/mins
- * @param  lower->facecenter-cell2nodemaxminv(X)      [-] lower face max/mins
- * @param  vecLimiter                                 [-] flag to limit vectors consistently
- ******************************************************************************/
-$rule pointwise(limiterv(X)<-cellcenter,X,gradv(X),firstOrderCells,
-                upper->face2node->(pos,cell2nodemaxminv(X)),
-                lower->face2node->(pos,cell2nodemaxminv(X)),vecLimiter),
-      constraint(geom_cells,NB_limiter),prelude
-{
-  $limiterv(X).setVecSize($X.vecSize());
-}
-compute
-{
-  const int vs = $*X.vecSize();
-  real limi[vs];
-  for(int j=0;j<vs;++j)
+  $type X storeVec<real>;
+  /** ****************************************************************************
+   * @brief Barth limiter for vectors
+   * @retval limiterv(X)         [-] vector limiter parametric
+   * @param  cellcenter          [-] cellcenter coordinates
+   * @param  X                   [-] vector value at cell center
+   * @param  cellmaxminv(X)      [-] max and min for cell stencil
+   * @param  gradv(X)            [-] cell center gradient
+   * @param  firstOrderCells     [-] flag for setting a cell to a locally zero limiter
+   * @param  upper-facecenter    [-] face center coordinates, upper face
+   * @param  lower->facecenter   [-] face center coordinates, lower face
+   * @param  vecLimiter          [-] flag to limit vectors consistently
+   ******************************************************************************/
+  $rule pointwise(limiterv(X)<-cellcenter,X,cellmaxminv(X),gradv(X),firstOrderCells,
+                  upper->facecenter,lower->facecenter,vecLimiter),
+        constraint(geom_cells,B_limiter),prelude
   {
-    const real Xcc = $X[j];
-    const vect3d Xgr = $gradv(X)[j];
-    const int usz = $upper.size();
+    $limiterv(X).setVecSize($X.vecSize());
+  }
+  compute
+  {
+    const int vs = $*X.vecSize();
+    real      limi[vs];
+    for(int j=0;j<vs;++j)
+    {
+      const real   Xcc  = $X[j];
+      real         qmax = $cellmaxminv(X)[j].max;
+      real         qmin = $cellmaxminv(X)[j].min;
+      const vect3d Xgr  = $gradv(X)[j];
+      const int    usz  = $upper.size();
+      const int    lsz  = $lower.size();
+      limi[j]           = ($firstOrderCells != 0)?0.0:1.0;
+
+      for(int i=0;i<usz;++i)
+      {
+        const vect3d drl  = $upper[i]->$facecenter - $cellcenter;
+        real         qdif = dot(Xgr,drl);
+        limi[j]           = min(limi[j],barth_limit(Xcc,qdif,qmax,qmin));
+      }
+
+      for(int i=0;i<lsz;++i)
+      {
+        const vect3d drl  = $lower[i]->$facecenter - $cellcenter;
+        real         qdif = dot(Xgr,drl);
+        limi[j]           = min(limi[j],barth_limit(Xcc,qdif,qmax,qmin));
+      }
+
+  // Zero out the sensitivity contribution of the limiter, since the limiter
+  // function 'acts' more as a functional constant
+      $limiterv(X)[j] = realToDouble(limi[j]);
+    }
+
+    // Apply limiter in direction of strongest gradient
+    if($vecLimiter)
+    {
+      real limv = limi[0];
+      for(int j = 1; j < vs; j++)
+      {
+        limv = min(limv,limi[j]);
+      }
+      for(int j = 0; j < vs; j++)
+      {
+        $limiterv(X)[j] = realToDouble(limv);
+      }
+    }
+  }
+
+  //==========================================================================
+  //
+  // Nodal Barth Limiter
+  //
+  // Like Barth except limiting to nodal max/min rather than at face centers
+  //
+  //==========================================================================
+  $type X store<real>;
+  /** ****************************************************************************
+   * @brief Nodal Barth limiter for scalars
+   * @retval limiters(X)                                [-] scalar limiter parametric
+   * @param  cellcenter                                 [-] cellcenter coordinates
+   * @param  X                                          [-] scalar value at cell center
+   * @param  grads(X)                                   [-] cell center gradient
+   * @param  firstOrderCells                            [-] flag for setting a cell to a locally zero limiter
+   * @param  upper->face2node->pos                      [-] upper face nodal coordinates
+   * @param  lower->facecenter->pos                     [-] lower face nodal coordinates
+   * @param  upper->face2node->cell2nodemaxmins(X)      [-] upper face max/mins
+   * @param  lower->facecenter-cell2nodemaxmins(X)      [-] lower face max/mins
+   ******************************************************************************/
+  $rule pointwise(limiters(X)<-cellcenter,X,grads(X),firstOrderCells,
+                  upper->face2node->(pos,cell2nodemaxmins(X)),
+                  lower->face2node->(pos,cell2nodemaxmins(X))),
+        constraint(geom_cells,NB_limiter)
+  {
+    const real   Xcc  = $X;
+    const vect3d Xgr  = $grads(X);
+    const vect3d cent = $cellcenter;
+    const int    usz  = $upper.size();
+    const int    lsz  = $lower.size();
+    real         limi = ($firstOrderCells != 0)?0.0:1.0;
+
     for(int i=0;i<usz;++i)
     {
       const int fsz = $upper[i]->$face2node.size();
       for(int f=0;f<fsz;++f)
       {
-        const vect3d drl = $upper[i]->$face2node[f]->$pos - $cellcenter;
-        real qdif =  dot(Xgr,drl);
-        real qmax = $upper[i]->$face2node[f]->$cell2nodemaxminv(X)[j].max;
-        real qmin = $upper[i]->$face2node[f]->$cell2nodemaxminv(X)[j].min;
-        limi[j] = min(limi[j],barth_limit(Xcc,qdif,qmax,qmin));
+        const vect3d drl  = $upper[i]->$face2node[f]->$pos - cent;
+        const real   qdif = dot(Xgr,drl);
+        real         qmax = $upper[i]->$face2node[f]->$cell2nodemaxmins(X).max;
+        real         qmin = $upper[i]->$face2node[f]->$cell2nodemaxmins(X).min;
+        limi              = min(limi,barth_limit(Xcc,qdif,qmax,qmin));
       }
     }
 
-    const int lsz= $lower.size();
     for(int i=0;i<lsz;++i)
     {
       const int fsz = $lower[i]->$face2node.size();
       for(int f=0;f<fsz;++f)
       {
-        const vect3d drl = $lower[i]->$face2node[f]->$pos - $cellcenter;
-        real qdif =  dot(Xgr,drl);
-        real qmax = $lower[i]->$face2node[f]->$cell2nodemaxminv(X)[j].max;
-        real qmin = $lower[i]->$face2node[f]->$cell2nodemaxminv(X)[j].min;
-        limi[j] = min(limi[j],barth_limit(Xcc,qdif,qmax,qmin));
+        const vect3d drl  = $lower[i]->$face2node[f]->$pos - cent;
+        const real   qdif = dot(Xgr,drl);
+        real         qmax = $lower[i]->$face2node[f]->$cell2nodemaxmins(X).max;
+        real         qmin = $lower[i]->$face2node[f]->$cell2nodemaxmins(X).min;
+        limi              = min(limi,barth_limit(Xcc,qdif,qmax,qmin));
+      }
+    }
+  // Zero out the sensitivity contribution of the limiter, since the limiter
+  // function 'acts' more as a functional constant
+    $limiters(X) = realToDouble(limi);
+  }
+
+  $type X store<vect3d>;
+  /** ****************************************************************************
+   * @brief Nodal Barth limiter for vect3d
+   * @retval limiterv3d(X)                              [-] vect3d limiter parametric
+   * @param  cellcenter                                 [-] cellcenter coordinates
+   * @param  X                                          [-] vect3d value at cell center
+   * @param  gradv3d(X)                                 [-] cell center gradient
+   * @param  firstOrderCells                            [-] flag for setting a cell to a locally zero limiter
+   * @param  upper->face2node->pos                      [-] upper face nodal coordinates
+   * @param  lower->facecenter->pos                     [-] lower face nodal coordinates
+   * @param  upper->face2node->cell2nodemaxminv3d(X)    [-] upper face max/mins
+   * @param  lower->facecenter-cell2nodemaxminv3d(X)    [-] lower face max/mins
+   * @param  vecLimiter                                 [-] flag to limit vectors consistently
+   ******************************************************************************/
+  $rule pointwise(limiterv3d(X)<-cellcenter,X,gradv3d(X),firstOrderCells,
+                  upper->face2node->(pos,cell2nodemaxminv3d(X)),
+                  lower->face2node->(pos,cell2nodemaxminv3d(X)),vecLimiter),
+        constraint(geom_cells,NB_limiter)
+  {
+    const vect3d Xcc  = $X;
+    const tens3d Xgr  = $gradv3d(X);
+    const vect3d cent = $cellcenter;
+    const int    usz  = $upper.size();
+    const int    lsz  = $lower.size();
+    vect3d       limi = ($firstOrderCells != 0)?vect3d(0.,0.,0.):vect3d(1.,1.,1.);
+
+    for(int i=0;i<usz;++i)
+    {
+      const int fsz = $upper[i]->$face2node.size();
+      for(int f=0;f<fsz;++f)
+      {
+        vect3d       qmax  = $upper[i]->$face2node[f]->$cell2nodemaxminv3d(X).max;
+        vect3d       qmin  = $upper[i]->$face2node[f]->$cell2nodemaxminv3d(X).min;
+        const vect3d drl   = $upper[i]->$face2node[f]->$pos - cent;
+        const real   qdifx = dot(Xgr.x,drl);
+        const real   qdify = dot(Xgr.y,drl);
+        const real   qdifz = dot(Xgr.z,drl);
+        limi.x             = min(limi.x,barth_limit(Xcc.x,qdifx,qmax.x,qmin.x));
+        limi.y             = min(limi.y,barth_limit(Xcc.y,qdify,qmax.y,qmin.y));
+        limi.z             = min(limi.z,barth_limit(Xcc.z,qdifz,qmax.z,qmin.z));
       }
     }
 
-// Zero out the sensitivity contribution of the limiter, since the limiter
-// function 'acts' more as a functional constant
-#if USE_AUTODIFF
-    #ifdef MULTIFAD
-    for (int i=0;i<$limiterv(X)[j].maxN;j++)
-    { 
-      limi[j].grad[i] = 0.0;
-    }
-    #else
-    limi[j].grad = 0.0;
-    #ifdef AUTODIFF2ND
-    limi[j].grad2 = 0.0;
-    #endif
-    #endif
-#endif
-    $limiterv(X)[j] = limi[j];
-  }
-  if($vecLimiter)
-  {
-    // Apply limiter in direction of strongest gradient
-    real limv = limi[0];
-    for(int j = 1; j < vs; j++)
+    for(int i=0;i<lsz;++i)
     {
-      limv = min(limv,limi[j]);
+      const int fsz = $lower[i]->$face2node.size();
+      for(int f=0;f<fsz;++f)
+      {
+        vect3d       qmax  = $lower[i]->$face2node[f]->$cell2nodemaxminv3d(X).max;
+        vect3d       qmin  = $lower[i]->$face2node[f]->$cell2nodemaxminv3d(X).min;
+        const vect3d drl   = $lower[i]->$face2node[f]->$pos - cent;
+        const real   qdifx =  dot(Xgr.x,drl);
+        const real   qdify = dot(Xgr.y,drl);
+        const real   qdifz = dot(Xgr.z,drl);
+        limi.x             = min(limi.x,barth_limit(Xcc.x,qdifx,qmax.x,qmin.x));
+        limi.y             = min(limi.y,barth_limit(Xcc.y,qdify,qmax.y,qmin.y));
+        limi.z             = min(limi.z,barth_limit(Xcc.z,qdifz,qmax.z,qmin.z));
+      }
     }
-    for(int j = 0; j < vs; j++)
+
+    // limit vector based on strongest gradient (min velocity) direction
+    // Zero out the sensitivity contribution of the limiter, since the limiter
+    // function 'acts' more as a functional constant
+    if($vecLimiter)
     {
-      $limiterv(X)[j] = limv;
+      real limv = limi.x;
+      for(int i = 1;i<3;++i)
+      {
+        limv = min(limv,limi[i]);
+      }
+      $limiterv3d(X) = realToDouble(vect3d(limv,limv,limv));
+    }
+    else
+    {
+      $limiterv3d(X) = realToDouble(limi);
     }
   }
-}
 
-  //==========================================================================
-  //
-  // Venkatakrishnan Limiter 
-  //
-  //==========================================================================
-
-$type X store<real>;
- /** ****************************************************************************
- * @brief Venkatakrishnan limiter for scalars
- * @retval limiters(X)       [-] scalar limiter parametric
- * @param  cellcenter        [-] cellcenter coordinates
- * @param  X                 [-] scalar value at cell center
- * @param  cellmaxmins(X)    [-] max and min for cell stencil
- * @param  grads(X)          [-] cell center gradient
- * @param  epsilon2s(X)      [-] Venkatakrishnan limiter parameter
- * @param  firstOrderCells   [-] flag for setting a cell to a locally zero limiter
- * @param  upper->facecenter [-] face center coordinates, upper face
- * @param  lower->facecenter [-] face center coordinates, lower face
- ******************************************************************************/
-$rule pointwise(limiters(X)<-cellcenter,X,cellmaxmins(X),grads(X),epsilon2s(X),
-                             firstOrderCells,upper->facecenter,lower->facecenter),
-      constraint(geom_cells,V_limiter)
-{
-  const real Xcc = $X;
-  const vect3d cctr = $cellcenter;
-
-  real qmax = $cellmaxmins(X).max;
-  real qmin = $cellmaxmins(X).min;
-  const vect3d Xgr = $grads(X);
-
-  const real epsilon2 = $epsilon2s(X);
-
-  real limi = ($firstOrderCells != 0)?0.0:1.0;
-
-  const int usz = $upper.size();
-  for(int i=0;i<usz;++i)
+  $type X storeVec<real>;
+  /** ****************************************************************************
+   * @brief Nodal Barth limiter for vectors
+   * @retval limiterv(X)                                [-] vector limiter parametric
+   * @param  cellcenter                                 [-] cellcenter coordinates
+   * @param  X                                          [-] vector value at cell center
+   * @param  gradv(X)                                   [-] cell center gradient
+   * @param  firstOrderCells                            [-] flag for setting a cell to a locally zero limiter
+   * @param  upper->face2node->pos                      [-] upper face nodal coordinates
+   * @param  lower->facecenter->pos                     [-] lower face nodal coordinates
+   * @param  upper->face2node->cell2nodemaxminv(X)      [-] upper face max/mins
+   * @param  lower->facecenter-cell2nodemaxminv(X)      [-] lower face max/mins
+   * @param  vecLimiter                                 [-] flag to limit vectors consistently
+   ******************************************************************************/
+  $rule pointwise(limiterv(X)<-cellcenter,X,gradv(X),firstOrderCells,
+                  upper->face2node->(pos,cell2nodemaxminv(X)),
+                  lower->face2node->(pos,cell2nodemaxminv(X)),vecLimiter),
+        constraint(geom_cells,NB_limiter),prelude
   {
-    const vect3d drl = $upper[i]->$facecenter - cctr;
-    real qdif = dot(Xgr,drl);
-    limi = min(limi,vlimit(Xcc,qmin,qmax,qdif,epsilon2));
+    $limiterv(X).setVecSize($X.vecSize());
   }
-
-  const int lsz= $lower.size();
-  for(int i=0;i<lsz;++i)
+  compute
   {
-    const vect3d drl = $lower[i]->$facecenter - cctr;
-    real qdif = dot(Xgr,drl);
-    limi = min(limi,vlimit(Xcc,qmin,qmax,qdif,epsilon2));
+    const int vs = $*X.vecSize();
+    real limi[vs];
+    for(int j=0;j<vs;++j)
+    {
+      const real Xcc = $X[j];
+      const vect3d Xgr = $gradv(X)[j];
+      const int usz = $upper.size();
+      for(int i=0;i<usz;++i)
+      {
+        const int fsz = $upper[i]->$face2node.size();
+        for(int f=0;f<fsz;++f)
+        {
+          const vect3d drl = $upper[i]->$face2node[f]->$pos - $cellcenter;
+          real qdif =  dot(Xgr,drl);
+          real qmax = $upper[i]->$face2node[f]->$cell2nodemaxminv(X)[j].max;
+          real qmin = $upper[i]->$face2node[f]->$cell2nodemaxminv(X)[j].min;
+          limi[j] = min(limi[j],barth_limit(Xcc,qdif,qmax,qmin));
+        }
+      }
+
+      const int lsz= $lower.size();
+      for(int i=0;i<lsz;++i)
+      {
+        const int fsz = $lower[i]->$face2node.size();
+        for(int f=0;f<fsz;++f)
+        {
+          const vect3d drl = $lower[i]->$face2node[f]->$pos - $cellcenter;
+          real qdif =  dot(Xgr,drl);
+          real qmax = $lower[i]->$face2node[f]->$cell2nodemaxminv(X)[j].max;
+          real qmin = $lower[i]->$face2node[f]->$cell2nodemaxminv(X)[j].min;
+          limi[j] = min(limi[j],barth_limit(Xcc,qdif,qmax,qmin));
+        }
+      }
+      $limiterv(X)[j] = realToDouble(limi[j]);
+    }
+    if($vecLimiter)
+    {
+      // Apply limiter in direction of strongest gradient
+      real limv = limi[0];
+      for(int j = 1; j < vs; j++)
+      {
+        limv = min(limv,limi[j]);
+      }
+      for(int j = 0; j < vs; j++)
+      {
+        $limiterv(X)[j] = realToDouble(limv);
+      }
+    }
   }
 
-  $limiters(X) = limi;
+    //==========================================================================
+    //
+    // Venkatakrishnan Limiter 
+    //
+    //==========================================================================
 
-// Zero out the sensitivity contribution of the limiter, since the limiter
-// function 'acts' more as a functional constant
-#if USE_AUTODIFF
-#if MULTIFAD
-for (int j=0;j<$limiters(X).maxN;j++)
-  { 
-    $limiters(X).grad[j] = 0.0;
+  $type X store<real>;
+  /** ****************************************************************************
+   * @brief Venkatakrishnan limiter for scalars
+   * @retval limiters(X)       [-] scalar limiter parametric
+   * @param  cellcenter        [-] cellcenter coordinates
+   * @param  X                 [-] scalar value at cell center
+   * @param  cellmaxmins(X)    [-] max and min for cell stencil
+   * @param  grads(X)          [-] cell center gradient
+   * @param  epsilon2s(X)      [-] Venkatakrishnan limiter parameter
+   * @param  firstOrderCells   [-] flag for setting a cell to a locally zero limiter
+   * @param  upper->facecenter [-] face center coordinates, upper face
+   * @param  lower->facecenter [-] face center coordinates, lower face
+   ******************************************************************************/
+  $rule pointwise(limiters(X)<-cellcenter,X,cellmaxmins(X),grads(X),epsilon2s(X),
+                              firstOrderCells,upper->facecenter,lower->facecenter),
+        constraint(geom_cells,V_limiter)
+  {
+    const real Xcc = $X;
+    const vect3d cctr = $cellcenter;
+
+    real qmax = $cellmaxmins(X).max;
+    real qmin = $cellmaxmins(X).min;
+    const vect3d Xgr = $grads(X);
+
+    const real epsilon2 = $epsilon2s(X);
+
+    real limi = ($firstOrderCells != 0)?0.0:1.0;
+
+    const int usz = $upper.size();
+    for(int i=0;i<usz;++i)
+    {
+      const vect3d drl = $upper[i]->$facecenter - cctr;
+      real qdif = dot(Xgr,drl);
+      limi = min(limi,vlimit(Xcc,qmin,qmax,qdif,epsilon2));
+    }
+
+    const int lsz= $lower.size();
+    for(int i=0;i<lsz;++i)
+    {
+      const vect3d drl = $lower[i]->$facecenter - cctr;
+      real qdif = dot(Xgr,drl);
+      limi = min(limi,vlimit(Xcc,qmin,qmax,qdif,epsilon2));
+    }
+
+  // Zero out the sensitivity contribution of the limiter, since the limiter
+  // function 'acts' more as a functional constant
+    $limiters(X) = realToDouble(limi);
   }
-#else
-  $limiters(X).grad = 0.0;
-#if AUTODIFF2ND
-  $limiters(X).grad2 = 0.0;
-#endif
-#endif
-#endif
-}
 
-$type X store<vect3d>;
-/** ****************************************************************************
- * @brief Venkatakrishnan limiter for vect3d
- * @retval limiterv3d(X)       [-] vect3d limiter parametric
- * @param  cellcenter          [-] cellcenter coordinates
- * @param  X                   [-] vect3d value at cell center
- * @param  cellmaxminv3d(X)    [-] max and min for cell stencil
- * @param  gradv3d(X)          [-] cell center gradient
- * @param  epsilon2v3d(X)      [-] Venkatakrishnan limiter parameter
- * @param  firstOrderCells     [-] flag for setting a cell to a locally zero limiter
- * @param  upper->facecenter   [-] face center coordinates, upper face
- * @param  lower->facecenter   [-] face center coordinates, lower face
- * @param  vecLimiter          [-] flag to limit vectors consistently
- ******************************************************************************/
-$rule pointwise(limiterv3d(X)<-cellcenter,X,cellmaxminv3d(X),gradv3d(X),epsilon2v3d(X),
+  $type X store<vect3d>;
+  /** ****************************************************************************
+   * @brief Venkatakrishnan limiter for vect3d
+   * @retval limiterv3d(X)       [-] vect3d limiter parametric
+   * @param  cellcenter          [-] cellcenter coordinates
+   * @param  X                   [-] vect3d value at cell center
+   * @param  cellmaxminv3d(X)    [-] max and min for cell stencil
+   * @param  gradv3d(X)          [-] cell center gradient
+   * @param  epsilon2v3d(X)      [-] Venkatakrishnan limiter parameter
+   * @param  firstOrderCells     [-] flag for setting a cell to a locally zero limiter
+   * @param  upper->facecenter   [-] face center coordinates, upper face
+   * @param  lower->facecenter   [-] face center coordinates, lower face
+   * @param  vecLimiter          [-] flag to limit vectors consistently
+   ******************************************************************************/
+  $rule pointwise(limiterv3d(X)<-cellcenter,X,cellmaxminv3d(X),gradv3d(X),epsilon2v3d(X),
+                                firstOrderCells,upper->facecenter,lower->facecenter,
+                                vecLimiter),
+        constraint(geom_cells,V_limiter)
+  {
+    const vect3d Xcc = $X;
+    vect3d qmax = $cellmaxminv3d(X).max;
+    vect3d qmin = $cellmaxminv3d(X).min;
+    const tens3d Xgr = $gradv3d(X);
+
+    real epsilon2 = $epsilon2v3d(X);
+
+    vect3d limi = ($firstOrderCells != 0)?vect3d(0.,0.,0.):vect3d(1.,1.,1.);
+
+    const int usz = $upper.size();
+    for(int i=0;i<usz;++i)
+    {
+      const vect3d drl = $upper[i]->$facecenter - $cellcenter;
+      real qdifx = dot(Xgr.x,drl);
+      limi.x = min(limi.x,vlimit(Xcc.x,qmin.x,qmax.x,qdifx,epsilon2));
+      real qdify = dot(Xgr.y,drl);
+      limi.y = min(limi.y,vlimit(Xcc.y,qmin.y,qmax.y,qdify,epsilon2));
+      real qdifz = dot(Xgr.z,drl);
+      limi.z = min(limi.z,vlimit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2));
+    }
+
+    const int lsz= $lower.size();
+    for(int i=0;i<lsz;++i)
+    {
+      const vect3d drl = $lower[i]->$facecenter - $cellcenter;
+      real qdifx = dot(Xgr.x,drl);
+      limi.x = min(limi.x,vlimit(Xcc.x,qmin.x,qmax.x,qdifx,epsilon2));
+      real qdify = dot(Xgr.y,drl);
+      limi.y = min(limi.y,vlimit(Xcc.y,qmin.y,qmax.y,qdify,epsilon2));
+      real qdifz = dot(Xgr.z,drl);
+      limi.z = min(limi.z,vlimit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2));
+    }
+
+    if($vecLimiter)
+    {
+      // limit vector based on strongest gradient (min velocity) direction
+      real limv = limi.x;
+      for(int i = 1;i<3;++i)
+      {
+        limv = min(limv,limi[i]);
+      }
+      $limiterv3d(X) = realToDouble(vect3d(limv,limv,limv));
+    } 
+    else 
+    {
+      $limiterv3d(X) = realToDouble(limi);
+    }
+  }
+
+  $type X storeVec<real>;
+  /** ****************************************************************************
+   * @brief Venkatakrishnan limiter for vectors
+   * @retval limiterv(X)         [-] vector limiter parametric
+   * @param  cellcenter          [-] cellcenter coordinates
+   * @param  X                   [-] vector value at cell center
+   * @param  cellmaxminv(X)      [-] max and min for cell stencil
+   * @param  gradv(X)            [-] cell center gradient
+   * @param  epsilon2v(X)        [-] Venkatakrishnan limiter parameter
+   * @param  firstOrderCells     [-] flag for setting a cell to a locally zero limiter
+   * @param  upper->facecenter   [-] face center coordinates, upper face
+   * @param  lower->facecenter   [-] face center coordinates, lower face
+   * @param  vecLimiter          [-] flag to limit vectors consistently
+   ******************************************************************************/
+  $rule pointwise(limiterv(X)<-cellcenter,X,cellmaxminv(X),gradv(X),epsilon2v(X),
                               firstOrderCells,upper->facecenter,lower->facecenter,
                               vecLimiter),
-      constraint(geom_cells,V_limiter)
-{
-  const vect3d Xcc = $X;
-  vect3d qmax = $cellmaxminv3d(X).max;
-  vect3d qmin = $cellmaxminv3d(X).min;
-  const tens3d Xgr = $gradv3d(X);
-
-  real epsilon2 = $epsilon2v3d(X);
-
-  vect3d limi = ($firstOrderCells != 0)?vect3d(0.,0.,0.):vect3d(1.,1.,1.);
-
-  const int usz = $upper.size();
-  for(int i=0;i<usz;++i)
+        constraint(geom_cells,V_limiter),prelude
   {
-    const vect3d drl = $upper[i]->$facecenter - $cellcenter;
-    real qdifx = dot(Xgr.x,drl);
-    limi.x = min(limi.x,vlimit(Xcc.x,qmin.x,qmax.x,qdifx,epsilon2));
-    real qdify = dot(Xgr.y,drl);
-    limi.y = min(limi.y,vlimit(Xcc.y,qmin.y,qmax.y,qdify,epsilon2));
-    real qdifz = dot(Xgr.z,drl);
-    limi.z = min(limi.z,vlimit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2));
-  }
-
-  const int lsz= $lower.size();
-  for(int i=0;i<lsz;++i)
+    $limiterv(X).setVecSize($X.vecSize());
+  } 
+  compute 
   {
-    const vect3d drl = $lower[i]->$facecenter - $cellcenter;
-    real qdifx = dot(Xgr.x,drl);
-    limi.x = min(limi.x,vlimit(Xcc.x,qmin.x,qmax.x,qdifx,epsilon2));
-    real qdify = dot(Xgr.y,drl);
-    limi.y = min(limi.y,vlimit(Xcc.y,qmin.y,qmax.y,qdify,epsilon2));
-    real qdifz = dot(Xgr.z,drl);
-    limi.z = min(limi.z,vlimit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2));
-  }
+    const int vs = $*X.vecSize();
 
-  if($vecLimiter)
-  {
-    // limit vector based on strongest gradient (min velocity) direction
-    real limv = limi.x;
-    for(int i = 1;i<3;++i)
+    real limi[vs];
+    for(int j=0;j<vs;++j)
     {
-      limv = min(limv,limi[i]);
+      const real Xcc = $X[j];
+      real qmax = $cellmaxminv(X)[j].max;
+      real qmin = $cellmaxminv(X)[j].min;
+      real epsilon2 = $epsilon2v(X)[j];
+      const vect3d Xgr = $gradv(X)[j];
+
+      limi[j] = ($firstOrderCells != 0)?0.0:1.0;
+
+      const int usz = $upper.size();
+      for(int i=0;i<usz;++i)
+      {
+        const vect3d drl = $upper[i]->$facecenter - $cellcenter;
+        real qdif = dot(Xgr,drl);
+        limi[j] = min(limi[j],vlimit(Xcc,qmin,qmax,qdif,epsilon2));
+      }
+
+      const int lsz= $lower.size();
+      for(int i=0;i<lsz;++i)
+      {
+        const vect3d drl = $lower[i]->$facecenter - $cellcenter;
+        real qdif = dot(Xgr,drl);
+        limi[j] = min(limi[j],vlimit(Xcc,qmin,qmax,qdif,epsilon2));
+      }
+  // Zero out the sensitivity contribution of the limiter, since the limiter
+  // function 'acts' more as a functional constant
+      $limiterv(X)[j] = realToDouble(limi[j]);
     }
-    $limiterv3d(X) = vect3d(limv,limv,limv);
-  } else {
-    $limiterv3d(X) = limi;
+    if($vecLimiter)
+    {
+      // Apply limiter in direction of strongest gradient
+      real limv = limi[0];
+      for(int j = 1; j < vs; j++)
+      {
+        limv = min(limv,limi[j]);
+      }
+      for(int j = 0; j < vs; j++)
+      {
+        $limiterv(X)[j] = realToDouble(limv);
+      }
+    }
   }
-
-// Zero out the sensitivity contribution of the limiter, since the limiter
-// function 'acts' more as a functional constant
-#if USE_AUTODIFF
-for (int i = 0; i<3;i++)
-{
-  #if MULTIFAD
-  for (int j=0;j<$limiterv3d(X)[i].maxN;j++)
-  { 
-    $limiterv3d(X)[i].grad[j] = 0.0;
-  }
-  #else
-  $limiterv3d(X)[i].grad = 0.0;
-  #if AUTODIFF2ND
-  $limiterv3d(X)[i].grad2 = 0.0;
-  #endif
-  #endif
-}
-#endif
-}
-
-$type X storeVec<real>;
-/** ****************************************************************************
- * @brief Venkatakrishnan limiter for vectors
- * @retval limiterv(X)         [-] vector limiter parametric
- * @param  cellcenter          [-] cellcenter coordinates
- * @param  X                   [-] vector value at cell center
- * @param  cellmaxminv(X)      [-] max and min for cell stencil
- * @param  gradv(X)            [-] cell center gradient
- * @param  epsilon2v(X)        [-] Venkatakrishnan limiter parameter
- * @param  firstOrderCells     [-] flag for setting a cell to a locally zero limiter
- * @param  upper->facecenter   [-] face center coordinates, upper face
- * @param  lower->facecenter   [-] face center coordinates, lower face
- * @param  vecLimiter          [-] flag to limit vectors consistently
- ******************************************************************************/
-$rule pointwise(limiterv(X)<-cellcenter,X,cellmaxminv(X),gradv(X),epsilon2v(X),
-                             firstOrderCells,upper->facecenter,lower->facecenter,
-                             vecLimiter),
-      constraint(geom_cells,V_limiter),prelude
-{
-  $limiterv(X).setVecSize($X.vecSize());
-} compute {
-  const int vs = $*X.vecSize();
-
-  real limi[vs];
-  for(int j=0;j<vs;++j)
+  //==========================================================================
+  //
+  // Venkatakrishnan Limiter2 (Limit to cell centers)
+  //
+  //==========================================================================
+  $type X store<real>;
+  /** ****************************************************************************
+   * @brief Venkatakrishnan limiter for scalars, cell center
+   * @retval limiters(X)            [-] scalar limiter parametric
+   * @param  cellcenter             [-] cellcenter coordinates
+   * @param  X                      [-] scalar value at cell center
+   * @param  cellmaxmins(X)         [-] max and min for cell stencil
+   * @param  grads(X)               [-] cell center gradient
+   * @param  epsilon2s(X)           [-] Venkatakrishnan limiter parameter
+   * @param  firstOrderCells        [-] flag for setting a cell to a locally zero limiter
+   * @param  upper->cr->cellcenter  [-] cell center coordinates, upper cell
+   * @param  lower->cl->cellcenter  [-] cell center coordinates, lower cell
+   ******************************************************************************/
+  $rule pointwise(limiters(X)<-cellcenter,X,cellmaxmins(X),grads(X),epsilon2s(X),
+                              firstOrderCells,upper->cr->cellcenter,lower->cl->cellcenter),
+        constraint(geom_cells,V2_limiter)
   {
-    const real Xcc = $X[j];
-    real qmax = $cellmaxminv(X)[j].max;
-    real qmin = $cellmaxminv(X)[j].min;
-    real epsilon2 = $epsilon2v(X)[j];
-    const vect3d Xgr = $gradv(X)[j];
+    const real Xcc = $X;
+    const vect3d cctr = $cellcenter;
 
-    limi[j] = ($firstOrderCells != 0)?0.0:1.0;
+    real qmax = $cellmaxmins(X).max;
+    real qmin = $cellmaxmins(X).min;
+    const vect3d Xgr = $grads(X);
 
+    const real epsilon2 = $epsilon2s(X);
+
+    real limi = ($firstOrderCells != 0)?0.0:1.0;
     const int usz = $upper.size();
     for(int i=0;i<usz;++i)
     {
-      const vect3d drl = $upper[i]->$facecenter - $cellcenter;
+      const vect3d drl = $upper[i]->$cr->$cellcenter - cctr;
       real qdif = dot(Xgr,drl);
-      limi[j] = min(limi[j],vlimit(Xcc,qmin,qmax,qdif,epsilon2));
+      limi = min(limi,vlimit(Xcc,qmin,qmax,qdif,epsilon2));
     }
 
     const int lsz= $lower.size();
     for(int i=0;i<lsz;++i)
     {
-      const vect3d drl = $lower[i]->$facecenter - $cellcenter;
+      const vect3d drl = $lower[i]->$cl->$cellcenter - cctr;
       real qdif = dot(Xgr,drl);
-      limi[j] = min(limi[j],vlimit(Xcc,qmin,qmax,qdif,epsilon2));
+      limi = min(limi,vlimit(Xcc,qmin,qmax,qdif,epsilon2));
     }
-// Zero out the sensitivity contribution of the limiter, since the limiter
-// function 'acts' more as a functional constant
-#if USE_AUTODIFF
-    #ifdef MULTIFAD
-    for (int i=0;i<$limiterv(X)[j].maxN;j++)
-    { 
-      limi[j].grad[i] = 0.0;
-    }
-    #else
-    limi[j].grad = 0.0;
-    #ifdef AUTODIFF2ND
-    limi[j].grad2 = 0.0;
-    #endif
-    #endif
-#endif
-    $limiterv(X)[j] = limi[j];
+  // Zero out the sensitivity contribution of the limiter, since the limiter
+  // function 'acts' more as a functional constant
+    $limiters(X) = realToDouble(limi);
   }
-  if($vecLimiter){
-    // Apply limiter in direction of strongest gradient
-    real limv = limi[0];
-    for(int j = 1; j < vs; j++)
-    {
-      limv = min(limv,limi[j]);
-    }
-    for(int j = 0; j < vs; j++)
-    {
-      $limiterv(X)[j] = limv;
-    }
-  }
-}
-//==========================================================================
-//
-// Venkatakrishnan Limiter2 (Limit to cell centers)
-//
-//==========================================================================
-$type X store<real>;
-/** ****************************************************************************
- * @brief Venkatakrishnan limiter for scalars, cell center
- * @retval limiters(X)            [-] scalar limiter parametric
- * @param  cellcenter             [-] cellcenter coordinates
- * @param  X                      [-] scalar value at cell center
- * @param  cellmaxmins(X)         [-] max and min for cell stencil
- * @param  grads(X)               [-] cell center gradient
- * @param  epsilon2s(X)           [-] Venkatakrishnan limiter parameter
- * @param  firstOrderCells        [-] flag for setting a cell to a locally zero limiter
- * @param  upper->cr->cellcenter  [-] cell center coordinates, upper cell
- * @param  lower->cl->cellcenter  [-] cell center coordinates, lower cell
- ******************************************************************************/
-$rule pointwise(limiters(X)<-cellcenter,X,cellmaxmins(X),grads(X),epsilon2s(X),
-                             firstOrderCells,upper->cr->cellcenter,lower->cl->cellcenter),
-      constraint(geom_cells,V2_limiter)
-{
-  const real Xcc = $X;
-  const vect3d cctr = $cellcenter;
 
-  real qmax = $cellmaxmins(X).max;
-  real qmin = $cellmaxmins(X).min;
-  const vect3d Xgr = $grads(X);
-
-  const real epsilon2 = $epsilon2s(X);
-
-  real limi = ($firstOrderCells != 0)?0.0:1.0;
-  const int usz = $upper.size();
-  for(int i=0;i<usz;++i)
+  $type X store<vect3d>;
+  /** ****************************************************************************
+   * @brief Venkatakrishnan limiter for vect3d, cell center
+   * @retval limiterv3d(X)         [-] vect3d limiter parametric
+   * @param  cellcenter            [-] cellcenter coordinates
+   * @param  X                     [-] vect3d value at cell center
+   * @param  cellmaxminv3d(X)      [-] max and min for cell stencil
+   * @param  gradv3d(X)            [-] cell center gradient
+   * @param  epsilon2v3d(X)        [-] Venkatakrishnan limiter parameter
+   * @param  firstOrderCells       [-] flag for setting a cell to a locally zero limiter
+   * @param  upper->cr->cellcenter [-] cell center coordinates, upper cell
+   * @param  lower->cl->cellcenter [-] cell center coordinates, lower cell
+   * @param  vecLimiter            [-] flag to limit vectors consistently
+   ******************************************************************************/
+  $rule pointwise(limiterv3d(X)<-cellcenter,X,cellmaxminv3d(X),gradv3d(X),epsilon2v3d(X),
+                                firstOrderCells,upper->cr->cellcenter,
+                                lower->cl->cellcenter,vecLimiter),
+        constraint(geom_cells,V2_limiter)
   {
-    const vect3d drl = $upper[i]->$cr->$cellcenter - cctr;
-    real qdif = dot(Xgr,drl);
-    limi = min(limi,vlimit(Xcc,qmin,qmax,qdif,epsilon2));
-  }
+    const vect3d Xcc = $X;
+    vect3d qmax = $cellmaxminv3d(X).max;
+    vect3d qmin = $cellmaxminv3d(X).min;
+    const tens3d Xgr = $gradv3d(X);
 
-  const int lsz= $lower.size();
-  for(int i=0;i<lsz;++i)
-  {
-    const vect3d drl = $lower[i]->$cl->$cellcenter - cctr;
-    real qdif = dot(Xgr,drl);
-    limi = min(limi,vlimit(Xcc,qmin,qmax,qdif,epsilon2));
-  }
+    const real epsilon2 = $epsilon2v3d(X);
 
-  $limiters(X) = limi;
-  
-// Zero out the sensitivity contribution of the limiter, since the limiter
-// function 'acts' more as a functional constant
-#if USE_AUTODIFF
-#if MULTIFAD
-for (int j=0;j<$limiters(X).maxN;j++)
-  { 
-    $limiters(X).grad[j] = 0.0;
-  }
-#else
-  $limiters(X).grad = 0.0;
-#if AUTODIFF2ND
-    $limiters(X).grad2 = 0.0;
-#endif
-#endif
-#endif
-}
-
-$type X store<vect3d>;
-/** ****************************************************************************
- * @brief Venkatakrishnan limiter for vect3d, cell center
- * @retval limiterv3d(X)         [-] vect3d limiter parametric
- * @param  cellcenter            [-] cellcenter coordinates
- * @param  X                     [-] vect3d value at cell center
- * @param  cellmaxminv3d(X)      [-] max and min for cell stencil
- * @param  gradv3d(X)            [-] cell center gradient
- * @param  epsilon2v3d(X)        [-] Venkatakrishnan limiter parameter
- * @param  firstOrderCells       [-] flag for setting a cell to a locally zero limiter
- * @param  upper->cr->cellcenter [-] cell center coordinates, upper cell
- * @param  lower->cl->cellcenter [-] cell center coordinates, lower cell
- * @param  vecLimiter            [-] flag to limit vectors consistently
- ******************************************************************************/
-$rule pointwise(limiterv3d(X)<-cellcenter,X,cellmaxminv3d(X),gradv3d(X),epsilon2v3d(X),
-                               firstOrderCells,upper->cr->cellcenter,
-                               lower->cl->cellcenter,vecLimiter),
-      constraint(geom_cells,V2_limiter)
-{
-  const vect3d Xcc = $X;
-  vect3d qmax = $cellmaxminv3d(X).max;
-  vect3d qmin = $cellmaxminv3d(X).min;
-  const tens3d Xgr = $gradv3d(X);
-
-  const real epsilon2 = $epsilon2v3d(X);
-
-  vect3d limi = ($firstOrderCells != 0)?vect3d(0.,0.,0.):vect3d(1.,1.,1.);
-
-  const int usz = $upper.size();
-  for(int i=0;i<usz;++i)
-  {
-    const vect3d drl = $upper[i]->$cr->$cellcenter - $cellcenter;
-    real qdifx = dot(Xgr.x,drl);
-    limi.x = min(limi.x,vlimit(Xcc.x,qmin.x,qmax.x,qdifx,epsilon2));
-    real qdify = dot(Xgr.y,drl);
-    limi.y = min(limi.y,vlimit(Xcc.y,qmin.y,qmax.y,qdify,epsilon2));
-    real qdifz = dot(Xgr.z,drl);
-    limi.z = min(limi.z,vlimit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2));
-  }
-
-  const int lsz= $lower.size();
-  for(int i=0;i<lsz;++i)
-  {
-    const vect3d drl = $lower[i]->$cl->$cellcenter - $cellcenter;
-    real qdifx = dot(Xgr.x,drl);
-    limi.x = min(limi.x,vlimit(Xcc.x,qmin.x,qmax.x,qdifx,epsilon2));
-    real qdify = dot(Xgr.y,drl);
-    limi.y = min(limi.y,vlimit(Xcc.y,qmin.y,qmax.y,qdify,epsilon2));
-    real qdifz = dot(Xgr.z,drl);
-    limi.z = min(limi.z,vlimit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2));
-  }
-
-   if($vecLimiter)
-   {
-    // limit vector based on strongest gradient (min velocity) direction
-    real limv = limi.x;
-    for(int i = 1;i<3;++i)
-    {
-      limv = min(limv,limi[i]);
-    }
-    $limiterv3d(X) = vect3d(limv,limv,limv);
-  } else {
-    $limiterv3d(X) = limi;
-  }
-
-// Zero out the sensitivity contribution of the limiter, since the limiter
-// function 'acts' more as a functional constant
-#if USE_AUTODIFF
-for (int i = 0; i<3;i++)
-{
-  #if MULTIFAD
-  for (int j=0;j<$limiterv3d(X)[i].maxN;j++)
-  { 
-    $limiterv3d(X)[i].grad[j] = 0.0;
-  }
-  #else
-  $limiterv3d(X)[i].grad = 0.0;
-  #if AUTODIFF2ND
-  $limiterv3d(X)[i].grad2 = 0.0;
-  #endif
-  #endif
-}
-#endif
-}
-
-$type X storeVec<real>;
-/** ****************************************************************************
- * @brief Venkatakrishnan limiter for vectors, cell center
- * @retval limiterv(X)             [-] vector limiter parametric
- * @param  cellcenter              [-] cellcenter coordinates
- * @param  X                       [-] vector value at cell center
- * @param  cellmaxminv(X)          [-] max and min for cell stencil
- * @param  gradv(X)                [-] cell center gradient
- * @param  epsilon2v(X)            [-] Venkatakrishnan limiter parameter
- * @param  firstOrderCells         [-] flag for setting a cell to a locally zero limiter
- * @param  upper->cr->cellcenter   [-] face center coordinates, upper face
- * @param  lower->cl->cellcenter   [-] face center coordinates, lower face
- * @param  vecLimiter              [-] flag to limit vectors consistently
- ******************************************************************************/
-$rule pointwise(limiterv(X)<-cellcenter,X,cellmaxminv(X),gradv(X),epsilon2v(X),
-                             firstOrderCells,upper->cr->cellcenter,
-                             lower->cl->cellcenter,vecLimiter),
-      constraint(geom_cells,V2_limiter),prelude
-{
-  $limiterv(X).setVecSize($X.vecSize());
-} compute {
-  const int vs = $*X.vecSize();
-
-  real limi[vs];
-  for(int j=0;j<vs;++j)
-  {
-    const real Xcc = $X[j];
-    real qmax = $cellmaxminv(X)[j].max;
-    real qmin = $cellmaxminv(X)[j].min;
-    real epsilon2 = $epsilon2v(X)[j];
-    const vect3d Xgr = $gradv(X)[j];
-
-    limi[j] = ($firstOrderCells != 0)?0.0:1.0;
+    vect3d limi = ($firstOrderCells != 0)?vect3d(0.,0.,0.):vect3d(1.,1.,1.);
 
     const int usz = $upper.size();
     for(int i=0;i<usz;++i)
     {
       const vect3d drl = $upper[i]->$cr->$cellcenter - $cellcenter;
-      real qdif = dot(Xgr,drl);
-      limi[j] = min(limi[j],vlimit(Xcc,qmin,qmax,qdif,epsilon2));
+      real qdifx = dot(Xgr.x,drl);
+      limi.x = min(limi.x,vlimit(Xcc.x,qmin.x,qmax.x,qdifx,epsilon2));
+      real qdify = dot(Xgr.y,drl);
+      limi.y = min(limi.y,vlimit(Xcc.y,qmin.y,qmax.y,qdify,epsilon2));
+      real qdifz = dot(Xgr.z,drl);
+      limi.z = min(limi.z,vlimit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2));
     }
 
     const int lsz= $lower.size();
     for(int i=0;i<lsz;++i)
     {
       const vect3d drl = $lower[i]->$cl->$cellcenter - $cellcenter;
-      real qdif = dot(Xgr,drl);
-      limi[j] = min(limi[j],vlimit(Xcc,qmin,qmax,qdif,epsilon2));
+      real qdifx = dot(Xgr.x,drl);
+      limi.x = min(limi.x,vlimit(Xcc.x,qmin.x,qmax.x,qdifx,epsilon2));
+      real qdify = dot(Xgr.y,drl);
+      limi.y = min(limi.y,vlimit(Xcc.y,qmin.y,qmax.y,qdify,epsilon2));
+      real qdifz = dot(Xgr.z,drl);
+      limi.z = min(limi.z,vlimit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2));
     }
-    $limiterv(X)[j] = limi[j];
-  }
-  if($vecLimiter){
-    // Apply limiter in direction of strongest gradient
-    real limv = limi[0];
-    for(int j = 1; j < vs; j++)
+
+    if($vecLimiter)
     {
-      limv = min(limv,limi[j]);
-    }
-    for(int j = 0; j < vs; j++)
+    // limit vector based on strongest gradient (min velocity) direction
+    real limv = limi.x;
+    for(int i = 1;i<3;++i)
     {
-      $limiterv(X)[j] = limv;
+      limv = min(limv,limi[i]);
+    }
+    $limiterv3d(X) = realToDouble(vect3d(limv,limv,limv));
+    } 
+    else 
+    {
+      $limiterv3d(X) = realToDouble(limi);
     }
   }
 
-// Zero out the sensitivity contribution of the limiter, since the limiter
-// function 'acts' more as a functional constant
-#if USE_AUTODIFF
-for(int j = 1; j < vs; j++)
-{
-  #ifdef MULTIFAD
-  for (int i=0;i<$limiterv(X)[j].maxN;j++)
-  { 
-    $limiterv(X)[j].grad[i] = 0.0;
-  }
-  #else
-  $limiterv(X)[j].grad = 0.0;
-  #ifdef AUTODIFF2ND
-  $limiterv(X)[j].grad2 = 0.0;
-  #endif
-  #endif
-}
-#endif
-}
-
-//-------------------------------------------------------------------
-//
-// Venkatakrishnan V2 -- alternate stencil version
-//
-//-------------------------------------------------------------------
-$type X store<real>;
-/** ****************************************************************************
- * @brief Venkatakrishnan limiter for scalars, special stencil
- * @retval limiters(X)             [-] scalar limiter parametric
- * @param  cellcenter              [-] cellcenter coordinates
- * @param  X                       [-] scalar value at cell center
- * @param  cellmaxmins(X)          [-] max and min for cell stencil
- * @param  grads(X)                [-] cell center gradient
- * @param  epsilon2s(X)            [-] Venkatakrishnan limiter parameter
- * @param  firstOrderCells         [-] flag for setting a cell to a locally zero limiter
- * @param  cellStencil->cellcenter [-] cell center coordinates, neighbor cells
- ******************************************************************************/
-$rule pointwise(stencil::limiters(X)<-cellcenter,X,cellmaxmins(X),grads(X),
-                                      epsilon2s(X),firstOrderCells,
-                                      cellStencil->cellcenter),
-      constraint(geom_cells,V2_limiter)
-{
-  const real Xcc = $X;
-  const vect3d cctr = $cellcenter;
-
-  real qmax = $cellmaxmins(X).max;
-  real qmin = $cellmaxmins(X).min;
-  const vect3d Xgr = $grads(X);
-
-  const real epsilon2 = $epsilon2s(X);
-
-  real limi = ($firstOrderCells != 0)?0.0:1.0;
-
-  const int ssz = $cellStencil.size();
-  for(int i=0;i<ssz;++i)
+  $type X storeVec<real>;
+  /** ****************************************************************************
+   * @brief Venkatakrishnan limiter for vectors, cell center
+   * @retval limiterv(X)             [-] vector limiter parametric
+   * @param  cellcenter              [-] cellcenter coordinates
+   * @param  X                       [-] vector value at cell center
+   * @param  cellmaxminv(X)          [-] max and min for cell stencil
+   * @param  gradv(X)                [-] cell center gradient
+   * @param  epsilon2v(X)            [-] Venkatakrishnan limiter parameter
+   * @param  firstOrderCells         [-] flag for setting a cell to a locally zero limiter
+   * @param  upper->cr->cellcenter   [-] face center coordinates, upper face
+   * @param  lower->cl->cellcenter   [-] face center coordinates, lower face
+   * @param  vecLimiter              [-] flag to limit vectors consistently
+   ******************************************************************************/
+  $rule pointwise(limiterv(X)<-cellcenter,X,cellmaxminv(X),gradv(X),epsilon2v(X),
+                              firstOrderCells,upper->cr->cellcenter,
+                              lower->cl->cellcenter,vecLimiter),
+        constraint(geom_cells,V2_limiter),prelude
   {
-    const vect3d drl = $cellStencil[i]->$cellcenter - cctr;
-    real qdif = dot(Xgr,drl);
-    limi = min(limi,vlimit(Xcc,qmin,qmax,qdif,epsilon2));
-  }
-  $limiters(X) = limi;
+    $limiterv(X).setVecSize($X.vecSize());
+  } 
+  compute 
+  {
+    const int vs = $*X.vecSize();
 
-// Zero out the sensitivity contribution of the limiter, since the limiter
-// function 'acts' more as a functional constant
-#if USE_AUTODIFF
-#if MULTIFAD
-for (int j=0;j<$limiters(X).maxN;j++)
-  { 
-    $limiters(X).grad[j] = 0.0;
-  }
-#else
-  $limiters(X).grad = 0.0;
-#if AUTODIFF2ND
-    $limiters(X).grad2 = 0.0;
-#endif
-#endif
-#endif
-}
+    real limi[vs];
+    for(int j=0;j<vs;++j)
+    {
+      const real Xcc = $X[j];
+      real qmax = $cellmaxminv(X)[j].max;
+      real qmin = $cellmaxminv(X)[j].min;
+      real epsilon2 = $epsilon2v(X)[j];
+      const vect3d Xgr = $gradv(X)[j];
 
-$type X store<vect3d>;
-/** ****************************************************************************
- * @brief Venkatakrishnan limiter for vect3d, special stencil
- * @retval limiterv3d(X)           [-] vect3d limiter parametric
- * @param  cellcenter              [-] cellcenter coordinates
- * @param  X                       [-] vect3d value at cell center
- * @param  cellmaxminv3d(X)        [-] max and min for cell stencil
- * @param  gradv3d(X)              [-] cell center gradient
- * @param  epsilon2v3d(X)          [-] Venkatakrishnan limiter parameter
- * @param  firstOrderCells         [-] flag for setting a cell to a locally zero limiter
- * @param  cellStencil->cellcenter [-] cell center coordinates, neighbor cells
- * @param  vecLimiter              [-] flag to limit vectors consistently
- ******************************************************************************/
-$rule pointwise(stencil::limiterv3d(X)<-cellcenter,X,cellmaxminv3d(X),gradv3d(X),
-                                        epsilon2v3d(X),firstOrderCells,
+      limi[j] = ($firstOrderCells != 0)?0.0:1.0;
+
+      const int usz = $upper.size();
+      for(int i=0;i<usz;++i)
+      {
+        const vect3d drl = $upper[i]->$cr->$cellcenter - $cellcenter;
+        real qdif = dot(Xgr,drl);
+        limi[j] = min(limi[j],vlimit(Xcc,qmin,qmax,qdif,epsilon2));
+      }
+
+      const int lsz= $lower.size();
+      for(int i=0;i<lsz;++i)
+      {
+        const vect3d drl = $lower[i]->$cl->$cellcenter - $cellcenter;
+        real qdif = dot(Xgr,drl);
+        limi[j] = min(limi[j],vlimit(Xcc,qmin,qmax,qdif,epsilon2));
+      }
+      $limiterv(X)[j] = realToDouble(limi[j]);
+    }
+
+  // Zero out the sensitivity contribution of the limiter, since the limiter
+  // function 'acts' more as a functional constant
+    if($vecLimiter)
+    {
+      // Apply limiter in direction of strongest gradient
+      real limv = limi[0];
+      for(int j = 1; j < vs; j++)
+      {
+        limv = min(limv,limi[j]);
+      }
+      for(int j = 0; j < vs; j++)
+      {
+        $limiterv(X)[j] = realToDouble(limv);
+      }
+    }
+  }
+
+  //-------------------------------------------------------------------
+  //
+  // Venkatakrishnan V2 -- alternate stencil version
+  //
+  //-------------------------------------------------------------------
+  $type X store<real>;
+  /** ****************************************************************************
+   * @brief Venkatakrishnan limiter for scalars, special stencil
+   * @retval limiters(X)             [-] scalar limiter parametric
+   * @param  cellcenter              [-] cellcenter coordinates
+   * @param  X                       [-] scalar value at cell center
+   * @param  cellmaxmins(X)          [-] max and min for cell stencil
+   * @param  grads(X)                [-] cell center gradient
+   * @param  epsilon2s(X)            [-] Venkatakrishnan limiter parameter
+   * @param  firstOrderCells         [-] flag for setting a cell to a locally zero limiter
+   * @param  cellStencil->cellcenter [-] cell center coordinates, neighbor cells
+   ******************************************************************************/
+  $rule pointwise(stencil::limiters(X)<-cellcenter,X,cellmaxmins(X),grads(X),
+                                        epsilon2s(X),firstOrderCells,
+                                        cellStencil->cellcenter),
+        constraint(geom_cells,V2_limiter)
+  {
+    const real Xcc = $X;
+    const vect3d cctr = $cellcenter;
+
+    real qmax = $cellmaxmins(X).max;
+    real qmin = $cellmaxmins(X).min;
+    const vect3d Xgr = $grads(X);
+
+    const real epsilon2 = $epsilon2s(X);
+
+    real limi = ($firstOrderCells != 0)?0.0:1.0;
+
+    const int ssz = $cellStencil.size();
+    for(int i=0;i<ssz;++i)
+    {
+      const vect3d drl = $cellStencil[i]->$cellcenter - cctr;
+      real qdif = dot(Xgr,drl);
+      limi = min(limi,vlimit(Xcc,qmin,qmax,qdif,epsilon2));
+    }
+  // Zero out the sensitivity contribution of the limiter, since the limiter
+  // function 'acts' more as a functional constant
+    $limiters(X) = realToDouble(limi);
+  }
+
+  $type X store<vect3d>;
+  /** ****************************************************************************
+   * @brief Venkatakrishnan limiter for vect3d, special stencil
+   * @retval limiterv3d(X)           [-] vect3d limiter parametric
+   * @param  cellcenter              [-] cellcenter coordinates
+   * @param  X                       [-] vect3d value at cell center
+   * @param  cellmaxminv3d(X)        [-] max and min for cell stencil
+   * @param  gradv3d(X)              [-] cell center gradient
+   * @param  epsilon2v3d(X)          [-] Venkatakrishnan limiter parameter
+   * @param  firstOrderCells         [-] flag for setting a cell to a locally zero limiter
+   * @param  cellStencil->cellcenter [-] cell center coordinates, neighbor cells
+   * @param  vecLimiter              [-] flag to limit vectors consistently
+   ******************************************************************************/
+  $rule pointwise(stencil::limiterv3d(X)<-cellcenter,X,cellmaxminv3d(X),gradv3d(X),
+                                          epsilon2v3d(X),firstOrderCells,
+                                          cellStencil->cellcenter,vecLimiter),
+        constraint(geom_cells,V2_limiter)
+  {
+    const vect3d Xcc = $X;
+    vect3d qmax = $cellmaxminv3d(X).max;
+    vect3d qmin = $cellmaxminv3d(X).min;
+    const vect3d cctr = $cellcenter;
+    const tens3d Xgr = $gradv3d(X);
+
+    const real epsilon2 = $epsilon2v3d(X);
+
+    vect3d limi = ($firstOrderCells != 0)?vect3d(0.,0.,0.):vect3d(1.,1.,1.);
+
+    const int ssz = $cellStencil.size();
+    for(int i=0;i<ssz;++i)
+    {
+      const vect3d drl = $cellStencil[i]->$cellcenter - cctr;
+      real qdifx = dot(Xgr.x,drl);
+      limi.x = min(limi.x,vlimit(Xcc.x,qmin.x,qmax.x,qdifx,epsilon2));
+      real qdify = dot(Xgr.y,drl);
+      limi.y = min(limi.y,vlimit(Xcc.y,qmin.y,qmax.y,qdify,epsilon2));
+      real qdifz = dot(Xgr.z,drl);
+      limi.z = min(limi.z,vlimit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2));
+    }
+
+  // Zero out the sensitivity contribution of the limiter, since the limiter
+  // function 'acts' more as a functional constant
+    if($vecLimiter)
+    {
+      // limit vector based on strongest gradient (min velocity) direction
+      real limv = limi.x;
+      for(int i = 1;i<3;++i)
+      {
+        limv = min(limv,limi[i]);
+      }
+      $limiterv3d(X) = realToDouble(vect3d(limv,limv,limv));
+    } 
+    else 
+    {
+      $limiterv3d(X) = realToDouble(limi);
+    }
+  }
+
+  $type X storeVec<real>;
+  /** ****************************************************************************
+   * @brief Venkatakrishnan limiter for vectors, cell center
+   * @retval limiterv(X)             [-] vector limiter parametric
+   * @param  cellcenter              [-] cellcenter coordinates
+   * @param  X                       [-] vector value at cell center
+   * @param  cellmaxminv(X)          [-] max and min for cell stencil
+   * @param  gradv(X)                [-] cell center gradient
+   * @param  epsilon2v(X)            [-] Venkatakrishnan limiter parameter
+   * @param  firstOrderCells         [-] flag for setting a cell to a locally zero limiter
+   * @param  cellStencil->cellcenter [-] cell center coordinates, neighbor cells
+   * @param  vecLimiter              [-] flag to limit vectors consistently
+   ******************************************************************************/
+  $rule pointwise(stencil::limiterv(X)<-cellcenter,X,cellmaxminv(X),gradv(X),
+                                        epsilon2v(X),firstOrderCells,
                                         cellStencil->cellcenter,vecLimiter),
-      constraint(geom_cells,V2_limiter)
-{
-  const vect3d Xcc = $X;
-  vect3d qmax = $cellmaxminv3d(X).max;
-  vect3d qmin = $cellmaxminv3d(X).min;
-  const vect3d cctr = $cellcenter;
-  const tens3d Xgr = $gradv3d(X);
-
-  const real epsilon2 = $epsilon2v3d(X);
-
-  vect3d limi = ($firstOrderCells != 0)?vect3d(0.,0.,0.):vect3d(1.,1.,1.);
-
-  const int ssz = $cellStencil.size();
-  for(int i=0;i<ssz;++i)
+        constraint(geom_cells,V2_limiter),prelude
   {
-    const vect3d drl = $cellStencil[i]->$cellcenter - cctr;
-    real qdifx = dot(Xgr.x,drl);
-    limi.x = min(limi.x,vlimit(Xcc.x,qmin.x,qmax.x,qdifx,epsilon2));
-    real qdify = dot(Xgr.y,drl);
-    limi.y = min(limi.y,vlimit(Xcc.y,qmin.y,qmax.y,qdify,epsilon2));
-    real qdifz = dot(Xgr.z,drl);
-    limi.z = min(limi.z,vlimit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2));
-  }
-
-  if($vecLimiter)
+    $limiterv(X).setVecSize($X.vecSize());
+  } 
+  compute 
   {
-    // limit vector based on strongest gradient (min velocity) direction
-    real limv = limi.x;
-    for(int i = 1;i<3;++i){
-      limv = min(limv,limi[i]);
-    }
-    $limiterv3d(X) = vect3d(limv,limv,limv);
-  } else {
-    $limiterv3d(X) = limi;
-  }
+    const int vs = $*X.vecSize();
+    const vect3d cctr = $cellcenter;
+    real limi[vs];
 
-// Zero out the sensitivity contribution of the limiter, since the limiter
-// function 'acts' more as a functional constant
-#if USE_AUTODIFF
-for (int i = 0; i<3;i++)
-{
-  #if MULTIFAD
-  for (int j=0;j<$limiterv3d(X)[i].maxN;j++)
-  { 
-    $limiterv3d(X)[i].grad[j] = 0.0;
-  }
-  #else
-  $limiterv3d(X)[i].grad = 0.0;
-  #if AUTODIFF2ND
-  $limiterv3d(X)[i].grad2 = 0.0;
-  #endif
-  #endif
-}
-#endif
-}
-
-$type X storeVec<real>;
-/** ****************************************************************************
- * @brief Venkatakrishnan limiter for vectors, cell center
- * @retval limiterv(X)             [-] vector limiter parametric
- * @param  cellcenter              [-] cellcenter coordinates
- * @param  X                       [-] vector value at cell center
- * @param  cellmaxminv(X)          [-] max and min for cell stencil
- * @param  gradv(X)                [-] cell center gradient
- * @param  epsilon2v(X)            [-] Venkatakrishnan limiter parameter
- * @param  firstOrderCells         [-] flag for setting a cell to a locally zero limiter
- * @param  cellStencil->cellcenter [-] cell center coordinates, neighbor cells
- * @param  vecLimiter              [-] flag to limit vectors consistently
- ******************************************************************************/
-$rule pointwise(stencil::limiterv(X)<-cellcenter,X,cellmaxminv(X),gradv(X),
-                                      epsilon2v(X),firstOrderCells,
-                                      cellStencil->cellcenter,vecLimiter),
-      constraint(geom_cells,V2_limiter),prelude
-{
-  $limiterv(X).setVecSize($X.vecSize());
-} compute {
-  const int vs = $*X.vecSize();
-  const vect3d cctr = $cellcenter;
-  real limi[vs];
-
-  for(int j=0;j<vs;++j)
-  {
-    const real Xcc = $X[j];
-    real qmax = $cellmaxminv(X)[j].max;
-    real qmin = $cellmaxminv(X)[j].min;
-    const vect3d Xgr = $gradv(X)[j];
-    real epsilon2 = $epsilon2v(X)[j];
-
-    limi[j] = ($firstOrderCells != 0)?0.0:1.0;
-
-    const int ssz = $cellStencil.size();
-    for(int i=0;i<ssz;++i)
+    for(int j=0;j<vs;++j)
     {
-      const vect3d drl = $cellStencil[i]->$cellcenter - cctr;
+      const real Xcc = $X[j];
+      real qmax = $cellmaxminv(X)[j].max;
+      real qmin = $cellmaxminv(X)[j].min;
+      const vect3d Xgr = $gradv(X)[j];
+      real epsilon2 = $epsilon2v(X)[j];
+
+      limi[j] = ($firstOrderCells != 0)?0.0:1.0;
+
+      const int ssz = $cellStencil.size();
+      for(int i=0;i<ssz;++i)
+      {
+        const vect3d drl = $cellStencil[i]->$cellcenter - cctr;
+        real qdif = dot(Xgr,drl);
+        limi[j] = min(limi[j],vlimit(Xcc,qmin,qmax,qdif,epsilon2));
+      }
+  // Zero out the sensitivity contribution of the limiter, since the limiter
+  // function 'acts' more as a functional constant
+      $limiterv(X)[j] = realToDouble(limi[j]);
+    }
+    if($vecLimiter)
+    {
+      // Apply limiter in direction of strongest gradient
+      real limv = limi[0];
+      for(int j = 1; j < vs; j++)
+      {
+        limv = min(limv,limi[j]);
+      }
+      for(int j = 0; j < vs; j++)
+      {
+        $limiterv(X)[j] = realToDouble(limv);
+      }
+    }
+  }
+  //==========================================================================
+  //
+  // Nishikawa Limiter, face center
+  //
+  //==========================================================================
+  $type X store<real>;
+  /** ****************************************************************************
+   * @brief Nishikawa limiter for scalars
+   * @retval limiters(X)       [-] scalar limiter parametric
+   * @param  cellcenter        [-] cellcenter coordinates
+   * @param  X                 [-] scalar value at cell center
+   * @param  cellmaxmins(X)    [-] max and min for cell stencil
+   * @param  grads(X)          [-] cell center gradient
+   * @param  epsilon2s(X)      [-] Venkatakrishnan limiter parameter
+   * @param  nisPow            [-] Order of limiter
+   * @param  firstOrderCells   [-] flag for setting a cell to a locally zero limiter
+   * @param  upper->facecenter [-] face center coordinates, upper face
+   * @param  lower->facecenter [-] face center coordinates, lower face
+   ******************************************************************************/
+  $rule pointwise(limiters(X)<-cellcenter,X,cellmaxmins(X),grads(X),epsilon2s(X),
+                              nisPow,firstOrderCells,upper->facecenter,lower->facecenter),
+        constraint(geom_cells,NISf_limiter)
+  {
+    const real Xcc = $X;
+    const vect3d cctr = $cellcenter;
+
+    real qmax = $cellmaxmins(X).max;
+    real qmin = $cellmaxmins(X).min;
+    const vect3d Xgr = $grads(X);
+
+    const real epsilon2 = $epsilon2s(X);
+
+    real limi = ($firstOrderCells != 0)?0.0:1.0;
+
+    const int usz = $upper.size();
+    for(int i=0;i<usz;++i)
+    {
+      const vect3d drl = $upper[i]->$facecenter - cctr;
       real qdif = dot(Xgr,drl);
-      limi[j] = min(limi[j],vlimit(Xcc,qmin,qmax,qdif,epsilon2));
+      limi = min(limi,nis_limit(Xcc,qmin,qmax,qdif,epsilon2,$nisPow));
     }
-// Zero out the sensitivity contribution of the limiter, since the limiter
-// function 'acts' more as a functional constant
-#if USE_AUTODIFF
-    #ifdef MULTIFAD
-    for (int i=0;i<$limiterv(X)[j].maxN;j++)
-    { 
-      limi[j].grad[i] = 0.0;
-    }
-    #else
-    limi[j].grad = 0.0;
-    #ifdef AUTODIFF2ND
-    limi[j].grad2 = 0.0;
-    #endif
-    #endif
-#endif
-    $limiterv(X)[j] = limi[j];
-  }
-  if($vecLimiter){
-    // Apply limiter in direction of strongest gradient
-    real limv = limi[0];
-    for(int j = 1; j < vs; j++)
+
+    const int lsz= $lower.size();
+    for(int i=0;i<lsz;++i)
     {
-      limv = min(limv,limi[j]);
+      const vect3d drl = $lower[i]->$facecenter - cctr;
+      real qdif = dot(Xgr,drl);
+      limi = min(limi,nis_limit(Xcc,qmin,qmax,qdif,epsilon2,$nisPow));
     }
-    for(int j = 0; j < vs; j++)
+
+  // Zero out the sensitivity contribution of the limiter, since the limiter
+  // function 'acts' more as a functional constant
+    $limiters(X) = realToDouble(limi);
+  }
+
+  $type X store<vect3d>;
+  /** ****************************************************************************
+   * @brief Nishikawa limiter for vect3d
+   * @retval limiterv3d(X)       [-] vect3d limiter parametric
+   * @param  cellcenter          [-] cellcenter coordinates
+   * @param  X                   [-] vect3d value at cell center
+   * @param  cellmaxminv3d(X)    [-] max and min for cell stencil
+   * @param  gradv3d(X)          [-] cell center gradient
+   * @param  epsilon2v3d(X)      [-] Venkatakrishnan limiter parameter
+   * @param  nisPow              [-] order of limiter
+   * @param  firstOrderCells     [-] flag for setting a cell to a locally zero limiter
+   * @param  upper->facecenter   [-] face center coordinates, upper face
+   * @param  lower->facecenter   [-] face center coordinates, lower face
+   * @param  vecLimiter          [-] flag to limit vectors consistently
+   ******************************************************************************/
+  $rule pointwise(limiterv3d(X)<-cellcenter,X,gradv3d(X),cellmaxminv3d(X),
+                                epsilon2v3d(X),nisPow,firstOrderCells,upper->facecenter,
+                                lower->facecenter,vecLimiter),
+        constraint(geom_cells,NISf_limiter)
     {
-      $limiterv(X)[j] = limv;
-    }
-  }
-}
-//==========================================================================
-//
-// Nishikawa Limiter, face center
-//
-//==========================================================================
-$type X store<real>;
-/** ****************************************************************************
- * @brief Nishikawa limiter for scalars
- * @retval limiters(X)       [-] scalar limiter parametric
- * @param  cellcenter        [-] cellcenter coordinates
- * @param  X                 [-] scalar value at cell center
- * @param  cellmaxmins(X)    [-] max and min for cell stencil
- * @param  grads(X)          [-] cell center gradient
- * @param  epsilon2s(X)      [-] Venkatakrishnan limiter parameter
- * @param  nisPow            [-] Order of limiter
- * @param  firstOrderCells   [-] flag for setting a cell to a locally zero limiter
- * @param  upper->facecenter [-] face center coordinates, upper face
- * @param  lower->facecenter [-] face center coordinates, lower face
- ******************************************************************************/
-$rule pointwise(limiters(X)<-cellcenter,X,cellmaxmins(X),grads(X),epsilon2s(X),
-                             nisPow,firstOrderCells,upper->facecenter,lower->facecenter),
-      constraint(geom_cells,NISf_limiter)
-{
-  const real Xcc = $X;
-  const vect3d cctr = $cellcenter;
+    const vect3d Xcc = $X;
+    vect3d qmax = $cellmaxminv3d(X).max;
+    vect3d qmin = $cellmaxminv3d(X).min;
+    const tens3d Xgr = $gradv3d(X);
+    real epsilon2 = $epsilon2v3d(X);
 
-  real qmax = $cellmaxmins(X).max;
-  real qmin = $cellmaxmins(X).min;
-  const vect3d Xgr = $grads(X);
-
-  const real epsilon2 = $epsilon2s(X);
-
-  real limi = ($firstOrderCells != 0)?0.0:1.0;
-
-  const int usz = $upper.size();
-  for(int i=0;i<usz;++i)
-  {
-    const vect3d drl = $upper[i]->$facecenter - cctr;
-    real qdif = dot(Xgr,drl);
-    limi = min(limi,nis_limit(Xcc,qmin,qmax,qdif,epsilon2,$nisPow));
-  }
-
-  const int lsz= $lower.size();
-  for(int i=0;i<lsz;++i)
-  {
-    const vect3d drl = $lower[i]->$facecenter - cctr;
-    real qdif = dot(Xgr,drl);
-    limi = min(limi,nis_limit(Xcc,qmin,qmax,qdif,epsilon2,$nisPow));
-  }
-
-  $limiters(X) = limi;
-
-// Zero out the sensitivity contribution of the limiter, since the limiter
-// function 'acts' more as a functional constant
-#if USE_AUTODIFF
-#if MULTIFAD
-for (int j=0;j<$limiters(X).maxN;j++)
-  { 
-    $limiters(X).grad[j] = 0.0;
-  }
-#else
-  $limiters(X).grad = 0.0;
-#if AUTODIFF2ND
-    $limiters(X).grad2 = 0.0;
-#endif
-#endif
-#endif
-}
-
-$type X store<vect3d>;
-/** ****************************************************************************
- * @brief Nishikawa limiter for vect3d
- * @retval limiterv3d(X)       [-] vect3d limiter parametric
- * @param  cellcenter          [-] cellcenter coordinates
- * @param  X                   [-] vect3d value at cell center
- * @param  cellmaxminv3d(X)    [-] max and min for cell stencil
- * @param  gradv3d(X)          [-] cell center gradient
- * @param  epsilon2v3d(X)      [-] Venkatakrishnan limiter parameter
- * @param  nisPow              [-] order of limiter
- * @param  firstOrderCells     [-] flag for setting a cell to a locally zero limiter
- * @param  upper->facecenter   [-] face center coordinates, upper face
- * @param  lower->facecenter   [-] face center coordinates, lower face
- * @param  vecLimiter          [-] flag to limit vectors consistently
- ******************************************************************************/
-$rule pointwise(limiterv3d(X)<-cellcenter,X,gradv3d(X),cellmaxminv3d(X),
-                               epsilon2v3d(X),nisPow,firstOrderCells,upper->facecenter,
-                               lower->facecenter,vecLimiter),
-      constraint(geom_cells,NISf_limiter)
-  {
-  const vect3d Xcc = $X;
-  vect3d qmax = $cellmaxminv3d(X).max;
-  vect3d qmin = $cellmaxminv3d(X).min;
-  const tens3d Xgr = $gradv3d(X);
-  real epsilon2 = $epsilon2v3d(X);
-
-  vect3d limi = ($firstOrderCells != 0)?vect3d(0.,0.,0.):vect3d(1.,1.,1.);
-
-  const int usz = $upper.size();
-  for(int i=0;i<usz;++i)
-  {
-    const vect3d drl = $upper[i]->$facecenter - $cellcenter;
-    real qdifx = dot(Xgr.x,drl);
-    limi.x = min(limi.x,nis_limit(Xcc.x,qmin.x,qmax.x,qdifx,epsilon2,$nisPow));
-    real qdify = dot(Xgr.y,drl);
-    limi.y = min(limi.y,nis_limit(Xcc.y,qmin.y,qmax.y,qdify,epsilon2,$nisPow));
-    real qdifz = dot(Xgr.z,drl);
-    limi.z = min(limi.z,nis_limit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2,$nisPow));
-  }
-
-  const int lsz= $lower.size();
-  for(int i=0;i<lsz;++i)
-  {
-    const vect3d drl = $lower[i]->$facecenter - $cellcenter;
-    real qdifx = dot(Xgr.x,drl);
-    limi.x = min(limi.x,nis_limit(Xcc.x,qmin.x,qmax.x,qdifx,epsilon2,$nisPow));
-    real qdify = dot(Xgr.y,drl);
-    limi.y = min(limi.y,nis_limit(Xcc.y,qmin.y,qmax.y,qdify,epsilon2,$nisPow));
-    real qdifz = dot(Xgr.z,drl);
-    limi.z = min(limi.z,nis_limit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2,$nisPow));
-  }
-
-  if($vecLimiter)
-  {
-    // limit vector based on strongest gradient (min velocity) direction
-    real limv = limi.x;
-    for(int i = 1;i<3;++i){
-      limv = min(limv,limi[i]);
-    }
-    $limiterv3d(X) = vect3d(limv,limv,limv);
-  } else {
-    $limiterv3d(X) = limi;
-  }
-
-// Zero out the sensitivity contribution of the limiter, since the limiter
-// function 'acts' more as a functional constant
-#if USE_AUTODIFF
-for (int i = 0; i<3;i++)
-{
-  #if MULTIFAD
-  for (int j=0;j<$limiterv3d(X)[i].maxN;j++)
-  { 
-    $limiterv3d(X)[i].grad[j] = 0.0;
-  }
-  #else
-  $limiterv3d(X)[i].grad = 0.0;
-  #if AUTODIFF2ND
-  $limiterv3d(X)[i].grad2 = 0.0;
-  #endif
-  #endif
-}
-#endif
-}
-
-$type X storeVec<real>;
-/** ****************************************************************************
- * @brief Nishikawa limiter for vectors
- * @retval limiterv(X)         [-] vector limiter parametric
- * @param  cellcenter          [-] cellcenter coordinates
- * @param  X                   [-] vector value at cell center
- * @param  cellmaxminv(X)      [-] max and min for cell stencil
- * @param  gradv(X)            [-] cell center gradient
- * @param  epsilon2v(X)        [-] Venkatakrishnan limiter parameter
- * @param  nisPow              [-] order of limiter
- * @param  firstOrderCells     [-] flag for setting a cell to a locally zero limiter
- * @param  upper->facecenter   [-] face center coordinates, upper face
- * @param  lower->facecenter   [-] face center coordinates, lower face
- * @param  vecLimiter          [-] flag to limit vectors consistently
- ******************************************************************************/
-$rule pointwise(limiterv(X)<-cellcenter,X,gradv(X),cellmaxminv(X),epsilon2v(X),
-                              nisPow,firstOrderCells,upper->facecenter,
-                              lower->facecenter,vecLimiter),
-      constraint(geom_cells,NISf_limiter),prelude
-{
-  $limiterv(X).setVecSize($X.vecSize());
-} compute {
-  const int vs = $*X.vecSize();
-
-  real limi[vs];
-  for(int j=0;j<vs;++j)
-  {
-    const real Xcc = $X[j];
-    real qmax = $cellmaxminv(X)[j].max;
-    real qmin = $cellmaxminv(X)[j].min;
-    real epsilon2 = $epsilon2v(X)[j];
-    const vect3d Xgr = $gradv(X)[j];
-
-    limi[j] = ($firstOrderCells != 0)?0.0:1.0;
+    vect3d limi = ($firstOrderCells != 0)?vect3d(0.,0.,0.):vect3d(1.,1.,1.);
 
     const int usz = $upper.size();
     for(int i=0;i<usz;++i)
     {
       const vect3d drl = $upper[i]->$facecenter - $cellcenter;
-      real qdif = dot(Xgr,drl);
-      limi[j] = min(limi[j],nis_limit(Xcc,qmin,qmax,qdif,epsilon2,$nisPow));
+      real qdifx = dot(Xgr.x,drl);
+      limi.x = min(limi.x,nis_limit(Xcc.x,qmin.x,qmax.x,qdifx,epsilon2,$nisPow));
+      real qdify = dot(Xgr.y,drl);
+      limi.y = min(limi.y,nis_limit(Xcc.y,qmin.y,qmax.y,qdify,epsilon2,$nisPow));
+      real qdifz = dot(Xgr.z,drl);
+      limi.z = min(limi.z,nis_limit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2,$nisPow));
     }
 
     const int lsz= $lower.size();
     for(int i=0;i<lsz;++i)
     {
       const vect3d drl = $lower[i]->$facecenter - $cellcenter;
+      real qdifx = dot(Xgr.x,drl);
+      limi.x = min(limi.x,nis_limit(Xcc.x,qmin.x,qmax.x,qdifx,epsilon2,$nisPow));
+      real qdify = dot(Xgr.y,drl);
+      limi.y = min(limi.y,nis_limit(Xcc.y,qmin.y,qmax.y,qdify,epsilon2,$nisPow));
+      real qdifz = dot(Xgr.z,drl);
+      limi.z = min(limi.z,nis_limit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2,$nisPow));
+    }
+
+  // Zero out the sensitivity contribution of the limiter, since the limiter
+  // function 'acts' more as a functional constant
+    if($vecLimiter)
+    {
+      // limit vector based on strongest gradient (min velocity) direction
+      real limv = limi.x;
+      for(int i = 1;i<3;++i)
+      {
+        limv = min(limv,limi[i]);
+      }
+      $limiterv3d(X) = realToDouble(vect3d(limv,limv,limv));
+    } 
+    else 
+    {
+      $limiterv3d(X) = realToDouble(limi);
+    }
+  }
+
+  $type X storeVec<real>;
+  /** ****************************************************************************
+   * @brief Nishikawa limiter for vectors
+   * @retval limiterv(X)         [-] vector limiter parametric
+   * @param  cellcenter          [-] cellcenter coordinates
+   * @param  X                   [-] vector value at cell center
+   * @param  cellmaxminv(X)      [-] max and min for cell stencil
+   * @param  gradv(X)            [-] cell center gradient
+   * @param  epsilon2v(X)        [-] Venkatakrishnan limiter parameter
+   * @param  nisPow              [-] order of limiter
+   * @param  firstOrderCells     [-] flag for setting a cell to a locally zero limiter
+   * @param  upper->facecenter   [-] face center coordinates, upper face
+   * @param  lower->facecenter   [-] face center coordinates, lower face
+   * @param  vecLimiter          [-] flag to limit vectors consistently
+   ******************************************************************************/
+  $rule pointwise(limiterv(X)<-cellcenter,X,gradv(X),cellmaxminv(X),epsilon2v(X),
+                                nisPow,firstOrderCells,upper->facecenter,
+                                lower->facecenter,vecLimiter),
+        constraint(geom_cells,NISf_limiter),prelude
+  {
+    $limiterv(X).setVecSize($X.vecSize());
+  } 
+  compute 
+  {
+    const int vs = $*X.vecSize();
+
+    real limi[vs];
+    for(int j=0;j<vs;++j)
+    {
+      const real Xcc = $X[j];
+      real qmax = $cellmaxminv(X)[j].max;
+      real qmin = $cellmaxminv(X)[j].min;
+      real epsilon2 = $epsilon2v(X)[j];
+      const vect3d Xgr = $gradv(X)[j];
+
+      limi[j] = ($firstOrderCells != 0)?0.0:1.0;
+
+      const int usz = $upper.size();
+      for(int i=0;i<usz;++i)
+      {
+        const vect3d drl = $upper[i]->$facecenter - $cellcenter;
+        real qdif = dot(Xgr,drl);
+        limi[j] = min(limi[j],nis_limit(Xcc,qmin,qmax,qdif,epsilon2,$nisPow));
+      }
+
+      const int lsz= $lower.size();
+      for(int i=0;i<lsz;++i)
+      {
+        const vect3d drl = $lower[i]->$facecenter - $cellcenter;
+        real qdif = dot(Xgr,drl);
+        limi[j] = min(limi[j],nis_limit(Xcc,qmin,qmax,qdif,epsilon2,$nisPow));
+      }
+
+  // Zero out the sensitivity contribution of the limiter, since the limiter
+  // function 'acts' more as a functional constant
+      $limiterv(X)[j] = realToDouble(limi[j]);
+    }
+    if($vecLimiter)
+    {
+      // Apply limiter in direction of strongest gradient
+      real limv = limi[0];
+      for(int j = 1; j < vs; j++)
+      {
+        limv = min(limv,limi[j]);
+      }
+      for(int j = 0; j < vs; j++)
+      {
+        $limiterv(X)[j] = realToDouble(limv);
+      }
+    }
+  }
+
+
+  $type X store<real>;
+  /** ****************************************************************************
+   * @brief Nishikawa limiter for scalars, cell center
+   * @retval limiters(X)            [-] scalar limiter parametric
+   * @param  cellcenter             [-] cellcenter coordinates
+   * @param  X                      [-] scalar value at cell center
+   * @param  cellmaxmins(X)         [-] max and min for cell stencil
+   * @param  grads(X)               [-] cell center gradient
+   * @param  epsilon2s(X)           [-] Venkatakrishnan limiter parameter
+   * @param  nisPow                 [-] order of limter
+   * @param  firstOrderCells        [-] flag for setting a cell to a locally zero limiter
+   * @param  upper->cr->cellcenter  [-] cell center coordinates, upper cell
+   * @param  lower->cl->cellcenter  [-] cell center coordinates, lower cell
+   ******************************************************************************/
+  $rule pointwise(limiters(X)<-cellcenter,X,cellmaxmins(X),grads(X),epsilon2s(X),
+                              nisPow,firstOrderCells,upper->cr->cellcenter,
+                              lower->cl->cellcenter),
+        constraint(geom_cells,NISc_limiter)
+  {
+    const real Xcc = $X;
+    const vect3d cctr = $cellcenter;
+
+    real qmax = $cellmaxmins(X).max;
+    real qmin = $cellmaxmins(X).min;
+    const vect3d Xgr = $grads(X);
+
+    const real epsilon2 = $epsilon2s(X);
+
+    real limi = ($firstOrderCells != 0)?0.0:1.0;
+
+    const int usz = $upper.size();
+    for(int i=0;i<usz;++i)
+    {
+      const vect3d drl = $upper[i]->$cr->$cellcenter - cctr;
       real qdif = dot(Xgr,drl);
-      limi[j] = min(limi[j],nis_limit(Xcc,qmin,qmax,qdif,epsilon2,$nisPow));
+      limi = min(limi,nis_limit(Xcc,qmin,qmax,qdif,epsilon2,$nisPow));
     }
 
-// Zero out the sensitivity contribution of the limiter, since the limiter
-// function 'acts' more as a functional constant
-#if USE_AUTODIFF
-    #ifdef MULTIFAD
-    for (int i=0;i<$limiterv(X)[j].maxN;j++)
-    { 
-      limi[j].grad[i] = 0.0;
-    }
-    #else
-    limi[j].grad = 0.0;
-    #ifdef AUTODIFF2ND
-    limi[j].grad2 = 0.0;
-    #endif
-    #endif
-#endif
-    $limiterv(X)[j] = limi[j];
-  }
-  if($vecLimiter)
-  {
-    // Apply limiter in direction of strongest gradient
-    real limv = limi[0];
-    for(int j = 1; j < vs; j++)
+    const int lsz= $lower.size();
+    for(int i=0;i<lsz;++i)
     {
-      limv = min(limv,limi[j]);
+      const vect3d drl = $lower[i]->$cl->$cellcenter - cctr;
+      real qdif = dot(Xgr,drl);
+      limi = min(limi,nis_limit(Xcc,qmin,qmax,qdif,epsilon2,$nisPow));
     }
-    for(int j = 0; j < vs; j++)
-    {
-      $limiterv(X)[j] = limv;
-    }
+  // Zero out the sensitivity contribution of the limiter, since the limiter
+  // function 'acts' more as a functional constant
+    $limiters(X) = realToDouble(limi);
   }
-}
 
-
-$type X store<real>;
-/** ****************************************************************************
- * @brief Nishikawa limiter for scalars, cell center
- * @retval limiters(X)            [-] scalar limiter parametric
- * @param  cellcenter             [-] cellcenter coordinates
- * @param  X                      [-] scalar value at cell center
- * @param  cellmaxmins(X)         [-] max and min for cell stencil
- * @param  grads(X)               [-] cell center gradient
- * @param  epsilon2s(X)           [-] Venkatakrishnan limiter parameter
- * @param  nisPow                 [-] order of limter
- * @param  firstOrderCells        [-] flag for setting a cell to a locally zero limiter
- * @param  upper->cr->cellcenter  [-] cell center coordinates, upper cell
- * @param  lower->cl->cellcenter  [-] cell center coordinates, lower cell
- ******************************************************************************/
-$rule pointwise(limiters(X)<-cellcenter,X,cellmaxmins(X),grads(X),epsilon2s(X),
-                            nisPow,firstOrderCells,upper->cr->cellcenter,
-                            lower->cl->cellcenter),
-      constraint(geom_cells,NISc_limiter)
-{
-  const real Xcc = $X;
-  const vect3d cctr = $cellcenter;
-
-  real qmax = $cellmaxmins(X).max;
-  real qmin = $cellmaxmins(X).min;
-  const vect3d Xgr = $grads(X);
-
-  const real epsilon2 = $epsilon2s(X);
-
-  real limi = ($firstOrderCells != 0)?0.0:1.0;
-
-  const int usz = $upper.size();
-  for(int i=0;i<usz;++i)
+  $type X store<vect3d>;
+  /** ****************************************************************************
+   * @brief Nishikawa limiter for vect3d, cell center
+   * @retval limiterv3d(X)         [-] vect3d limiter parametric
+   * @param  cellcenter            [-] cellcenter coordinates
+   * @param  X                     [-] vect3d value at cell center
+   * @param  cellmaxminv3d(X)      [-] max and min for cell stencil
+   * @param  gradv3d(X)            [-] cell center gradient
+   * @param  epsilon2v3d(X)        [-] Venkatakrishnan limiter parameter
+   * @param  nisPow                [-] order of limiter
+   * @param  firstOrderCells       [-] flag for setting a cell to a locally zero limiter
+   * @param  upper->cr->cellcenter [-] cell center coordinates, upper cell
+   * @param  lower->cl->cellcenter [-] cell center coordinates, lower cell
+   * @param  vecLimiter            [-] flag to limit vectors consistently
+   ******************************************************************************/
+  $rule pointwise(limiterv3d(X)<-cellcenter,X,cellmaxminv3d(X),gradv3d(X),
+                                epsilon2v3d(X),nisPow,firstOrderCells,
+                                upper->cr->cellcenter,
+                                lower->cl->cellcenter,vecLimiter),
+        constraint(geom_cells,NISc_limiter)
   {
-    const vect3d drl = $upper[i]->$cr->$cellcenter - cctr;
-    real qdif = dot(Xgr,drl);
-    limi = min(limi,nis_limit(Xcc,qmin,qmax,qdif,epsilon2,$nisPow));
-  }
+    const vect3d Xcc = $X;
+    vect3d qmax = $cellmaxminv3d(X).max;
+    vect3d qmin = $cellmaxminv3d(X).min;
+    const tens3d Xgr = $gradv3d(X);
+    real epsilon2 = $epsilon2v3d(X);
 
-  const int lsz= $lower.size();
-  for(int i=0;i<lsz;++i)
-  {
-    const vect3d drl = $lower[i]->$cl->$cellcenter - cctr;
-    real qdif = dot(Xgr,drl);
-    limi = min(limi,nis_limit(Xcc,qmin,qmax,qdif,epsilon2,$nisPow));
-  }
-  $limiters(X) = limi;
-
-// Zero out the sensitivity contribution of the limiter, since the limiter
-// function 'acts' more as a functional constant
-#if USE_AUTODIFF
-#if MULTIFAD
-for (int j=0;j<$limiters(X).maxN;j++)
-  { 
-    $limiters(X).grad[j] = 0.0;
-  }
-#else
-  $limiters(X).grad = 0.0;
-#if AUTODIFF2ND
-    $limiters(X).grad2 = 0.0;
-#endif
-#endif
-#endif
-}
-
-$type X store<vect3d>;
- /** ****************************************************************************
- * @brief Nishikawa limiter for vect3d, cell center
- * @retval limiterv3d(X)         [-] vect3d limiter parametric
- * @param  cellcenter            [-] cellcenter coordinates
- * @param  X                     [-] vect3d value at cell center
- * @param  cellmaxminv3d(X)      [-] max and min for cell stencil
- * @param  gradv3d(X)            [-] cell center gradient
- * @param  epsilon2v3d(X)        [-] Venkatakrishnan limiter parameter
- * @param  nisPow                [-] order of limiter
- * @param  firstOrderCells       [-] flag for setting a cell to a locally zero limiter
- * @param  upper->cr->cellcenter [-] cell center coordinates, upper cell
- * @param  lower->cl->cellcenter [-] cell center coordinates, lower cell
- * @param  vecLimiter            [-] flag to limit vectors consistently
- ******************************************************************************/
-$rule pointwise(limiterv3d(X)<-cellcenter,X,cellmaxminv3d(X),gradv3d(X),
-                               epsilon2v3d(X),nisPow,firstOrderCells,
-                               upper->cr->cellcenter,
-                               lower->cl->cellcenter,vecLimiter),
-      constraint(geom_cells,NISc_limiter)
-{
-  const vect3d Xcc = $X;
-  vect3d qmax = $cellmaxminv3d(X).max;
-  vect3d qmin = $cellmaxminv3d(X).min;
-  const tens3d Xgr = $gradv3d(X);
-  real epsilon2 = $epsilon2v3d(X);
-
-  vect3d limi = ($firstOrderCells != 0)?vect3d(0.,0.,0.):vect3d(1.,1.,1.);
-
-  const int usz = $upper.size();
-  for(int i=0;i<usz;++i)
-  {
-    const vect3d drl = $upper[i]->$cr->$cellcenter - $cellcenter;
-    real qdifx = dot(Xgr.x,drl);
-    limi.x = min(limi.x,nis_limit(Xcc.x,qmin.x,qmax.x,qdifx,epsilon2,$nisPow));
-    real qdify = dot(Xgr.y,drl);
-    limi.y = min(limi.y,nis_limit(Xcc.y,qmin.y,qmax.y,qdify,epsilon2,$nisPow));
-    real qdifz = dot(Xgr.z,drl);
-    limi.z = min(limi.z,nis_limit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2,$nisPow));
-  }
-
-  const int lsz= $lower.size();
-  for(int i=0;i<lsz;++i)
-  {
-    const vect3d drl = $lower[i]->$cl->$cellcenter - $cellcenter;
-    real qdifx = dot(Xgr.x,drl);
-    limi.x = min(limi.x,nis_limit(Xcc.x,qmin.x,qmax.x,qdifx,epsilon2,$nisPow));
-    real qdify = dot(Xgr.y,drl);
-    limi.y = min(limi.y,nis_limit(Xcc.y,qmin.y,qmax.y,qdify,epsilon2,$nisPow));
-    real qdifz = dot(Xgr.z,drl);
-    limi.z = min(limi.z,nis_limit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2,$nisPow));
-  }
-
-  if($vecLimiter)
-  {
-    // limit vector based on strongest gradient (min velocity) direction
-    real limv = limi.x;
-    for(int i = 1;i<3;++i)
-    {
-      limv = min(limv,limi[i]);
-    }
-    $limiterv3d(X) = vect3d(limv,limv,limv);
-  } else {
-    $limiterv3d(X) = limi;
-  }
-
-// Zero out the sensitivity contribution of the limiter, since the limiter
-// function 'acts' more as a functional constant
-#if USE_AUTODIFF
-for (int i = 0; i<3;i++)
-{
-  #if MULTIFAD
-  for (int j=0;j<$limiterv3d(X)[i].maxN;j++)
-  { 
-    $limiterv3d(X)[i].grad[j] = 0.0;
-  }
-  #else
-  $limiterv3d(X)[i].grad = 0.0;
-  #if AUTODIFF2ND
-  $limiterv3d(X)[i].grad2 = 0.0;
-  #endif
-  #endif
-}
-#endif
-}
-
-$type X storeVec<real>;
-/** ****************************************************************************
- * @brief Nishikawa limiter for vectors, cell center
- * @retval limiterv(X)             [-] vector limiter parametric
- * @param  cellcenter              [-] cellcenter coordinates
- * @param  X                       [-] vector value at cell center
- * @param  cellmaxminv(X)          [-] max and min for cell stencil
- * @param  gradv(X)                [-] cell center gradient
- * @param  epsilon2v(X)            [-] Venkatakrishnan limiter parameter
- * @param  nisPow                  [-] order of limiter
- * @param  firstOrderCells         [-] flag for setting a cell to a locally zero limiter
- * @param  upper->cr->cellcenter   [-] face center coordinates, upper face
- * @param  lower->cl->cellcenter   [-] face center coordinates, lower face
- * @param  vecLimiter              [-] flag to limit vectors consistently
- ******************************************************************************/
-$rule pointwise(limiterv(X)<-cellcenter,X,gradv(X),cellmaxminv(X),epsilon2v(X),
-                             nisPow,firstOrderCells,upper->cr->cellcenter,
-                             lower->cl->cellcenter,vecLimiter),
-      constraint(geom_cells,NISc_limiter),prelude
-{
-  $limiterv(X).setVecSize($X.vecSize());
-} compute {
-  const int vs = $*X.vecSize();
-
-  real limi[vs];
-  for(int j=0;j<vs;++j) {
-    const real Xcc = $X[j];
-    real qmax = $cellmaxminv(X)[j].max;
-    real qmin = $cellmaxminv(X)[j].min;
-    real epsilon2 = $epsilon2v(X)[j];
-    const vect3d Xgr = $gradv(X)[j];
-
-    limi[j] = ($firstOrderCells != 0)?0.0:1.0;
+    vect3d limi = ($firstOrderCells != 0)?vect3d(0.,0.,0.):vect3d(1.,1.,1.);
 
     const int usz = $upper.size();
     for(int i=0;i<usz;++i)
     {
       const vect3d drl = $upper[i]->$cr->$cellcenter - $cellcenter;
-      real qdif = dot(Xgr,drl);
-      limi[j] = min(limi[j],nis_limit(Xcc,qmin,qmax,qdif,epsilon2,$nisPow));
+      real qdifx = dot(Xgr.x,drl);
+      limi.x = min(limi.x,nis_limit(Xcc.x,qmin.x,qmax.x,qdifx,epsilon2,$nisPow));
+      real qdify = dot(Xgr.y,drl);
+      limi.y = min(limi.y,nis_limit(Xcc.y,qmin.y,qmax.y,qdify,epsilon2,$nisPow));
+      real qdifz = dot(Xgr.z,drl);
+      limi.z = min(limi.z,nis_limit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2,$nisPow));
     }
 
     const int lsz= $lower.size();
     for(int i=0;i<lsz;++i)
     {
       const vect3d drl = $lower[i]->$cl->$cellcenter - $cellcenter;
-      real qdif = dot(Xgr,drl);
-      limi[j] = min(limi[j],nis_limit(Xcc,qmin,qmax,qdif,epsilon2,$nisPow));
+      real qdifx = dot(Xgr.x,drl);
+      limi.x = min(limi.x,nis_limit(Xcc.x,qmin.x,qmax.x,qdifx,epsilon2,$nisPow));
+      real qdify = dot(Xgr.y,drl);
+      limi.y = min(limi.y,nis_limit(Xcc.y,qmin.y,qmax.y,qdify,epsilon2,$nisPow));
+      real qdifz = dot(Xgr.z,drl);
+      limi.z = min(limi.z,nis_limit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2,$nisPow));
     }
 
-// Zero out the sensitivity contribution of the limiter, since the limiter
-// function 'acts' more as a functional constant
-#if USE_AUTODIFF
-    #ifdef MULTIFAD
-    for (int i=0;i<$limiterv(X)[j].maxN;j++)
-    { 
-      limi[j].grad[i] = 0.0;
-    }
-    #else
-    limi[j].grad = 0.0;
-    #ifdef AUTODIFF2ND
-    limi[j].grad2 = 0.0;
-    #endif
-    #endif
-#endif
-    $limiterv(X)[j] = limi[j];
-  }
-  if($vecLimiter){
-    // Apply limiter in direction of strongest gradient
-    real limv = limi[0];
-    for(int j = 1; j < vs; j++)
+  // Zero out the sensitivity contribution of the limiter, since the limiter
+  // function 'acts' more as a functional constant
+    if($vecLimiter)
     {
-      limv = min(limv,limi[j]);
-    }
-    for(int j = 0; j < vs; j++)
+      // limit vector based on strongest gradient (min velocity) direction
+      real limv = limi.x;
+      for(int i = 1;i<3;++i)
+      {
+        limv = min(limv,limi[i]);
+      }
+      $limiterv3d(X) = realToDouble(vect3d(limv,limv,limv));
+    } 
+    else 
     {
-      $limiterv(X)[j] = limv;
+      $limiterv3d(X) = realToDouble(limi);
     }
   }
-}
-//==========================================================================
-//
-// Nishikawa Limiter, cell center, alternate stencil
-//
-//==========================================================================
-$type X store<real>;
-/** ****************************************************************************
- * @brief Nishikawa limiter for scalars, special stencil
- * @retval limiters(X)             [-] scalar limiter parametric
- * @param  cellcenter              [-] cellcenter coordinates
- * @param  X                       [-] scalar value at cell center
- * @param  cellmaxmins(X)          [-] max and min for cell stencil
- * @param  grads(X)                [-] cell center gradient
- * @param  epsilon2s(X)            [-] Venkatakrishnan limiter parameter
- * @param  nisPow                  [-] order of limiter
- * @param  firstOrderCells         [-] flag for setting a cell to a locally zero limiter
- * @param  cellStencil->cellcenter [-] cell center coordinates, neighbor cells
- ******************************************************************************/
-$rule pointwise(stencil::limiters(X)<-cellcenter,X,cellmaxmins(X),grads(X),
-                                      epsilon2s(X),nisPow,firstOrderCells,
-                                      cellStencil->cellcenter),
-      constraint(geom_cells,NISc_limiter)
-{
-  const real Xcc = $X;
-  const vect3d cctr = $cellcenter;
 
-  real qmax = $cellmaxmins(X).max;
-  real qmin = $cellmaxmins(X).min;
-  const vect3d Xgr = $grads(X);
-
-  const real epsilon2 = $epsilon2s(X);
-
-  real limi = ($firstOrderCells != 0)?0.0:1.0;
-
-  const int ssz = $cellStencil.size();
-  for(int i=0;i<ssz;++i)
+  $type X storeVec<real>;
+  /** ****************************************************************************
+   * @brief Nishikawa limiter for vectors, cell center
+   * @retval limiterv(X)             [-] vector limiter parametric
+   * @param  cellcenter              [-] cellcenter coordinates
+   * @param  X                       [-] vector value at cell center
+   * @param  cellmaxminv(X)          [-] max and min for cell stencil
+   * @param  gradv(X)                [-] cell center gradient
+   * @param  epsilon2v(X)            [-] Venkatakrishnan limiter parameter
+   * @param  nisPow                  [-] order of limiter
+   * @param  firstOrderCells         [-] flag for setting a cell to a locally zero limiter
+   * @param  upper->cr->cellcenter   [-] face center coordinates, upper face
+   * @param  lower->cl->cellcenter   [-] face center coordinates, lower face
+   * @param  vecLimiter              [-] flag to limit vectors consistently
+   ******************************************************************************/
+  $rule pointwise(limiterv(X)<-cellcenter,X,gradv(X),cellmaxminv(X),epsilon2v(X),
+                              nisPow,firstOrderCells,upper->cr->cellcenter,
+                              lower->cl->cellcenter,vecLimiter),
+        constraint(geom_cells,NISc_limiter),prelude
   {
-    const vect3d drl = $cellStencil[i]->$cellcenter - cctr;
-    real qdif = dot(Xgr,drl);
-    limi = min(limi,nis_limit(Xcc,qmin,qmax,qdif,epsilon2,$nisPow));
-  }
-  $limiters(X) = limi;
-
-// Zero out the sensitivity contribution of the limiter, since the limiter
-// function 'acts' more as a functional constant
-#if USE_AUTODIFF
-#if MULTIFAD
-for (int j=0;j<$limiters(X).maxN;j++)
-  { 
-    $limiters(X).grad[j] = 0.0;
-  }
-#else
-  $limiters(X).grad = 0.0;
-#if AUTODIFF2ND
-  $limiters(X).grad2 = 0.0;
-#endif
-#endif
-#endif
-}
-
-$type X store<vect3d>;
-/** ****************************************************************************
- * @brief Nishikawa limiter for vect3d, special stencil
- * @retval limiterv3d(X)           [-] vect3d limiter parametric
- * @param  cellcenter              [-] cellcenter coordinates
- * @param  X                       [-] vect3d value at cell center
- * @param  cellmaxminv3d(X)        [-] max and min for cell stencil
- * @param  gradv3d(X)              [-] cell center gradient
- * @param  epsilon2v3d(X)          [-] Venkatakrishnan limiter parameter
- * @param  nisPow                  [-] order of limiter
- * @param  firstOrderCells         [-] flag for setting a cell to a locally zero limiter
- * @param  cellStencil->cellcenter [-] cell center coordinates, neighbor cells
- * @param  vecLimiter              [-] flag to limit vectors consistently
- ******************************************************************************/
-$rule pointwise(limiterv3d(X)<-cellcenter,X,cellmaxminv3d(X),gradv3d(X),
-                              epsilon2v3d(X),nisPow,firstOrderCells,
-                              cellStencil->cellcenter,
-                              vecLimiter),
-      constraint(geom_cells,NISc_limiter)
-{
-  const vect3d Xcc = $X;
-  const vect3d cctr = $cellcenter;
-
-  vect3d qmax = $cellmaxminv3d(X).max;
-  vect3d qmin = $cellmaxminv3d(X).min;
-  const tens3d Xgr = $gradv3d(X);
-
-  real epsilon2 = $epsilon2v3d(X);
-
-  vect3d limi = ($firstOrderCells != 0)?vect3d(0.,0.,0.):vect3d(1.,1.,1.);
-
-  const int ssz = $cellStencil.size();
-  for(int i=0;i<ssz;++i)
+    $limiterv(X).setVecSize($X.vecSize());
+  } 
+  compute 
   {
-    const vect3d drl = $cellStencil[i]->$cellcenter - cctr;
-    real qdifx = dot(Xgr.x,drl);
-    limi.x = min(limi.x,nis_limit(Xcc.x,qmin.x,qmax.x,qdifx,epsilon2,$nisPow));
-    real qdify = dot(Xgr.y,drl);
-    limi.y = min(limi.y,nis_limit(Xcc.y,qmin.y,qmax.y,qdify,epsilon2,$nisPow));
-    real qdifz = dot(Xgr.z,drl);
-    limi.z = min(limi.z,nis_limit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2,$nisPow));
-  }
-  if($vecLimiter)
-  {
-    // limit vector based on strongest gradient (min velocity) direction
-    real limv = limi.x;
-    for(int i = 1;i<3;++i)
+    const int vs = $*X.vecSize();
+
+    real limi[vs];
+    for(int j=0;j<vs;++j) 
     {
-      limv = min(limv,limi[i]);
+      const real Xcc = $X[j];
+      real qmax = $cellmaxminv(X)[j].max;
+      real qmin = $cellmaxminv(X)[j].min;
+      real epsilon2 = $epsilon2v(X)[j];
+      const vect3d Xgr = $gradv(X)[j];
+
+      limi[j] = ($firstOrderCells != 0)?0.0:1.0;
+
+      const int usz = $upper.size();
+      for(int i=0;i<usz;++i)
+      {
+        const vect3d drl = $upper[i]->$cr->$cellcenter - $cellcenter;
+        real qdif = dot(Xgr,drl);
+        limi[j] = min(limi[j],nis_limit(Xcc,qmin,qmax,qdif,epsilon2,$nisPow));
+      }
+
+      const int lsz= $lower.size();
+      for(int i=0;i<lsz;++i)
+      {
+        const vect3d drl = $lower[i]->$cl->$cellcenter - $cellcenter;
+        real qdif = dot(Xgr,drl);
+        limi[j] = min(limi[j],nis_limit(Xcc,qmin,qmax,qdif,epsilon2,$nisPow));
+      }
+
+  // Zero out the sensitivity contribution of the limiter, since the limiter
+  // function 'acts' more as a functional constant
+      $limiterv(X)[j] = realToDouble(limi[j]);
     }
-    $limiterv3d(X) = vect3d(limv,limv,limv);
-  } else {
-    $limiterv3d(X) = limi;
+    if($vecLimiter)
+    {
+      // Apply limiter in direction of strongest gradient
+      real limv = limi[0];
+      for(int j = 1; j < vs; j++)
+      {
+        limv = min(limv,limi[j]);
+      }
+      for(int j = 0; j < vs; j++)
+      {
+        $limiterv(X)[j] = realToDouble(limv);
+      }
+    }
   }
+  //==========================================================================
+  //
+  // Nishikawa Limiter, cell center, alternate stencil
+  //
+  //==========================================================================
+  $type X store<real>;
+  /** ****************************************************************************
+   * @brief Nishikawa limiter for scalars, special stencil
+   * @retval limiters(X)             [-] scalar limiter parametric
+   * @param  cellcenter              [-] cellcenter coordinates
+   * @param  X                       [-] scalar value at cell center
+   * @param  cellmaxmins(X)          [-] max and min for cell stencil
+   * @param  grads(X)                [-] cell center gradient
+   * @param  epsilon2s(X)            [-] Venkatakrishnan limiter parameter
+   * @param  nisPow                  [-] order of limiter
+   * @param  firstOrderCells         [-] flag for setting a cell to a locally zero limiter
+   * @param  cellStencil->cellcenter [-] cell center coordinates, neighbor cells
+   ******************************************************************************/
+  $rule pointwise(stencil::limiters(X)<-cellcenter,X,cellmaxmins(X),grads(X),
+                                        epsilon2s(X),nisPow,firstOrderCells,
+                                        cellStencil->cellcenter),
+        constraint(geom_cells,NISc_limiter)
+  {
+    const real Xcc = $X;
+    const vect3d cctr = $cellcenter;
 
-// Zero out the sensitivity contribution of the limiter, since the limiter
-// function 'acts' more as a functional constant
-#if USE_AUTODIFF
-for (int i = 0; i<3;i++)
-{
-  #if MULTIFAD
-  for (int j=0;j<$limiterv3d(X)[i].maxN;j++)
-  { 
-    $limiterv3d(X)[i].grad[j] = 0.0;
-  }
-  #else
-  $limiterv3d(X)[i].grad = 0.0;
-  #if AUTODIFF2ND
-  $limiterv3d(X)[i].grad2 = 0.0;
-  #endif
-  #endif
-}
-#endif
-}
+    real qmax = $cellmaxmins(X).max;
+    real qmin = $cellmaxmins(X).min;
+    const vect3d Xgr = $grads(X);
 
-$type X storeVec<real>;
-/** ****************************************************************************
- * @brief Nishikawa limiter for vectors, cell center
- * @retval limiterv(X)             [-] vector limiter parametric
- * @param  cellcenter              [-] cellcenter coordinates
- * @param  X                       [-] vector value at cell center
- * @param  cellmaxminv(X)          [-] max and min for cell stencil
- * @param  gradv(X)                [-] cell center gradient
- * @param  epsilon2v(X)            [-] Venkatakrishnan limiter parameter
- * @param  nisPow                  [-] order of limiter
- * @param  firstOrderCells         [-] flag for setting a cell to a locally zero limiter
- * @param  cellStencil->cellcenter [-] cell center coordinates, neighbor cells
- * @param  vecLimiter              [-] flag to limit vectors consistently
- ******************************************************************************/
-$rule pointwise(limiterv(X)<-cellcenter,X,cellmaxminv(X),gradv(X),epsilon2v(X),
-                             nisPow,firstOrderCells,cellStencil->cellcenter,vecLimiter),
-      constraint(geom_cells,NISc_limiter),prelude
-{
-  $limiterv(X).setVecSize($X.vecSize());
-} compute {
-  const int vs = $*X.vecSize();
-  const vect3d cctr = $cellcenter;
+    const real epsilon2 = $epsilon2s(X);
 
-  real limi[vs];
-  for(int j=0;j<vs;++j) {
-    const real Xcc = $X[j];
-    real qmax = $cellmaxminv(X)[j].max;
-    real qmin = $cellmaxminv(X)[j].min;
-    real epsilon2 = $epsilon2v(X)[j];
-
-    const vect3d Xgr = $gradv(X)[j];
-
-    limi[j] = ($firstOrderCells != 0)?0.0:1.0;
+    real limi = ($firstOrderCells != 0)?0.0:1.0;
 
     const int ssz = $cellStencil.size();
     for(int i=0;i<ssz;++i)
     {
       const vect3d drl = $cellStencil[i]->$cellcenter - cctr;
       real qdif = dot(Xgr,drl);
-      limi[j] = min(limi[j],nis_limit(Xcc,qmin,qmax,qdif,epsilon2,$nisPow));
+      limi = min(limi,nis_limit(Xcc,qmin,qmax,qdif,epsilon2,$nisPow));
     }
-// Zero out the sensitivity contribution of the limiter, since the limiter
-// function 'acts' more as a functional constant
-#if USE_AUTODIFF
-    #ifdef MULTIFAD
-    for (int i=0;i<$limiterv(X)[j].maxN;j++)
-    { 
-      limi[j].grad[i] = 0.0;
-    }
-    #else
-    limi[j].grad = 0.0;
-    #ifdef AUTODIFF2ND
-    limi[j].grad2 = 0.0;
-    #endif
-    #endif
-#endif
-    $limiterv(X)[j] = limi[j];
+  // Zero out the sensitivity contribution of the limiter, since the limiter
+  // function 'acts' more as a functional constant
+    $limiters(X) = realToDouble(limi);
   }
-  if($vecLimiter){
-    // Apply limiter in direction of strongest gradient
-    real limv = limi[0];
-    for(int j = 1; j < vs; j++)
+
+  $type X store<vect3d>;
+  /** ****************************************************************************
+   * @brief Nishikawa limiter for vect3d, special stencil
+   * @retval limiterv3d(X)           [-] vect3d limiter parametric
+   * @param  cellcenter              [-] cellcenter coordinates
+   * @param  X                       [-] vect3d value at cell center
+   * @param  cellmaxminv3d(X)        [-] max and min for cell stencil
+   * @param  gradv3d(X)              [-] cell center gradient
+   * @param  epsilon2v3d(X)          [-] Venkatakrishnan limiter parameter
+   * @param  nisPow                  [-] order of limiter
+   * @param  firstOrderCells         [-] flag for setting a cell to a locally zero limiter
+   * @param  cellStencil->cellcenter [-] cell center coordinates, neighbor cells
+   * @param  vecLimiter              [-] flag to limit vectors consistently
+   ******************************************************************************/
+  $rule pointwise(limiterv3d(X)<-cellcenter,X,cellmaxminv3d(X),gradv3d(X),
+                                epsilon2v3d(X),nisPow,firstOrderCells,
+                                cellStencil->cellcenter,
+                                vecLimiter),
+        constraint(geom_cells,NISc_limiter)
+  {
+    const vect3d Xcc = $X;
+    const vect3d cctr = $cellcenter;
+
+    vect3d qmax = $cellmaxminv3d(X).max;
+    vect3d qmin = $cellmaxminv3d(X).min;
+    const tens3d Xgr = $gradv3d(X);
+
+    real epsilon2 = $epsilon2v3d(X);
+
+    vect3d limi = ($firstOrderCells != 0)?vect3d(0.,0.,0.):vect3d(1.,1.,1.);
+
+    const int ssz = $cellStencil.size();
+    for(int i=0;i<ssz;++i)
     {
-      limv = min(limv,limi[j]);
+      const vect3d drl = $cellStencil[i]->$cellcenter - cctr;
+      real qdifx = dot(Xgr.x,drl);
+      limi.x = min(limi.x,nis_limit(Xcc.x,qmin.x,qmax.x,qdifx,epsilon2,$nisPow));
+      real qdify = dot(Xgr.y,drl);
+      limi.y = min(limi.y,nis_limit(Xcc.y,qmin.y,qmax.y,qdify,epsilon2,$nisPow));
+      real qdifz = dot(Xgr.z,drl);
+      limi.z = min(limi.z,nis_limit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2,$nisPow));
     }
-    for(int j = 0; j < vs; j++)
+
+  // Zero out the sensitivity contribution of the limiter, since the limiter
+  // function 'acts' more as a functional constant
+    if($vecLimiter)
     {
-      $limiterv(X)[j] = limv;
+      // limit vector based on strongest gradient (min velocity) direction
+      real limv = limi.x;
+      for(int i = 1;i<3;++i)
+      {
+        limv = min(limv,limi[i]);
+      }
+      $limiterv3d(X) = realToDouble(vect3d(limv,limv,limv));
+    } 
+    else 
+    {
+      $limiterv3d(X) = realToDouble(limi);
     }
   }
-}
+
+  $type X storeVec<real>;
+  /** ****************************************************************************
+   * @brief Nishikawa limiter for vectors, cell center
+   * @retval limiterv(X)             [-] vector limiter parametric
+   * @param  cellcenter              [-] cellcenter coordinates
+   * @param  X                       [-] vector value at cell center
+   * @param  cellmaxminv(X)          [-] max and min for cell stencil
+   * @param  gradv(X)                [-] cell center gradient
+   * @param  epsilon2v(X)            [-] Venkatakrishnan limiter parameter
+   * @param  nisPow                  [-] order of limiter
+   * @param  firstOrderCells         [-] flag for setting a cell to a locally zero limiter
+   * @param  cellStencil->cellcenter [-] cell center coordinates, neighbor cells
+   * @param  vecLimiter              [-] flag to limit vectors consistently
+   ******************************************************************************/
+  $rule pointwise(limiterv(X)<-cellcenter,X,cellmaxminv(X),gradv(X),epsilon2v(X),
+                              nisPow,firstOrderCells,cellStencil->cellcenter,vecLimiter),
+        constraint(geom_cells,NISc_limiter),prelude
+  {
+    $limiterv(X).setVecSize($X.vecSize());
+  } 
+  compute 
+  {
+    const int vs = $*X.vecSize();
+    const vect3d cctr = $cellcenter;
+
+    real limi[vs];
+    for(int j=0;j<vs;++j) 
+    {
+      const real Xcc = $X[j];
+      real qmax = $cellmaxminv(X)[j].max;
+      real qmin = $cellmaxminv(X)[j].min;
+      real epsilon2 = $epsilon2v(X)[j];
+
+      const vect3d Xgr = $gradv(X)[j];
+
+      limi[j] = ($firstOrderCells != 0)?0.0:1.0;
+
+      const int ssz = $cellStencil.size();
+      for(int i=0;i<ssz;++i)
+      {
+        const vect3d drl = $cellStencil[i]->$cellcenter - cctr;
+        real qdif = dot(Xgr,drl);
+        limi[j] = min(limi[j],nis_limit(Xcc,qmin,qmax,qdif,epsilon2,$nisPow));
+      }
+  // Zero out the sensitivity contribution of the limiter, since the limiter
+  // function 'acts' more as a functional constant
+      $limiterv(X)[j] = realToDouble(limi[j]);
+    }
+    if($vecLimiter)
+    {
+      // Apply limiter in direction of strongest gradient
+      real limv = limi[0];
+      for(int j = 1; j < vs; j++)
+      {
+        limv = min(limv,limi[j]);
+      }
+      for(int j = 0; j < vs; j++)
+      {
+        $limiterv(X)[j] = realToDouble(limv);
+      }
+    }
+  }
 }

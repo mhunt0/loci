@@ -360,7 +360,8 @@ namespace Loci {
   template <class T> 
   int dstoreVecRepI<T>::get_mpi_size( IDENTITY_CONVERTER c, const entitySet &eset) 
   {
-    return (sizeof(T)*eset.size()*size + sizeof(int));
+    T *p = 0 ;
+    return cpypacksize(&size,1) + cpypacksize(p,size*eset.size()) ;
   }
   
   //*************************************************************************/ 
@@ -382,25 +383,26 @@ namespace Loci {
   {
     entitySet                :: const_iterator ci;
     typename HASH_MAP(int,std::vector<T>)::const_iterator iter;
-    int       arraySize =0, numContainers = 0;
     std::vector<T> newVec;
 
     typedef data_schema_traits<T> schema_traits; 
 
+    int byteCount = cpypacksize(&size,1) ;
     for( ci = eset.begin(); ci != eset.end(); ++ci) {
       iter = attrib_data.find(*ci);
       if( iter != attrib_data.end() ) {
         newVec = iter->second;
         for( int ivec = 0; ivec < size; ivec++){
           typename schema_traits::Converter_Type cvtr( newVec[ivec] );
-          arraySize += cvtr.getSize();
+          int arraySize = cvtr.getSize();
+          typename schema_traits::Converter_Base_Type *p=0 ;
+          byteCount += cpypacksize(&arraySize,1) ;
+          byteCount += cpypacksize(p,arraySize) ;
         }
       }
     }
-    numContainers =  size*eset.size();
 
-    return(arraySize*sizeof(typename schema_traits::Converter_Base_Type) +
-           (numContainers+1)*sizeof(int) );
+    return byteCount ;
   }
 
   //*************************************************************************/
@@ -435,8 +437,7 @@ namespace Loci {
     typedef typename data_schema_traits<T>::Schema_Converter schema_converter;
     schema_converter traits_type;
 
-    MPI_Pack( &size, 1, MPI_INT, outbuf, outcount, &position, 
-              MPI_COMM_WORLD) ;
+    cpypack(outbuf,position,outcount,&size,1) ;
 
     packdata( traits_type, outbuf, position, outcount, eset);
   }
@@ -454,8 +455,7 @@ namespace Loci {
       iter = attrib_data.find(*ci);
       if( iter == attrib_data.end() )  continue;
       inbuf = iter->second;
-      MPI_Pack( &inbuf[0], size*sizeof(T), MPI_BYTE, outbuf, outcount, &position, 
-                MPI_COMM_WORLD) ;
+      cpypack(outbuf,position,outcount,&inbuf[0],size) ;
     }
   }
 
@@ -472,10 +472,8 @@ namespace Loci {
     typedef data_schema_traits<T> schema_traits; 
     typedef typename schema_traits::Converter_Base_Type dtype;
 
-    int typesize = sizeof(dtype);
     std::vector<dtype> inbuf;
 
-    int incount, stateSize;
     for( ci = eset.begin(); ci != eset.end(); ++ci) {
       iter = attrib_data.find(*ci);
       if( iter == attrib_data.end() ) continue;
@@ -483,16 +481,13 @@ namespace Loci {
       for( int ivec = 0; ivec < size; ivec++){
         typename schema_traits::Converter_Type cvtr( newVec[ivec] );
 
-        stateSize  = cvtr.getSize();
+        int stateSize  = cvtr.getSize();
         if( size_t(stateSize) > inbuf.size() ) inbuf.resize(stateSize);
 
         cvtr.getState( &inbuf[0], stateSize);
-        MPI_Pack(&stateSize, 1, MPI_INT, outbuf, outcount,&position,
-                 MPI_COMM_WORLD);
 
-        incount =  stateSize*typesize;
-        MPI_Pack(&inbuf[0], incount, MPI_BYTE, outbuf, outcount, &position, 
-                 MPI_COMM_WORLD) ;
+        cpypack(outbuf,position,outcount,&stateSize,1) ;
+        cpypack(outbuf,position,outcount,&inbuf[0],stateSize) ;
       }
     }
 
@@ -507,7 +502,7 @@ namespace Loci {
     schema_converter traits_type;
 
     int M ;
-    MPI_Unpack(inbuf, insize, &position, &M, 1, MPI_INT, MPI_COMM_WORLD) ;
+    cpyunpack(inbuf,position,insize,&M,1) ;
     if( M > size) {
       set_elem_size(M) ;
     }
@@ -521,15 +516,12 @@ namespace Loci {
                                      int &insize, const sequence &seq)
   {
 
-    int   outcount;
     std::vector<T>  outbuf(size);
     sequence :: const_iterator ci;
 
     for( ci = seq.begin(); ci != seq.end(); ++ci) {
       attrib_data[*ci].resize(size);
-      outcount = size*sizeof(T);
-      MPI_Unpack( inbuf, insize, &position, &outbuf[0], outcount, 
-                  MPI_BYTE, MPI_COMM_WORLD) ;
+      cpyunpack(inbuf,position,insize,&outbuf[0],size) ;
       for( int i = 0; i < size; i++) 
         attrib_data[*ci][i] = outbuf[i];
     }
@@ -551,23 +543,16 @@ namespace Loci {
     typedef data_schema_traits<T> schema_traits;
     typedef typename schema_traits::Converter_Base_Type dtype;
 
-    int typesize = sizeof(dtype);
-    int  stateSize, outcount;
-
     std::vector<dtype> outbuf;
     for( ci = seq.begin(); ci != seq.end(); ++ci) {
       if( attrib_data[*ci].size() < size) {
         attrib_data[*ci].resize(size);
       }
       for( int ivec = 0; ivec < size; ivec++) {
-        outcount = sizeof(int);
-        MPI_Unpack(inbuf, insize, &position, &stateSize, 1, MPI_INT, 
-                   MPI_COMM_WORLD) ;
+        int stateSize=0 ;
+        cpyunpack(inbuf,position,insize,&stateSize,1) ;
         if( size_t(stateSize) > outbuf.size() ) outbuf.resize(stateSize);
-
-        outcount = stateSize*typesize;
-        MPI_Unpack(inbuf, insize, &position, &outbuf[0], outcount, MPI_BYTE, 
-                   MPI_COMM_WORLD) ;
+        cpyunpack(inbuf,position,insize,&outbuf[0],stateSize) ;
 
         typename schema_traits::Converter_Type  cvtr(attrib_data[*ci][ivec]);
         cvtr.setState( &outbuf[0], stateSize);

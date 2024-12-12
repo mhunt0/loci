@@ -370,12 +370,14 @@ namespace Loci {
   template <class T>
   int dmultiStoreRepI<T>::get_mpi_size( IDENTITY_CONVERTER c, const entitySet &eset)
   {
-    int size = 0 ;
+    int packsize = 0 ;
     FORALL(eset,i) {
-      size  +=  attrib_data[i].size();
+      int size = attrib_data[i].size() ;
+      packsize += cpypacksize(&size,1) ;
+      packsize += cpypacksize(&attrib_data[i][0],size);
     } ENDFORALL ;
     
-    return( size*sizeof(T) + eset.size()*sizeof(int) ) ;
+    return packsize ;
   }
   //**************************************************************************/
 
@@ -395,26 +397,27 @@ namespace Loci {
     entitySet :: const_iterator  ei;
     typename HASH_MAP(int,std::vector<T>)::const_iterator ci;
 
-    int     arraySize =0, numContainers = 0;
     typedef data_schema_traits<T> schema_traits;
 
+    int packsize = 0 ;
     for( ei = eset.begin(); ei != eset.end(); ++ei) {
       ci = attrib_data.find(*ei);
       if( ci != attrib_data.end() ) {
         newVec      = ci->second;
-        numContainers += newVec.size();
-        for( int ivec = 0; ivec < newVec.size(); ivec++) {
+        int sz = newVec.size() ;
+        packsize += cpypacksize(&sz,1) ;
+        for( int ivec = 0; ivec < sz; ivec++) {
           typename schema_traits::Converter_Type cvtr(newVec[ivec] );
-          arraySize += cvtr.getSize() ;
+          int arraySize = cvtr.getSize() ;
+          typename schema_traits::Converter_Base_Type *p = 0 ;
+          packsize += cpypacksize(&arraySize,1) ;
+          packsize += cpypacksize(p,arraySize) ;
         }
       }
     }
 
-    int  vsize = arraySize*sizeof(typename schema_traits::Converter_Base_Type) + 
-      numContainers*sizeof(int)  +   // size of each object
-      eset.size()*sizeof(int);       // size of each entity
+    return packsize ;
 
-    return(vsize);
   }
   //**************************************************************************/
 
@@ -447,7 +450,7 @@ namespace Loci {
   void dmultiStoreRepI<T>::packdata( IDENTITY_CONVERTER c, void *outbuf, int &position,
                                      int outcount, const entitySet &eset )
   {
-    int vsize, incount;
+    int vsize ;
     std::vector<T>   inbuf;
     entitySet :: const_iterator   ci;
     typename HASH_MAP(int,std::vector<T> )::const_iterator iter;
@@ -457,11 +460,8 @@ namespace Loci {
       if( iter != attrib_data.end() ) {
         inbuf   = iter->second;
         vsize   = inbuf.size();
-        incount = vsize*sizeof(T);
-        MPI_Pack( &vsize, 1, MPI_INT, outbuf, outcount, &position, 
-                  MPI_COMM_WORLD) ;
-        MPI_Pack( &inbuf[0], incount, MPI_BYTE, outbuf, outcount, &position, 
-                  MPI_COMM_WORLD) ;
+        cpypack(outbuf,position,outcount,&vsize,1) ;
+        cpypack(outbuf,position,outcount,&inbuf[0],vsize) ;
       } 
     }
 
@@ -480,14 +480,11 @@ namespace Loci {
     typedef data_schema_traits<T> schema_traits; 
     typedef typename schema_traits::Converter_Base_Type dtype;
 
-    int typesize = sizeof(dtype);
     std::vector<dtype> inbuf;
 
-    int incount;
     for( ci = eset.begin(); ci != eset.end(); ++ci) {
       vsize = attrib_data[*ci].size();
-      MPI_Pack(&vsize,1, MPI_INT, outbuf, outcount, &position,
-               MPI_COMM_WORLD);
+      cpypack(outbuf,position,outcount,&vsize,1) ;
       for( int ivec = 0; ivec < vsize; ivec++){
         typename data_schema_traits<T>::Converter_Type
           cvtr( attrib_data[*ci][ivec] );
@@ -497,12 +494,8 @@ namespace Loci {
 
         cvtr.getState( &inbuf[0], stateSize);
 
-        MPI_Pack(&stateSize,1, MPI_INT, outbuf, outcount,&position,
-                 MPI_COMM_WORLD);
-
-        incount =  stateSize*typesize;
-        MPI_Pack(&inbuf[0], incount, MPI_BYTE, outbuf, outcount, &position, 
-                 MPI_COMM_WORLD) ;
+        cpypack(outbuf,position,outcount,&stateSize,1) ;
+        cpypack(outbuf,position,outcount,&inbuf[0],stateSize) ;
       }
     }
   }
@@ -533,20 +526,18 @@ namespace Loci {
                                        int &insize, const sequence &seq)
   {
 
-    unsigned int   outcount, vsize;
+    unsigned int   vsize;
     std::vector<T>  outbuf;
     sequence :: const_iterator ci;
 
     for( ci = seq.begin(); ci != seq.end(); ++ci) {
-      MPI_Unpack( inbuf, insize, &position, &vsize, 1, MPI_INT, 
-                  MPI_COMM_WORLD) ;
+      cpyunpack(inbuf,position,insize,&vsize,1) ;
 
       if( vsize > outbuf.size() ) outbuf.resize(vsize);
 
       attrib_data[*ci].resize(vsize);
-      outcount = vsize*sizeof(T);
-      MPI_Unpack( inbuf, insize, &position, &outbuf[0], outcount, 
-                  MPI_BYTE, MPI_COMM_WORLD) ;
+      cpyunpack(inbuf,position,insize,&outbuf[0],vsize) ;
+
       for(typename std::vector<T>::size_type ivec = 0; ivec < vsize; ivec++) 
         attrib_data[*ci][ivec] = outbuf[ivec];
     }
@@ -559,12 +550,10 @@ namespace Loci {
   {
 
     sequence :: const_iterator ci;
-    int  stateSize, outcount, vsize;
+    int  stateSize, vsize;
 
     typedef data_schema_traits<T> schema_traits;
     typedef typename schema_traits::Converter_Base_Type dtype;
-
-    int typesize = sizeof(dtype);
 
     std::vector<dtype> outbuf;
 
@@ -573,17 +562,14 @@ namespace Loci {
         std::cerr << "Warning: Entity not present in entityset " << *ci << endl;
         continue;
       }
-      MPI_Unpack( inbuf, insize, &position, &vsize, 1, MPI_INT, MPI_COMM_WORLD) ;
+      cpyunpack(inbuf,position,insize,&vsize,1) ;
+
       attrib_data[*ci].resize(vsize);
 
       for( int ivec = 0; ivec < vsize; ivec++) {
-        MPI_Unpack( inbuf, insize, &position, &stateSize, 1, 
-                    MPI_INT, MPI_COMM_WORLD) ;
+        cpyunpack(inbuf,position,insize,&stateSize,1) ;
         if( stateSize > outbuf.size() ) outbuf.resize(stateSize);
-
-        outcount = stateSize*typesize;
-        MPI_Unpack( inbuf, insize, &position, &outbuf[0], outcount, 
-                    MPI_BYTE, MPI_COMM_WORLD) ;
+        cpyunpack(inbuf,position,insize,&outbuf[0],stateSize) ;
 
         typename schema_traits::Converter_Type  cvtr( attrib_data[*ci][ivec] );
         cvtr.setState( &outbuf[0], stateSize);
