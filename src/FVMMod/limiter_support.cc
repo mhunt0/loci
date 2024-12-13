@@ -5,7 +5,7 @@
  * @date      LICENSE Date: 12-30-2023
  * @copyright MS State/CFDRC
  * @brief     Support rules for limiter rules
-* @details   This file is a part of the Loci Framework, a free software. 
+ * @details   This file is a part of the Loci Framework, a free software. 
  * You can redistribute it and/or modify it under the terms of the Lesser 
  * GNU General Public License as published by the Free Software Foundation, 
  * either version 3 of the License, or (at your option) any later version.
@@ -96,7 +96,7 @@ namespace Loci{
     {
       Sp = 4.0*b*b;
     } else if (nisPow == 4){
-      Sp = 2.0*b*(a*a - 2.0*b*(a-b));
+      Sp = 2.0*b*(a*a - 2.0*b*(a-2*b));
     } else if (nisPow == 5) {
       Sp = 8.0*b*b*(a*a - 2.0*b*(a-b));
     }
