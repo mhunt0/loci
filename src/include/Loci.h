@@ -28,8 +28,6 @@ using Loci::create_entitySet ;
 using Loci::EMPTY ;
 using Loci::interval ;
 
-// Here we use a #define to define Map because bastard MPI implementations fail
-// to keep Map in the MPI namespace !@#$^!@^^$%
 using Loci::Map ;
 using Loci::const_Map ;
 using Loci::MapVec ;
