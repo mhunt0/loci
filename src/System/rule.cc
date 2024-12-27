@@ -1447,14 +1447,13 @@ namespace Loci {
   void
   rule::rename(const std::string& s) {
     // get the rule info.
-    rule::info& info = rdb->fiv[-(id+1)] ;
+    rule::info info = rdb->fiv[-(id+1)] ;
     // save the old name
     std::string old_name = info.name() ;
     // replace the "rule_ident" inside ;
     info.rule_ident = s ;
-    // then replace the rdb->fmap
-    rdb->fmap.erase(old_name) ;
-    rdb->fmap[s] = id ;
+    // Get new id
+    id = rdb->get_id(info) ;
   }
 
   rule rule::get_rule_by_name(std::string &name) {

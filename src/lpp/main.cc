@@ -27,7 +27,7 @@ list<string> include_dirs ;
 
 bool prettyOutput = false ;
 namespace {
-  const char *revision_name = "$Name:  $" ;
+  const char *revision_name = "$Name: " LOCI_BRANCH "-" LOCI_VERSION " $" ;
 
   std::string version() {
     const char *p = revision_name;
@@ -40,7 +40,7 @@ namespace {
     if(*p!= '\0')
       ++p ;
     std::string rn ;
-    while(*p!='$' &&  *p!=' ' && *p!='\0') 
+    while(*p!='$' &&  *p!=' ' && *p!='\0')
       rn += *p++ ;
 
     rn += " lpp compiled at " ;
@@ -62,7 +62,7 @@ bool no_cuda = false ;
 int main(int argc, char *argv[]) {
 
 
-  bool file_given = false; 
+  bool file_given = false;
   string filename ;
   bool out_given = false ;
   string outfile ;

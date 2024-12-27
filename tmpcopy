@@ -40,7 +40,7 @@ else
   COMP=${LOCI_COMP-gcc}
 fi
 
-while [ $# -ne 0 ]; do 
+while [ $# -ne 0 ]; do
     case "$1" in
 	--subdir)
 	    shift
@@ -103,7 +103,7 @@ fi
 mkdir -p $fulltarget/lib
 mkdir -p $fulltarget/bin
 
-if [ ! -h $fulltarget/Tutorial ]; then 
+if [ ! -h $fulltarget/Tutorial ]; then
     ln -s $source/Tutorial $fulltarget/Tutorial
 fi
 
@@ -147,9 +147,18 @@ if [ ! -e comp.conf ]; then
 fi
 if [ ! -e sys.conf ]; then
     if [ -e $source/src/conf/${ARCH}.conf ]; then
-	echo cp $source/src/conf/${ARCH}.conf sys.conf
-	cp $source/src/conf/${ARCH}.conf sys.conf
+      echo cp $source/src/conf/${ARCH}.conf sys.conf
+      cp $source/src/conf/${ARCH}.conf sys.conf
     fi
+fi
+if [ ! -e version.conf ]; then
+  if [ -e $source/src/version.conf ]; then
+    echo cp $source/src/version.conf version.conf
+    cp $source/src/version.conf version.conf
+  else
+    echo cp $source/src/conf/version.conf version.conf
+    cp $source/src/conf/version.conf version.conf
+  fi
 fi
 
 cd lib
@@ -201,7 +210,7 @@ if [ ! -h libsprng.${LIB_POSTFIX} ] ; then
     ln -s ../sprng/libsprng.${LIB_POSTFIX} libsprng.${LIB_POSTFIX}
 fi
 cd ../bin
-if [ ! -h lpp ] ; then 
+if [ ! -h lpp ] ; then
   ln -s ../lpp/lpp lpp
 fi
 if [ ! -h extract ] ; then
