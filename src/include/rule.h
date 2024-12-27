@@ -90,6 +90,9 @@ namespace Loci {
     typedef std::multimap<variable, store_instance *> storeIMap ;
     storeIMap var_table ;
     std::map<variable,variable> rvmap ;
+    std::map<variable,int> varInfoId ;
+    const char **vardoc ;
+
     void source(const std::string &invar) ;
     void target(const std::string &outvar) ;
     std::string rule_comments ; // the comments for a rule_impl
@@ -128,6 +131,21 @@ namespace Loci {
     void constraint(const std::string &constrain) ;
     void conditional(const std::string &cond) ;
     void comments(const char* c) {rule_comments += c ;}
+    void store_info_id(const std::string &var, int id) {
+      variable v(var) ;
+      varInfoId[v] = id ;
+    }
+    void setvardoc(const char **docarray) { vardoc = docarray ; }
+    const char *getvardoc(variable v) {
+      if(vardoc) {
+        auto mi = varInfoId.find(v) ;
+        if(mi==varInfoId.end())
+          return "" ;
+        else
+          return vardoc[mi->second] ;
+      }  else
+        return "" ;
+    }
     // set the keyspace tag
     void keyspace_tag(const std::string& t) {space_tag = t ;}
     // set the space_dist bit
