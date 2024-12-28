@@ -1,4 +1,3 @@
-
 include $(LOCI_BASE)/Loci.conf
 
 TARGET = libsprng.$(LIB_SUFFIX)
