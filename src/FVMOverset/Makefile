@@ -57,9 +57,9 @@ LOCI_INTERMEDIATE_FILES = $(subst .loci,.$(LPP_I_SUFFIX), $(wildcard *.loci) )
 distclean: 
 	rm -fr $(OBJS) $(LIB_OBJS) $(FAD_OBJS) $(MODULE_NAME)_m.so $(MODULE_NAME)FAD_m.so $(JUNK) $(LOCI_INTERMEDIATE_FILES) $(DEPEND_FILES)
 
-
 DEPEND_FILES=$(subst .o,.d,$(OBJS))
 
-
 #include automatically generated dependencies
+ifeq ($(filter $(MAKECMDGOALS),clean distclean ),)
 -include $(DEPEND_FILES)
+endif

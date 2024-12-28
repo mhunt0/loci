@@ -21,9 +21,6 @@
 LOCI_BASE?=..
 include $(LOCI_BASE)/Loci.conf
 
-#COPTLESS = -O0 -g
-#COPT = $(COPTLESS)
-
 MODULE_NAME  = fvmadapt
 
 LIB_NAME = fvmadaptfunc
@@ -136,4 +133,6 @@ distclean: clean
 
 DEPEND_FILES=$(subst .o,.d,$(MODULE_OBJS),$(LIB_OBJS))
 #include automatically generated dependencies
+ifeq ($(filter $(MAKECMDGOALS),clean distclean ),)
 -include $(DEPEND_FILES)
+endif
