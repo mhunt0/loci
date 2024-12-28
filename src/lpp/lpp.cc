@@ -649,8 +649,7 @@ void parseFile::setup_Type(std::ostream &outputFile,const string &comment) {
 
   if(type_map.find(v) != type_map.end()) {
     // check to see if the type is changing
-    std::map<Loci::variable,std::pair<std::string,std::string> >::const_iterator mi ;
-    mi = type_map.find(v) ;
+    auto mi = type_map.find(v) ;
     if(mi->second.container != tin.name ||
        mi->second.container_args !=tin.templ_args.str()) {
       cerr << filename << ":" << line_no << ":1: warning: variable " << v << " retyped!" <<endl << "Did you intend to change the type of this variable?  If so, use $untype " << v << "; to silence warning" << endl ;
@@ -678,8 +677,7 @@ void parseFile::setup_Untype(std::ostream &outputFile) {
   line_no += nl ;
   for(int i=0;i<nl;++i)
     outputFile << endl ;
-  std::map<Loci::variable,std::pair<std::string,std::string> >::const_iterator mi ;
-  mi = type_map.find(v) ;
+  auto mi = type_map.find(v) ;
   if(mi == type_map.end()) {
     cerr << filename << ":" << line_no << ":1: warning: variable " << v << " not defined for untype directive!" <<endl ;
   } else
@@ -2932,8 +2930,7 @@ void parseFile::processFile(string file, ostream &outputFile,
 
 
 
-	      map<variable,pair<string,string> >::const_iterator mi ;
-	      for(mi=parser.type_map.begin();mi!=parser.type_map.end();++mi)
+	      for(auto mi=parser.type_map.begin();mi!=parser.type_map.end();++mi)
 		type_map[mi->first] = mi->second ;
             } else {
 	      outputFile << "//$include \"" << newfile << '"' << endl ;
