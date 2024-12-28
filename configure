@@ -919,6 +919,10 @@ echo "default:"                              >> Makefile
 echo "	@\$(MAKE) -C ${OBJDIR} \$@"          >> Makefile
 echo "install:"                              >> Makefile
 echo "	@\$(MAKE) -C ${OBJDIR} \$@"          >> Makefile
+echo "test:"                                 >> Makefile
+echo "	@\$(MAKE) -C ${OBJDIR} \$@"          >> Makefile
+echo "docs:"                                 >> Makefile
+echo "	@\$(MAKE) -C ${OBJDIR} \$@"          >> Makefile
 echo "clean:"                                >> Makefile
 echo "	@\$(MAKE) -C ${OBJDIR} \$@"          >> Makefile
 echo "distclean:"                            >> Makefile
