@@ -2981,7 +2981,7 @@ void parseFile::processFile(string file, ostream &outputFile,
 
 
   if(access_types.size() > 0) {
-    outputFile << "const char *" << docvarname << "[] = {" << endl ;
+    outputFile << endl << "const char *" << docvarname << "[] = {" << endl ;
     for(auto mi=access_types.begin();mi!=access_types.end();++mi) {
       outputFile << "\"" << mi->getFileLoc() << "\\0"
                  << mi->v << "\\0"
