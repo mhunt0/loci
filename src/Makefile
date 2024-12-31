@@ -48,9 +48,10 @@ ifeq ($(INSTALL_METIS),1)
 endif
 
 
-.PHONY :
-SPRNG : FORCE
+.PHONY : SPRNG
+SPRNG : 
 	$(MAKE) -C sprng LOCI_BASE="$(LOCI_BASE)"
+
 
 .PHONY: FORCE
 
