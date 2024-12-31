@@ -145,10 +145,11 @@ class parseFile {
                          const std::map<Loci::variable,std::string> &vnames,
                          const std::set<std::list<Loci::variable> > & validate_set) ;
 
-    void setup_Type(std::ostream &outputFile, const std::string &comment) ;
+  void setup_Type(std::ostream &outputFile, const std::string &comment) ;
   void setup_Untype(std::ostream &outputFile) ;
   void setup_Rule(std::ostream &outputFile,const std::string &comment) ;
   void setup_cudaRule(std::ostream &outputFile,const std::string &comment) ;
+
   void setup_Test(std::ostream &outputFile) ;
 public:
   parseFile() {

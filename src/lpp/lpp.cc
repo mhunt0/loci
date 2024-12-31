@@ -684,6 +684,29 @@ void parseFile::setup_Untype(std::ostream &outputFile) {
     type_map.erase(mi) ;
 }
 
+void parseFile::setup_Untype(std::ostream &outputFile) {
+  var vin ;
+  vin.get(is) ;
+  while(is.peek() == ' ' || is.peek() == '\t') 
+    is.get() ;
+  if(is.peek() != ';')
+    throw parseError("syntax error, missing ';'") ;
+  is.get() ;
+  variable v(vin.str()) ;
+  v = convertVariable(v) ;
+  outputFile << "// $untype " << v << ";";
+  int nl = vin.num_lines() ;
+  line_no += nl ;
+  for(int i=0;i<nl;++i)
+    outputFile << endl ;
+  std::map<Loci::variable,std::pair<std::string,std::string> >::const_iterator mi ;
+  mi = type_map.find(v) ;
+  if(mi == type_map.end()) {
+    cerr << filename << ":" << line_no << ":1: warning: variable " << v << " not defined for untype directive!" <<endl ;
+  } else
+    type_map.erase(mi) ;
+}
+
 namespace {
   inline void fill_descriptors(set<vmap_info> &v, const exprList &in) {
     
@@ -2912,13 +2935,13 @@ void parseFile::processFile(string file, ostream &outputFile,
               throw parseError("syntax error") ;
 	    }
             string newfile = get_string(is) ;
-
 	    // check to see if the file was already included, if so then
 	    // don't perform the include repeatedly
             if(parseInfo.includedFiles.find(newfile) ==
 	       parseInfo.includedFiles.end()) {
 	      parseInfo.includedFiles.insert(newfile) ;
 	      parseFile parser ;
+
 	      parser.processFile(newfile,outputFile,parseInfo,level+1) ;
 	      syncFile(outputFile) ;
 
@@ -2998,5 +3021,4 @@ void parseFile::processFile(string file, ostream &outputFile,
       outputFile << ' ' << parseInfo.dependFileList[i] ;
     outputFile << endl ;
   }
-
 }
