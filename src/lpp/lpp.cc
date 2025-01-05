@@ -1940,7 +1940,9 @@ void parseFile::setup_cudaRule(std::ostream &outputFile, const string &comment) 
     outputFile <<   "       comments(" << *lsi << ") ;" << endl ;
     syncFile(outputFile) ;
   }
-
+  // document file location of rule
+  outputFile << "       set_file(" << filename << ":" << line_no << ") ;" << endl ;
+  syncFile(outputFile) ;
   outputFile <<   "    }" << endl ;
   syncFile(outputFile) ;
 
@@ -2674,6 +2676,16 @@ void parseFile::setup_Rule(std::ostream &outputFile, const string &comment) {
       constraint_vars += i->var ;
     }
 
+    variableSet undoc = constraint_vars ;
+    undoc -= all_vars ;
+    for(auto vi=undoc.begin();vi!=undoc.end();++vi) {
+      auto mi = access_map.find(lookupVarType(*vi)->second.getFileLoc()) ;
+      if(mi != access_map.end()) {
+        outputFile << "       store_info_id(\"" << *vi << "\","
+                   << mi->second << ") ;" << endl ;
+        syncFile(outputFile) ;
+      }
+    }
     for(auto vi=constraint_vars.begin();vi!=constraint_vars.end();++vi) {
       auto mi = lookupVarType(*vi) ;
       
@@ -2728,7 +2740,12 @@ void parseFile::setup_Rule(std::ostream &outputFile, const string &comment) {
     outputFile <<   "       comments(" << *lsi << ") ;" << endl ;
     syncFile(outputFile) ;
   }
+  // document file location of rule
+  outputFile << "       setvardoc(" << docvarname << ") ;" << endl ;
+  
+  outputFile << "       set_file(\"" << filename << ":" << line_no << "\") ;" << endl ;
 
+  syncFile(outputFile) ;
   outputFile <<   "    }" << endl ;
   syncFile(outputFile) ;
 
@@ -2839,8 +2856,6 @@ void parseFile::processFile(string file, ostream &outputFile,
   
   docvarname = ss.str() ;
 
-  bool firstrule = true ;
-
   parseInfo.fileNameStack.push_back(file) ;
   is.open(file.c_str(),ios::in) ;
   if(is.fail()) {
@@ -2866,6 +2881,9 @@ void parseFile::processFile(string file, ostream &outputFile,
   }
   char c ;
   
+  if(level==0) {
+    outputFile << "extern const char *" << docvarname << "[] ;" << endl ;
+  }
   syncFile(outputFile) ;
   do {
     string comment = killspout(outputFile) ;
@@ -2887,20 +2905,10 @@ void parseFile::processFile(string file, ostream &outputFile,
             if(level != 0) {
               throw parseError("$rule is not allowed in include file!") ;
             }
-            if(firstrule) {
-              firstrule = false ;
-              outputFile << "extern const char *" << docvarname << "[] ;" << endl ;
-              syncFile(outputFile) ;
-            }
             setup_Rule(outputFile,comment) ;
 	  } else if(key == "cudarule") {
             if(level != 0) {
               throw parseError("$rule is not allowed in include file!") ;
-            }
-            if(firstrule) {
-              firstrule = false ;
-              outputFile << "extern const char *" << docvarname << "[] ;" << endl ;
-              syncFile(outputFile) ;
             }
 	    if(parseInfo.no_cuda)
 	      setup_Rule(outputFile,comment) ;
@@ -2984,12 +2992,12 @@ void parseFile::processFile(string file, ostream &outputFile,
   if(access_types.size() > 0) {
     outputFile << endl << "const char *" << docvarname << "[] = {" << endl ;
     for(auto mi=access_types.begin();mi!=access_types.end();++mi) {
-      outputFile << "\"" << mi->getFileLoc() << "\\0"
-                 << mi->v << "\\0"
-                 << mi->container << mi->container_args << "\\0"
+      outputFile << "\"" << mi->getFileLoc() << "\\000"
+                 << mi->v << "\\000"
+                 << mi->container << mi->container_args << "\\000"
                  << cleanupComment(mi->comment)<< "\","<< endl ;
     }
-    outputFile << "\"\" } ;" << endl ; 
+    outputFile << "\"\\000\\000\\000\" } ;" << endl ; 
   }
   
   if(parseInfo.fileNameStack.empty()) {

@@ -96,6 +96,7 @@ namespace Loci {
     void source(const std::string &invar) ;
     void target(const std::string &outvar) ;
     std::string rule_comments ; // the comments for a rule_impl
+    std::string fileloc ;
     // keyspace tag that dictates which keyspace the rule
     // is currently assigned to, defaults to empty string,
     // which currently means that the rule should be scheduled
@@ -131,26 +132,27 @@ namespace Loci {
     void constraint(const std::string &constrain) ;
     void conditional(const std::string &cond) ;
     void comments(const char* c) {rule_comments += c ;}
+    void set_file(const char* c) {fileloc = c ; }
     void store_info_id(const std::string &var, int id) {
       variable v(var) ;
       varInfoId[v] = id ;
     }
     void setvardoc(const char **docarray) { vardoc = docarray ; }
-    const char *getvardoc(variable v) {
-      if(vardoc) {
-        auto mi = varInfoId.find(v) ;
-        if(mi==varInfoId.end())
-          return "" ;
-        else
-          return vardoc[mi->second] ;
-      }  else
-        return "" ;
-    }
     // set the keyspace tag
     void keyspace_tag(const std::string& t) {space_tag = t ;}
     // set the space_dist bit
     void keyspace_dist_hint() {space_dist = true ;}
   public:
+    const char *getvardoc(variable v) const {
+      if(vardoc) {
+        auto mi = varInfoId.find(v) ;
+        if(mi==varInfoId.end())
+          return "\0\0\0\0" ;
+        else
+          return vardoc[mi->second] ;
+      }  else
+        return "\0\0\0\0" ;
+    }
     rule_impl() ;
     bool check_perm_bits() const ;
     bool thread_rule() const { return rule_threading; }
@@ -238,6 +240,7 @@ namespace Loci {
     virtual CPTR<joiner> get_joiner() = 0 ;
     virtual rule_implP add_namespace(const std::string& n) const ;
     std::string get_comments() const {return rule_comments ;}
+    std::string get_fileloc() const { return fileloc; }
   } ;
   
   typedef rule_impl::rule_implP rule_implP ;
