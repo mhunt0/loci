@@ -104,9 +104,12 @@ int main(int argc, char *argv[]) {
     cerr << "no filename" << endl ;
     Usage(argc,argv) ;
   }
+  parseSharedInfo parseInfo ;
 #ifndef USE_CUDA_RT
   no_cuda = true ;
+  parseInfo.no_cuda = true ;
 #endif
+
   parseFile parser ;
   try {
     if(out_given) {
@@ -115,9 +118,9 @@ int main(int argc, char *argv[]) {
         cerr << "unable to open file " << outfile << " for writing!" << endl ;
         exit(-1) ;
       }
-      parser.processFile(filename,file) ;
+      parser.processFile(filename,file,parseInfo) ;
     } else {
-      parser.processFile(filename,cout) ;
+      parser.processFile(filename,cout,parseInfo) ;
     }
   } catch(parseError pe) {
     if(pe.error_type != "syntax error")
