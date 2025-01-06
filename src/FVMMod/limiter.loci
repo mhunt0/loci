@@ -19,6 +19,7 @@
  * along with the Loci Framework.  If not, see <http://www.gnu.org/licenses>
  ******************************************************************************/
 #include <Loci.h>
+#include "FVMMod/limiter_support.h"
 $include "FVMMod/limiter.lh"
 $include "FVMMod/spatialFilter.lh"
 $include "FVM.lh"
@@ -129,7 +130,7 @@ namespace Loci
         comments("This parameter specifies the order of the Nishikawa Limter. "
                 "Default is 3, acceptable values are 3, 4, and 5.")
   {
-    $nisPow = 3.0;
+    $nisPow = 3;
   }
 
   /** **************************************************************************

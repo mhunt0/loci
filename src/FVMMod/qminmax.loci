@@ -20,6 +20,7 @@
  ******************************************************************************/
 #include <Loci>
 #include <Loci.h>
+#include "FVMMod/limiter_support.h"
 $include "FVM.lh"
 $include "FVMMod/limiter.lh"
 $include "FVMMod/spatialFilter.lh"
@@ -373,7 +374,7 @@ $rule pointwise(venkaFac<-vol,grid_vol,Kl),
 $rule pointwise(venkaFac<-vol,grid_vol,Kl,nisPow),
       constraint(geom_cells,NIS_limiter)
 {
-  real pp1 = $nisPow + 1.0;
+  real pp1 = (real)$nisPow + 1;
   $venkaFac = pow($Kl,pp1) * pow(6/(M_PI * $grid_vol)*$vol,pp1/3.0); // (K delta X)^p+1
 }
 

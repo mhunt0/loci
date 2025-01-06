@@ -25,7 +25,6 @@ OBJS =	bcstuff.o 			\
 		cellgradient.o 		\
 		facegradient.o 		\
 		limiter.o			\
-		limiter_support.o 	\
 		metrics.o			\
 		misc.o				\
 		muscl.o				\
