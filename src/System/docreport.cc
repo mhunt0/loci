@@ -71,7 +71,7 @@ namespace Loci {
     prettyPrintString("",i,s,o) ;
   }
 
-  void describeInputs(rule_db &rdb,ostream &o) {
+  void describeInputs(const rule_db &rdb,ostream &o) {
     fact_db local ;
     // first of all, we need to process the default and optional rules
     ruleSet special_rules = rdb.get_default_rules() ;
@@ -215,7 +215,7 @@ namespace Loci {
   }
   
   void prettyPrintRuleDoc(rule r,ostream &o) {
-    o << "==................................." << endl ;
+    o << "== ____________________________________________________________________________" << endl ;
     rule_implP rp = r.get_rule_implP() ;
     switch(rp->get_rule_class()) {
     case rule_impl::POINTWISE:
@@ -269,25 +269,25 @@ namespace Loci {
     if(strlen(rp->getvardoc(*targets.begin())) > 0) {
       // We have variable documentation
       if(targets.size()>1)
-        o << "== ----------outputs----------" << endl ;
+        o << "== >>>>>>>>>>>>>>>>>>>>>>>>>>>> outputs >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl ;
       else
-        o << "== ----------output-----------" << endl ;
+        o << "== >>>>>>>>>>>>>>>>>>>>>>>>>>>> output >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << endl ;
       for(auto vi=targets.begin();vi!=targets.end();++vi) 
         prettyPrintVarInfo(*vi,rp,o) ;
 
       variableSet sources = r.sources() ;
       if(sources.size()>0) {
         if(sources.size()>1)
-          o << "== ----------inputs-----------" << endl ;
+          o << "== <<<<<<<<<<<<<<<<<<<<<<<<<<<< inputs <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << endl ;
         else
-          o << "== ----------input------------" << endl ;
+          o << "== <<<<<<<<<<<<<<<<<<<<<<<<<<<< input <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << endl ;
         for(auto vi=sources.begin();vi!=sources.end();++vi)
           prettyPrintVarInfo(*vi,rp,o) ;
       }
     }
   }
   
-  void ruleDocumentation(rule_db &rdb, variableSet vars, ostream &o) {
+  void ruleDocumentation(const rule_db &rdb, variableSet vars, ostream &o) {
     ruleSet rules = rdb.all_rules() ;
     if(vars == EMPTY) {
       // The empty set implies all of the variables
@@ -354,17 +354,24 @@ namespace Loci {
       variableSet vars ;
       for(auto ri=rs.begin();ri!=rs.end();++ri) {
         variableSet targets = ri->targets() ;
+        
         for(auto vi=targets.begin();vi!=targets.end();++vi)
           if(vt == basicVariable(*vi))
             vars += *vi ;
+        variable parametric_var ;
+        if(checkParametric(*ri,parametric_var))
+          vars += parametric_var ;
       }
+      FATAL(vars.size() == 0) ;
       variable vselect = *vars.begin() ;
       for(auto vi=vars.begin();vi!=vars.end();++vi) {
         if(vi->get_info().priority.size() < vselect.get_info().priority.size())
           vselect = *vi ;
       }
       int ruleTypes = 0 ;
-      const char *vardoc ;
+      // fall back if it doesn't find
+      const char *dummy = "\000\000\000\000" ;
+      const char *vardoc = dummy;
       rule unit ; //= *rs.begin() ;
       for(auto ri=rs.begin();ri!=rs.end();++ri) {
         rule_implP rp = ri->get_rule_implP() ;
@@ -386,8 +393,10 @@ namespace Loci {
       const char *vartype = vardoc ;
       vardoc += strlen(vardoc)+1 ;
       o << "===============================================================================" << endl ;
-      if(ruleTypes & (ruleCategories::RULE_UNIT|
-                      ruleCategories::RULE_APPLY)) 
+      if(varfile==dummy) {
+        o << "== Parametric Group based on unbound parametric variable: " ;
+      } else if(ruleTypes & (ruleCategories::RULE_UNIT|
+                             ruleCategories::RULE_APPLY)) 
         o << "== Reduction Variable: " ;
       else if(ruleTypes &(ruleCategories::RULE_DEFAULT|
                           ruleCategories::RULE_OPTIONAL))
@@ -425,7 +434,7 @@ namespace Loci {
       }
     }
     o << "===============================================================================" << endl ;
-
     
   }
+
 }
