@@ -1,14 +1,27 @@
-*.toc
-*.aux
-*.pdf
-*.log
-*~
-*.o
+# Compilation related files & directories
 *.d
-*.code-workspace
+*.o
+*.so*
+*~
+*.a
+OBJ/
 copy.out
-OBJ
-/Makefile
+Makefile
+
+# Document files
+*.aux
+*.bbl
+*.blg
+*.log
+*.pdf
+*.toc
 Tutorial/docs/Makefile_ex.tex
 Tutorial/docs/entities_cc.tex
 Tutorial/docs/helpers_cc.tex
+
+# Workspace
+*.code-workspace
+.vscode/
+
+# Code Review files
+CodeReview.txt
