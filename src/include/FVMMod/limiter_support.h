@@ -19,7 +19,7 @@
  * along with the Loci Framework.  If not, see <http://www.gnu.org/licenses>
  ******************************************************************************/
 
-#include <Loci.h>
+#include <Loci>
 
 using std::cerr ;
 using std::endl ;
@@ -128,9 +128,14 @@ namespace Loci {
  * @param  s    in T for comparison
  * @tparam T    stenMaxMinNorm
  */
-  template <class T> struct MaxMinv {
-    void operator()(T &r, const T &s) {
-      // do nothing, as max/min for this is handled explicitly
+  template <class T> struct MaxMin<Vect<T>> {
+    template <class U> void operator()(Vect<T> &r, const U &s) {
+      int vs = r.getSize();
+      for (int i = 0;i<vs;i++)
+      {
+        r[i].max = max(r[i].max,s[i].max);
+        r[i].min = min(r[i].min,s[i].min);
+      }
     }
   } ;
 
@@ -140,9 +145,14 @@ namespace Loci {
  * @param  s    in T for comparison
  * @tparam T    stenMaxMinNormv3d
  */
-    template <class T> struct SumMaxMinv {
-    void operator()(T &r, const T &s) {
-      // do nothing, as max/min for this is handled explicitly
+    template <class T> struct SumMaxMin<Vect<T>> {
+      template <class U> void operator()(Vect<T> &r, const U &s) {
+      int vs = r.getSize();
+      for (int i = 0;i<vs;i++)
+      {
+        r[i].max += s[i].max;
+        r[i].min += s[i].min;
+      }
     }
   } ;
 
@@ -157,7 +167,7 @@ namespace Loci {
   * @param eps2     [-] cell volume function
   * @return real    [-] limiter
   */
-inline real vlimit(real Xcc, real qmin, real qmax, real qdif, real eps2) 
+  inline real vlimit(real Xcc, real qmin, real qmax, real qdif, real eps2) 
   {
     /////////////////////////////////
     // delta +
@@ -183,7 +193,7 @@ inline real vlimit(real Xcc, real qmin, real qmax, real qdif, real eps2)
   * @param qmin      [-] minimum value in local stencil
   * @return real     [-] limiter value
   */
-inline real barth_limit(real Xcc, real qdif, real qmax, real qmin)
+  inline real barth_limit(real Xcc, real qdif, real qmax, real qmin)
   {
     real lim;
     if (qdif > 0){
@@ -205,7 +215,8 @@ inline real barth_limit(real Xcc, real qdif, real qmax, real qmin)
   * @param nisPow   [-] order for Nishikawa Limiter
   * @return real    [-] limiter
   */
-inline real nis_limit(real Xcc, real qmin, real qmax, real qdif, real epsp, int nisPow) {
+  inline real nis_limit(real Xcc, real qmin, real qmax, real qdif, real epsp, int nisPow) 
+  {
     // delta +
     const real delp = (qdif>=0.0)?qmax-Xcc:qmin-Xcc;
     // delta -

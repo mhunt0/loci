@@ -17,8 +17,6 @@
  * You should have received a copy of the Lesser GNU General Public License
  * along with the Loci Framework.  If not, see <http://www.gnu.org/licenses>
  ******************************************************************************/
-#include <Loci.h>
-
 $type nodeWeightSumSF       store<Loci::real_t>;                 // [-] weights for averaging to nodes
 $type cellWeightSumSF       store<Loci::real_t>;                 // [-] weights for averaging to cells
 $type cell2nodeScalarSF(X)  store<Loci::real_t>;                 // [-] cell 2 node map for scalars

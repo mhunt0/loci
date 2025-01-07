@@ -19,7 +19,6 @@
  * along with the Loci Framework.  If not, see <http://www.gnu.org/licenses>
  ******************************************************************************/
 #include <Loci>
-#include <Loci.h>
 #include "FVMMod/limiter_support.h"
 $include "FVM.lh"
 $include "FVMMod/limiter.lh"
