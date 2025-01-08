@@ -196,6 +196,7 @@ namespace Loci {
 
   $rule unit(c2n_scalar_sum(X) ), constraint(pos)  { $c2n_scalar_sum(X) = 0 ; }
 
+  $untype X ;
   $type X store<real> ;
 
   $rule apply((upper,lower,boundary_map)->face2node->c2n_scalar_sum(X) <-
@@ -244,6 +245,7 @@ namespace Loci {
     $boundary_scalar_sum(X) = 0 ;
   }
 
+  $untype X_f ;
   $type X_f store<real_t> ;
   $rule apply(face2node->boundary_scalar_sum(X)<-
 	      face2node->pos,X_f,facecenter)[Loci::Summation],
@@ -266,6 +268,7 @@ namespace Loci {
     $c2n_v3d_sum(X) = vector3d<float>(0.,0.,0.) ;
   }
 
+  $untype X ;
   $type X store<vect3d> ;
   
   $rule apply((upper,lower,boundary_map)->face2node->c2n_v3d_sum(X)<-
@@ -317,6 +320,7 @@ namespace Loci {
     $boundary_v3d_sum(X) = vector3d<float>(0.0,0.0,0.0) ;
   }
 
+  $untype X_f ;
   $type X_f store<vect3d> ;
   
   $rule apply(face2node->boundary_v3d_sum(X)<-face2node->pos,X_f,facecenter)[Loci::Summation],constraint(ci,no_symmetry_BC) {
@@ -352,6 +356,7 @@ namespace Loci {
 #endif
 #endif
 
+  $untype X ;
   $type X store<FADTYPE> ;
 
   $rule apply((upper,lower,boundary_map)->face2node->c2n_scalar_sump(X) <-
@@ -407,6 +412,7 @@ namespace Loci {
     $boundary_scalar_sump(X) = 0 ;
   }
 
+  $untype X_f ;
   $type X_f store<FADTYPE> ;
   $rule apply(face2node->boundary_scalar_sump(X)<-
 	      face2node->pos,X_f,facecenter)[Loci::Summation],
@@ -435,6 +441,7 @@ namespace Loci {
     $c2n_v3d_sump(X) = vector3d<float>(0.,0.,0.) ;
   }
 
+  $untype X ;
   $type X store<vector3d<FADTYPE> > ;
   
   $rule apply((upper,lower,boundary_map)->face2node->c2n_v3d_sump(X)<-
@@ -496,6 +503,7 @@ namespace Loci {
     $boundary_v3d_sump(X) = vector3d<float>(0.0,0.0,0.0) ;
   }
 
+  $untype X_f ;
   $type X_f store<vector3d<FADTYPE> > ;
   
   $rule apply(face2node->boundary_v3d_sump(X)<-face2node->pos,X_f,facecenter)[Loci::Summation],constraint(ci,no_symmetry_BC) {
@@ -561,6 +569,7 @@ namespace Loci {
     $face2nodeMax(X) = 0. ;
   }
 
+  $untype X ;`
   $type X store<real_t> ;
 
   $rule apply(face2node->face2nodeMax(X)<-X)[Loci::Maximum] {
@@ -708,6 +717,7 @@ namespace Loci {
       }
   } ;
 
+  $untype X ;
   $type X store<vect3d> ;
   $rule apply((upper,lower,boundary_map)->face2node->cell2nodeMaxv3d(X)<-
 	      X)[maxVect3d],constraint(geom_cells) {

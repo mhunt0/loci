@@ -71,6 +71,7 @@ void dummyFunctionDependencies(int i) {
 #include "thread.h"
 #include <Tools/debug.h>
 #include <Tools/except.h>
+#include "docreport.h"
 #include <new>
 using std::bad_alloc ;
 
@@ -562,8 +563,7 @@ namespace Loci {
       }
       bool debug_setup = false ;
       int i = 1 ;
-      vector<string> arglist ;
-      arglist.push_back(string(*argv[0])) ;
+      int k = 1 ; // copy cursor for removing processed arguments from argv
       while(i<*argc) {
         if(!strcmp((*argv)[i],"--display")) {
           debug_setup = true ;
@@ -804,19 +804,18 @@ namespace Loci {
         } else if(!strcmp((*argv)[i],"--no_threading_recursion")) {
           threading_recursion = false;
           i++;
-        }
-        else {
-	  //          break ;
-	  arglist.push_back(string((*argv)[i])) ;
+        } else {
+          // copy items to their new locations after removed items
+          // we only need to copy once arguments are processed.
+          if(k!=i)
+            (*argv)[k] = (*argv)[i] ;
 	  i++ ;
+          k++ ;
 	}
       }
 
-      for(size_t k = 0;k<arglist.size();++k) {
-	(*argv)[k] = (char *)malloc(arglist[k].size()+1) ;
-	strcpy((*argv)[k],arglist[k].c_str()) ;
-      }
-      *argc = arglist.size() ;
+      // reset the argument counter to account for processed flags
+      *argc = k ;
 
       if(useDebugDir) {
         //Create a debug file for each process

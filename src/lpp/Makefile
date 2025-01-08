@@ -42,7 +42,7 @@ all: $(TARGET)
 
 TOOLS_LIBS = $(RPATH)$(LOCI_RPATH) -L$(LOCI_BASE)/lib -lTools -lm
 
-$(TARGET): $(OBJS)  ../Tools/libTools.${LIB_SUFFIX}
+$(TARGET): $(OBJS)  $(LOCI_BASE)/lib/libTools.${LIB_SUFFIX}
 	$(LDBSL) -o $(TARGET) $(OBJS) $(LOCAL_LIBS) $(TOOLS_LIBS) $(LDFLAGS) $(PTHREADS_LIB)
 
 FRC : 
