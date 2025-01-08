@@ -608,8 +608,12 @@ H5SUPPORTLIBS=-lz
 H5SUPPORTLIBSPATHS=
 
 if [ -e $H5PATH/lib/libhdf5.settings ]; then
-    H5SUPPORTLIBS=`grep "Extra libraries" $H5PATH/lib/libhdf5.settings | sed "s/.*://"`
-    H5SUPPORTLIBSPATHS=`grep "AM_LDFLAGS" $H5PATH/lib/libhdf5.settings | sed "s/.*://"`
+    # Detect if cmake build system was used to build hdf5, and parse settings file if not.
+    TMP=`grep "Extra libraries" $H5PATH/lib/libhdf5.settings | sed "s/.*://"`
+    if [[ $TMP != *";"* ]]; then
+        H5SUPPORTLIBS=$TMP
+        H5SUPPORTLIBSPATHS=`grep "AM_LDFLAGS" $H5PATH/lib/libhdf5.settings | sed "s/.*://"`
+    fi
 fi
 
 echo \# HDF5 File I/O Libraries Setup >> sys.conf
