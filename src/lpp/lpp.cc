@@ -266,7 +266,7 @@ string parseFile::killspout(std::ostream &outputFile) {
 class parsebase {
 public:
   int lines ;
-  parsebase() {lines = 0 ; }
+  parsebase(): lines(0) { }
   istream &killsp(istream &s) {
     ::killsp(s,lines) ;
     return s ;
@@ -544,7 +544,7 @@ public:
 	  if(s.peek() == EOF) {
 	    throw parseError("unexpected EOF parsing string") ;
 	  }
-	  if(s.peek() == '\n' || s.peek() == '\r') {
+	  if(s.peek() == '\n' ) {
 	    lines++ ;
 	  }
 	  paren_contents += s.get() ;
@@ -558,7 +558,7 @@ public:
         open_parens++ ;
       if(s.peek() == ')')
         open_parens-- ;
-      if(s.peek() == '\n' || s.peek() == '\r') {
+      if(s.peek() == '\n') {
         s.get() ;
         lines++ ;
         continue ;
@@ -595,7 +595,7 @@ public:
         open_brackets++ ;
       if(s.peek() == ']')
         open_brackets-- ;
-      if(s.peek() == '\n' || s.peek() == '\r') {
+      if(s.peek() == '\n' ) {
         s.get() ;
         lines++ ;
         continue ;
@@ -756,8 +756,15 @@ void parseFile::process_SpecialCommand(std::ostream &outputFile,
 
 void parseFile::process_Prelude(std::ostream &outputFile,
                                 const map<variable,string> &vnames) {
-  outputFile << "    virtual void prelude(const Loci::sequence &seq) { " ;
-  is.get() ;
+  if(is.peek() == '{')  // eat open brace
+     is.get() ;
+  else
+    throw parseError("expected open brace") ;
+  
+  outputFile << "    virtual void prelude(const Loci::sequence &seq) { "
+             << endl ;
+  syncFile(outputFile) ;
+    
   
   int openbrace = 1 ;
   for(;;) {
@@ -789,6 +796,7 @@ void parseFile::process_Prelude(std::ostream &outputFile,
       } 
       var vin ;
       vin.get(is) ;
+      line_no += vin.num_lines() ;
       v = variable(vin.str()) ;
         
       auto vmi = vnames.find(v) ;
@@ -870,6 +878,7 @@ void parseFile::process_Compute(std::ostream &outputFile,
       var vin ;
       vin.get(is) ;
       v = variable(vin.str()) ;
+      line_no += vin.num_lines() ;
 
       auto vmi = vnames.find(v) ;
       if(vmi == vnames.end()) {
@@ -1001,7 +1010,7 @@ string parseFile::process_String(string in,
           is.get() ;
           var vin ;
           vin.get(is) ;
-          
+          line_no += vin.num_lines() ;
           variable v(vin.str()) ;
           auto  vmi = vnames.find(v) ;
           if(vmi == vnames.end()) {
@@ -1015,6 +1024,7 @@ string parseFile::process_String(string in,
         
         var vin ;
         vin.get(is) ;
+        line_no += vin.num_lines() ;
         v = variable(vin.str()) ;
         ::killspOut(is,line_no,outputFile) ;
         if(is.peek() == '[') {
@@ -1041,6 +1051,7 @@ string parseFile::process_String(string in,
             var vin ;
             vin.get(is) ;
             vlist.push_back(variable(vin.str())) ;
+            line_no += vin.num_lines() ;
             string brk ;
             ::killspOut(is,line_no,outputFile) ;
             if(is.peek() == '[') {
@@ -1313,6 +1324,7 @@ void parseFile::process_Calculate(std::ostream &outputFile,
             is.get() ;
             var vin ;
             vin.get(is) ;
+            line_no += vin.num_lines() ;
             vlist.push_back(variable(vin.str())) ;
             string brk ;
             lcount += killsp() ;
