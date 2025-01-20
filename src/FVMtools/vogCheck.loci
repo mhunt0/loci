@@ -507,7 +507,6 @@ $type report param<bool> ;
 $type minVol param<real_t> ;
 $type maxTwist param<real_t> ;
 $type maxShearTwist param<real_t> ;
-$type modelName param<string> ;
 $type convexCell param<int> ;
 
 $rule singleton(report<-volRatio,maxCellAngle,minVol,maxTwist,maxShearTwist,topo,modelName,convexCell,topocheck),option(disable_threading) {
