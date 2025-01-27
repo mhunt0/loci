@@ -2691,11 +2691,13 @@ void parseFile::setup_Rule(std::ostream &outputFile, const string &comment) {
     variableSet undoc = constraint_vars ;
     undoc -= all_vars ;
     for(auto vi=undoc.begin();vi!=undoc.end();++vi) {
-      auto mi = access_map.find(lookupVarType(*vi)->second.getFileLoc()) ;
-      if(mi != access_map.end()) {
-        outputFile << "       store_info_id(\"" << *vi << "\","
-                   << mi->second << ") ;" << endl ;
-        syncFile(outputFile) ;
+      if(checkTypeValid(lookupVarType(*vi))) {
+        auto mi = access_map.find(lookupVarType(*vi)->second.getFileLoc()) ;
+        if(mi != access_map.end()) {
+          outputFile << "       store_info_id(\"" << *vi << "\","
+                     << mi->second << ") ;" << endl ;
+          syncFile(outputFile) ;
+        }
       }
     }
     for(auto vi=constraint_vars.begin();vi!=constraint_vars.end();++vi) {
