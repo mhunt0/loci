@@ -246,7 +246,11 @@ string cleanupComment(const string &s) {
       while(i+1<s.size() && spaceChar(s[i+1])) 
 	i++ ;
       cleancomment += ' ' ;
-    } else
+    } else if(s[i] == '\\') {
+      cleancomment += "\\\\" ;
+    } else if(s[i] == '"') {
+      cleancomment += "\\\"" ;
+    } else if(s[i] >= ' ' &&  s[i] <='~') // valid ascii character
       cleancomment += s[i] ;
   }
   return cleancomment ;
