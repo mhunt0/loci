@@ -64,7 +64,7 @@ System/libLoci.$(LIB_SUFFIX): FORCE
 lpp: Tools/libTools.$(LIB_SUFFIX) FORCE
 	$(MAKE) -C lpp LOCI_BASE="$(LOCI_BASE)" lpp
 
-FVMtools: library lpp FVMAdapt FORCE
+FVMtools: library lpp FVMAdapt SPRNG FORCE
 	$(MAKE) -C FVMtools LOCI_BASE="$(LOCI_BASE)" default
 
 FVMMod: lpp FORCE
@@ -79,7 +79,7 @@ FVMOverset: lpp FORCE
 JUNK =
 
 .PHONY: test
-test:
+test: default
 	$(MAKE) -C quickTest LOCI_BASE="$(LOCI_BASE)"
 
 .PHONY: clean
