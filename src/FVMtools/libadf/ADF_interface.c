@@ -135,8 +135,9 @@ static char	data_chunk_start_tag[] = "DaTa" ;
 #ifndef __clang__
 #pragma GCC diagnostic ignored "-Wstringop-truncation"
 #endif
-
+#ifdef __clang__
 #pragma GCC diagnostic ignored "-Wsometimes-uninitialized"
+#endif
 /***********************************************************************
     Error strings
     These strings must be kept in sync with the error defines in ADF.h.
