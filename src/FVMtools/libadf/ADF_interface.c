@@ -137,6 +137,7 @@ static char	data_chunk_start_tag[] = "DaTa" ;
 #endif
 #ifdef __clang__
 #pragma GCC diagnostic ignored "-Wsometimes-uninitialized"
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #endif
 /***********************************************************************
     Error strings
