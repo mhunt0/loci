@@ -13,7 +13,7 @@ TestResults: $(TEST_FILES) FRC
 FRC:
 
 %.test : %.vars
-	FLOWTEST="$(FLOWTEST)" EXTRACT="$(EXTRACT)" NDIFF=../ndiff ./tests.sh $*.vars
+	FLOWTEST="$(FLOWTEST)" EXTRACT="$(EXTRACT)" NDIFF=../ndiff LOCI_BASE=$(LOCI_BASE) ./tests.sh $*.vars
 
 clean:
 	rm -fr TEST_* TestResults $(TEST_FILES)

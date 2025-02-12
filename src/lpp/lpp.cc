@@ -276,10 +276,8 @@ public:
     return s ;
   }
 } ;
-#if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
-#endif
 template<class T> class funclist : public parsebase {
 public:
   list<T> flist ;
@@ -328,9 +326,8 @@ public:
   }
 } ;
   
-#if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC diagnostic pop
-#endif
+
 template<class T> class templlist : public parsebase {
 public:
   list<T> flist ;

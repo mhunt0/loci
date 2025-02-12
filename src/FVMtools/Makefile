@@ -51,8 +51,8 @@ $(LOCI_BASE)/lib/libsprng.${LIB_SUFFIX}:
 
 extract: $(OBJS) $(DEPS)
 	$(LD) -o extract $(OBJS) $(TEC360LIB) $(LOCAL_LIBS) $(LIBS) $(LDFLAGS)
-
-libadf/libadf.a:
+.PHONY: FORCE
+libadf/libadf.a: FORCE
 	$(MAKE) -C libadf libadf.a
 
 extruder: extruder.o $(DEPS)

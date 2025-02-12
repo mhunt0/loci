@@ -138,10 +138,13 @@ public:
        
       hid_t attr = H5Aopen_name(group_id,"numNodes");
       //data type and variable has to match
-      hid_t ret  = H5Aread(attr, H5T_NATIVE_LLONG, &tmp_numNodes);
+//      hid_t ret  =
+      H5Aread(attr, H5T_NATIVE_LLONG, &tmp_numNodes);
        
-      ret =  H5Aclose(attr);
-      ret = H5Gclose(group_id);
+//      ret =
+      H5Aclose(attr);
+//      ret =
+      H5Gclose(group_id);
       numNodes = tmp_numNodes;
     }
     
