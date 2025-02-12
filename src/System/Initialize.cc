@@ -464,18 +464,17 @@ namespace Loci {
 
     {
       // Create MFADD type
-      int count = MFAD_SIZE + 1 ;
       //int blocklens[] = {1,1,1,1,1,1,1,1,1,1,1} ;
-      int blocklens[count] ;
-      for (int i=0;i<count;i++) blocklens[i] = 1 ;
-      MPI_Aint indices[count] ;
+      int blocklens[MFAD_SIZE+1] ;
+      for (int i=0;i<MFAD_SIZE+1;i++) blocklens[i] = 1 ;
+      MPI_Aint indices[MFAD_SIZE+1] ;
       MFADd tmp ;
       indices[0] = (MPI_Aint)((char *) &(tmp.value) - (char *) &tmp) ;
-      for (int i=1;i<count;i++) indices[i] = (MPI_Aint)((char *) &(tmp.grad[i-1]) - (char *) &tmp) ;
+      for (int i=1;i<MFAD_SIZE+1;i++) indices[i] = (MPI_Aint)((char *) &(tmp.grad[i-1]) - (char *) &tmp) ;
 
-      MPI_Datatype typelist[count] ;
-      for (int i=0;i<count;i++) typelist[i] = MPI_DOUBLE ;
-      MPI_Type_create_struct(count,blocklens,indices,typelist,&MPI_MFADD) ;
+      MPI_Datatype typelist[MFAD_SIZE+1] ;
+      for (int i=0;i<MFAD_SIZE+1;i++) typelist[i] = MPI_DOUBLE ;
+      MPI_Type_create_struct(MFAD_SIZE+1,blocklens,indices,typelist,&MPI_MFADD) ;
       MPI_Type_commit(&MPI_MFADD) ;
 
       MPI_Op_create((MPI_User_function *)sumMFADd,1,&MPI_MFADD_SUM) ;
