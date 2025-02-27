@@ -49,6 +49,9 @@ clean:
 
 DEPEND_FILES=$(subst .o,.d,$(OBJS))
 
+uninstall:
+	rm -fr $(LOCI_INSTALLED_DIR)/lib/$(TARGET) $(LOCI_INSTALLED_DIR)/include/Tools
+
 distclean:
 	rm -fr $(OBJS) $(LIB_OBJS) $(TARGET) $(JUNK) $(DEPEND_FILES) libTools.$(LIB_SUFFIX)
 

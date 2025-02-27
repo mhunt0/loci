@@ -128,11 +128,14 @@ clean:
 # intermediate files created from .loci files
 LOCI_INTERMEDIATE_FILES = $(subst .loci,.$(LPP_I_SUFFIX), $(wildcard *.loci) )
 
+uninstall:
+	rm -rf $(LOCI_INSTALLED_DIR)/lib/$(MODULE_NAME)_m.so $(LOCI_INSTALLED_DIR)/lib/$(MODULE_NAME)FAD_m.so $(LOCI_INSTALLED_DIR)/include/FVMAdapt $(LOCI_INSTALLED_DIR)/lib/lib$(LIB_NAME).so 
+
 distclean: clean
 	rm -fr $(DEPEND_FILES) $(LOCI_INTERMEDIATE_FILES)
 
 DEPEND_FILES=$(subst .o,.d,$(MODULE_OBJS),$(LIB_OBJS))
 #include automatically generated dependencies
-ifeq ($(filter $(MAKECMDGOALS),clean distclean ),)
+ifeq ($(filter $(MAKECMDGOALS),clean distclean uninstall),)
 -include $(DEPEND_FILES)
 endif

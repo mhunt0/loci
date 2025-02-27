@@ -40,6 +40,11 @@ install: default #docs
 	INSTALL_METIS=$(INSTALL_METIS) GIT_INFO=$(GIT_INFO) \
 	GIT_BRANCH=$(GIT_BRANCH) bash Install.bash
 
+ifeq ($(LOCI_INSTALL_DIR),)
+LOCI_INSTALLED_DIR=$(INSTALL_DIR)
+else
+LOCI_INSTALLED_DIR=$(INSTALL_DIR)/$(LOCI_INSTALL_DIR)
+endif
 
 .PHONY: METIS
 METIS :
@@ -98,6 +103,37 @@ endif
 	$(MAKE) -C FVMOverset clean LOCI_BASE="$(LOCI_BASE)"
 	$(MAKE) -C quickTest clean LOCI_BASE="$(LOCI_BASE)"
 	$(MAKE) -C lpp clean LOCI_BASE="$(LOCI_BASE)"
+
+
+LS_INC_H =$(shell cd $(LOCI_BASE)/include/; ls *.h) Loci
+LS_INC_LH =$(shell cd $(LOCI_BASE)/include/; ls *.lh) 
+
+uninstall_include:
+	for d in $(LS_INC_H);  do rm -f  $(LOCI_INSTALLED_DIR)/include/$$d; done
+	for d in $(LS_INC_LH); do rm -f  $(LOCI_INSTALLED_DIR)/include/$$d; done
+	for d in Config MPI_stubb; do rm -rf $(LOCI_INSTALLED_DIR)/include/$$d; done
+
+uninstall_conf:
+	rm -f $(LOCI_INSTALLED_DIR)/Loci.conf $(LOCI_INSTALLED_DIR)/sys.conf \
+			$(LOCI_INSTALLED_DIR)/comp.conf $(LOCI_INSTALLED_DIR)/version.conf 
+
+.PHONY: uninstall
+uninstall: uninstall_include uninstall_conf
+ifeq ($(INSTALL_METIS),1)
+	$(MAKE) -C ParMetis-4.0 uninstall LOCI_BASE="$(LOCI_BASE)" LOCI_INSTALLED_DIR="$(LOCI_INSTALLED_DIR)"
+endif
+	$(MAKE) -C sprng uninstall LOCI_BASE="$(LOCI_BASE)" LOCI_INSTALLED_DIR="$(LOCI_INSTALLED_DIR)"
+	$(MAKE) -C FVMMod uninstall LOCI_BASE="$(LOCI_BASE)" LOCI_INSTALLED_DIR="$(LOCI_INSTALLED_DIR)"
+	$(MAKE) -C FVMAdapt uninstall LOCI_BASE="$(LOCI_BASE)" LOCI_INSTALLED_DIR="$(LOCI_INSTALLED_DIR)"
+	$(MAKE) -C FVMOverset uninstall LOCI_BASE="$(LOCI_BASE)" LOCI_INSTALLED_DIR="$(LOCI_INSTALLED_DIR)"
+	$(MAKE) -C FVMtools uninstall LOCI_BASE="$(LOCI_BASE)" LOCI_INSTALLED_DIR="$(LOCI_INSTALLED_DIR)"
+	$(MAKE) -C lpp uninstall LOCI_BASE="$(LOCI_BASE)" LOCI_INSTALLED_DIR="$(LOCI_INSTALLED_DIR)"
+	$(MAKE) -C System uninstall LOCI_BASE="$(LOCI_BASE)" LOCI_INSTALLED_DIR="$(LOCI_INSTALLED_DIR)"
+	$(MAKE) -C Tools uninstall LOCI_BASE="$(LOCI_BASE)" LOCI_INSTALLED_DIR="$(LOCI_INSTALLED_DIR)"
+# for d in $(LS_INC_H);  do rm -f  ${LOCI_INSTALLED_DIR}/include/$$d; done
+# for d in $(LS_INC_LH); do rm -f  ${LOCI_INSTALLED_DIR}/include/$$d; done
+# rm -f $(LOCI_INSTALLED_DIR)/Loci.conf $(LOCI_INSTALLED_DIR)/sys.conf $(LOCI_INSTALLED_DIR)/comp.conf 
+# for d in Config MPI_stubb; do rm -rf $(LOCI_INSTALLED_DIR)/include/$$d; done
 
 .PHONY: distclean
 distclean:

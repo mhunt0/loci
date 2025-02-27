@@ -94,7 +94,7 @@ library/executable:
 | `make clean_install_<target>` | Remove files from `$LOCI_BASE`                               |
 | `make clean_<target>`         | Remove object, binary, and shared lib files from `$LOCI_SRC` |
 | `make distclean_<target>`     | Remove object, binary, shared lib, and dependency files from `$LOCI_SRC` |
-| `make spotless_<target>`      | Remove everything from `$LOCI_SRC` and `$LOCI_BASE`          |
+| `make uninstall_<target>`     | Uninstall bin/include/lib from `$LOCI_BASE`                  |
 | `make devhelp`                | Display environment/compilation variables                    |
 
 
