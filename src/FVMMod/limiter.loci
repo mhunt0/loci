@@ -123,12 +123,14 @@ namespace Loci {
     $limiters(X) = 1.0 ;
   }
 
+  $untype X ;
   $type X store<vect3d> ;
   
   $rule pointwise(limiterv3d(X)<-X),constraint(geom_cells,N_limiter) {
     $limiterv3d(X) = vect3d(1.0,1.0,1.0) ;
   }
-    
+
+  $untype X ;
   $type X storeVec<real> ;
   $rule pointwise(limiterv(X)<-X),constraint(geom_cells,N_limiter),prelude {
     $limiterv(X).setVecSize($X.vecSize()) ;
@@ -136,18 +138,21 @@ namespace Loci {
     $limiterv(X) = mk_Scalar(1.) ;
   }
 
+  $untype X ;
   $type X store<real> ;
 
   $rule pointwise(limiters(X)<-X),constraint(geom_cells,Z_limiter) {
     $limiters(X) = 0.0 ;
   }
 
+  $untype X ;
   $type X store<vect3d> ;
   
   $rule pointwise(limiterv3d(X)<-X),constraint(geom_cells,Z_limiter) {
     $limiterv3d(X) = vect3d(0.0,0.0,0.0) ;
   }
     
+  $untype X ;
   $type X storeVec<real> ;
   $rule pointwise(limiterv(X)<-X),constraint(geom_cells,Z_limiter),prelude {
     $limiterv(X).setVecSize($X.vecSize()) ;
@@ -160,19 +165,22 @@ namespace Loci {
   // Handle Periodic BC's
   //
   //==========================================================================
+  $untype X ;
   $type X store<real> ;
 
   $rule pointwise(cr->limiters(X)<-pmap->cl->limiters(X)),constraint(periodicFaces,cl->X) {
     $cr->$limiters(X) = $pmap->$cl->$limiters(X) ;
   }
 
+  $untype X ;
   $type X store<vect3d> ;
   $type periodicTransform store<rigid_transform> ;
   $rule pointwise(cr->limiterv3d(X)<-pmap->cl->limiterv3d(X),pmap->ref->periodicTransform),constraint(periodicFaces,cl->X) {
     const rigid_transform &frame = $pmap->$ref->$periodicTransform ;
     $cr->$limiterv3d(X) = frame.rotate_vec($pmap->$cl->$limiterv3d(X)) ;
   }
-    
+
+  $untype X ;
   $type X storeVec<real> ;
   $rule pointwise(cr->limiterv(X)<-pmap->cl->limiterv(X)),constraint(periodicFaces,cl->X),prelude { } compute {
     int vs = $*limiterv(X).vecSize() ;
@@ -185,7 +193,7 @@ namespace Loci {
   // Barth Limiter
   //
   //==========================================================================
-  
+  $untype X ;
   $type X store<real> ;
   $type X_f store<real> ;
   $rule pointwise(limiters(X)<-cellcenter,X,grads(X),firstOrderCells,
@@ -239,9 +247,11 @@ namespace Loci {
         limi = min(limi,(qmin-Xcc)/(qdif-1e-100)) ;
     }
     
-    $limiters(X) = limi ;
+    $limiters(X) = realToDouble(limi) ;
   }
 
+  $untype X ;
+  $untype X_f ;
   $type X store<vect3d> ;
   $type X_f store<vect3d> ;
 
@@ -334,9 +344,11 @@ namespace Loci {
         limi.z = min(limi.z,(qmin.z-Xcc.z)/(qdifz-1e-100)) ;
     }
     
-    $limiterv3d(X) = limi ;
+    $limiterv3d(X) = realToDouble(limi) ;
   }
 
+  $untype X ;
+  $untype X_f ;
   $type X storeVec<real> ;
   $type X_f storeVec<real> ;
   $rule pointwise(limiterv(X)<-cellcenter,X,gradv(X),firstOrderCells,
@@ -394,7 +406,7 @@ namespace Loci {
 	  limi = min(limi,(qmin-Xcc)/(qdif-1e-100)) ;
       }
     
-      $limiterv(X)[j] = limi ;
+      $limiterv(X)[j] = realToDouble(limi) ;
     }
   }
 
@@ -408,6 +420,8 @@ namespace Loci {
   
   $type NGTNodalMax(X) store<real_t> ;
   $type NGTNodalMin(X) store<real_t> ;
+  $untype X ;
+  $untype X_f ;
   $type X store<real_t> ;
   $type X_f store<real_t> ;
 
@@ -455,6 +469,8 @@ namespace Loci {
 
   $type NGTNodalv3dMax(X) store<vector3d<real_t> > ;
   $type NGTNodalv3dMin(X) store<vector3d<real_t> > ;
+  $untype X ;
+  $untype X_f ;
   $type X store<vector3d<real_t> > ;
   $type X_f store<vector3d<real_t> > ;
 
@@ -517,6 +533,8 @@ namespace Loci {
 
   $type NGTNodalvMax(X) storeVec<real_t> ;
   $type NGTNodalvMin(X) storeVec<real_t> ;
+  $untype X ;
+  $untype X_f ;
   $type X storeVec<real_t> ;
   $type X_f storeVec<real_t> ;
   $type vecSize(X) param<int> ;
@@ -567,6 +585,7 @@ namespace Loci {
   }
 
 
+  $untype X ;
   $type X store<real> ;
   $rule pointwise(limiters(X)<-cellcenter,X,grads(X),firstOrderCells,
 		  upper->face2node->(pos,NGTNodalMax(X),NGTNodalMin(X)),
@@ -606,9 +625,10 @@ namespace Loci {
       }
     }
 
-    $limiters(X) = limi ;
+    $limiters(X) = realToDouble(limi) ;
   }
 
+  $untype X ;
   $type X store<vect3d> ;
   $rule pointwise(limiterv3d(X)<-cellcenter,X,gradv3d(X),firstOrderCells,
 		  upper->face2node->(pos,NGTNodalv3dMax(X),NGTNodalv3dMin(X)),
@@ -674,9 +694,13 @@ namespace Loci {
       }
     }
 
-    $limiterv3d(X) = vect3d(limix,limiy,limiz);
+    $limiterv3d(X) = vect3d(realToDouble(limix),
+                            realToDouble(limiy),
+                            realToDouble(limiz));
   }
 
+  $untype X ;
+  $untype X_f ;
   $type X storeVec<real> ;
   $type X_f storeVec<real> ;
   $rule pointwise(limiterv(X)<-cellcenter,X,gradv(X),firstOrderCells,
@@ -734,7 +758,7 @@ namespace Loci {
 	  limi = min(limi,(qmin-Xcc)/(qdif-1e-100)) ;
       }
     
-      $limiterv(X)[j] = limi ;
+      $limiterv(X)[j] = realToDouble(limi) ;
     }
   }
 
@@ -763,6 +787,8 @@ namespace Loci {
     return (num+e)/(den+e) ;
   }
 
+  $untype X ;
+  $untype X_f ;
   $type X store<real> ;
   $type X_f store<real> ;
   $rule pointwise(limiters(X)<-cellcenter,X,grads(X),firstOrderCells,
@@ -824,9 +850,11 @@ namespace Loci {
       limi = min(limi,vlimit(Xcc,qmin,qmax,qdif,epsilon2,ref)) ;
     }
     
-    $limiters(X) = limi ;
+    $limiters(X) = realToDouble(limi) ;
   }
 
+  $untype X ;
+  $untype X_f ;
   $type X store<vect3d> ;
   $type X_f store<vect3d> ;
   
@@ -906,9 +934,11 @@ namespace Loci {
       limi.z = min(limi.z,vlimit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2,ref)) ;
     }
     
-    $limiterv3d(X) = limi ;
+    $limiterv3d(X) = realToDouble(limi) ;
   }
-  
+
+  $untype X ;
+  $untype X_f ;
   $type X storeVec<real> ;
   $type X_f storeVec<real> ;
   $rule pointwise(limiterv(X)<-cellcenter,X,gradv(X),firstOrderCells,
@@ -966,7 +996,7 @@ namespace Loci {
 	limi = min(limi,vlimit(Xcc,qmin,qmax,qdif,epsilon2,ref)) ;
       }
       
-      $limiterv(X)[j] = limi ;
+      $limiterv(X)[j] = realToDouble(limi) ;
     }
   }
 		   
@@ -976,7 +1006,8 @@ namespace Loci {
   // Venkatakrishnan Limiter2 (Limit to cell centers)
   //
   //==========================================================================
-
+  $untype X ;
+  $untype X_f ;
   $type X store<real> ;
   $type X_f store<real> ;
   $rule pointwise(limiters(X)<-cellcenter,X,grads(X),firstOrderCells,
@@ -1038,9 +1069,11 @@ namespace Loci {
       limi = min(limi,vlimit(Xcc,qmin,qmax,qdif,epsilon2,ref)) ;
     }
     
-    $limiters(X) = limi ;
+    $limiters(X) = realToDouble(limi) ;
   }
 
+  $untype X ;
+  $untype X_f ;
   $type X store<vect3d> ;
   $type X_f store<vect3d> ;
   
@@ -1120,9 +1153,11 @@ namespace Loci {
       limi.z = min(limi.z,vlimit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2,ref)) ;
     }
     
-    $limiterv3d(X) = limi ;
+    $limiterv3d(X) = realToDouble(limi) ;
   }
-  
+
+  $untype X ;
+  $untype X_f ;
   $type X storeVec<real> ;
   $type X_f storeVec<real> ;
   $rule pointwise(limiterv(X)<-cellcenter,X,gradv(X),firstOrderCells,
@@ -1180,13 +1215,15 @@ namespace Loci {
 	limi = min(limi,vlimit(Xcc,qmin,qmax,qdif,epsilon2,ref)) ;
       }
       
-      $limiterv(X)[j] = limi ;
+      $limiterv(X)[j] = realToDouble(limi) ;
     }
   }
 
   //-------------------------------------------------------------------
   // alternate stencil version
 
+  $untype X ;
+  $untype X_f ;
   $type X store<real> ;
   $type X_f store<real> ;
   $type cellStencil multiMap ;
@@ -1235,9 +1272,11 @@ namespace Loci {
       limi = min(limi,vlimit(Xcc,qmin,qmax,qdif,epsilon2,ref)) ;
     }
 
-    $limiters(X) = limi ;
+    $limiters(X) = realToDouble(limi) ;
   }
 
+  $untype X ;
+  $untype X_f ;
   $type X store<vect3d> ;
   $type X_f store<vect3d> ;
   
@@ -1294,9 +1333,11 @@ namespace Loci {
       limi.z = min(limi.z,vlimit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2,ref)) ;
     }
 
-    $limiterv3d(X) = limi ;
+    $limiterv3d(X) = realToDouble(limi) ;
   }
-  
+
+  $untype X ;
+  $untype X_f ;
   $type X storeVec<real> ;
   $type X_f storeVec<real> ;
   $rule pointwise(stencil::limiterv(X)<-cellcenter,X,gradv(X),firstOrderCells,
@@ -1341,7 +1382,7 @@ namespace Loci {
 	limi = min(limi,vlimit(Xcc,qmin,qmax,qdif,epsilon2,ref)) ;
       }
       
-      $limiterv(X)[j] = limi ;
+      $limiterv(X)[j] = realToDouble(limi) ;
     }
   }
 }

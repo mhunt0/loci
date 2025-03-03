@@ -45,8 +45,17 @@ following commands:
 make
 make install
 
-This will compile and install Loci in the directory
-<install_directory>/Loci-*.  If there are any problems with compilation you
+This will compile and install Loci in the directory (and set LOCI_BASE to)
+<install_directory>/Loci-*.  
+
+If you do not want to automatically append your <install_directory> with the 
+Loci build information, then at the configure step specify:
+
+./configure --prefix=<install_directory> --no-sub-dir
+
+which will make LOCI_BASE = <install_directory>.
+
+If there are any problems with compilation you
 may need to edit the files OBJ/sys.conf (system configuration file) or
 OBJ/comp.conf (compiler configuration file) to accomodate variations
 on your system that the configure script did not detect. 
@@ -56,6 +65,33 @@ To use the Loci library you will need to add the
 and the <install_directory>/Loci-*/lib subdirectory to your
 LD_LIBRARY_PATH environment.  Also, you will need to set the LOCI_BASE
 environment variable to <install_directory>/Loci-*
+
+--------------------------------------------------------------------------------
+Notes for Debug Builds
+
+When debugging of Loci or associated codes is necessary, the user has two options.
+At configure time, one can include the following flag:
+
+./configure --prefix<install_directory> --bounds-check
+
+which enables compiler-specific directives to enable bound checking of vectors/arrays.
+
+To generate debugging information in the compiled object files, set the environment
+variable (for bash)
+
+export LOCI_DEBUG=<0,1,2,3>
+
+LOCI_DEBUG can be added to an environment module as well.
+LOCI_DEBUG will do two things: 
+   1. Enable debug compiler flags (-Wall -g3, and for gnu compilers, -ggdb and -fno-eliminate-unused-debug-symbols)
+   2. Change the optimization level of the compiled code:
+      a. LOCI_DEBUG=0: -O0
+      b. LOCI_DEBUG=1: -O1
+      c. LOCI_DEBUG=2: -O2
+      d. LOCI_DEBUG=3: -O3
+
+For gnu compilers, -ggdb should enable automatic traceback and reporting upon 
+code termination.
 
 -------------------------------------------------------------------------------
 Notes on installing packages required by Loci

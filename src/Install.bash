@@ -20,7 +20,13 @@
 #
 ###############################################################################
 
-INSTALL_PATH=$INSTALL_DIR/$LOCI_INSTALL_DIR
+# Install with or without the Loci build information appended if set
+# at configure time
+if [ -z "${LOCI_INSTALL_DIR}" ]; then
+    INSTALL_PATH=$INSTALL_DIR
+else
+    INSTALL_PATH=$INSTALL_DIR/$LOCI_INSTALL_DIR
+fi
 
 echo INSTALL_PATH = $INSTALL_PATH
 
@@ -86,8 +92,11 @@ cp FVMtools/ugrid2cgns $INSTALL_PATH/bin
 cp FVMtools/cgns2ugrid $INSTALL_PATH/bin
 cp FVMtools/cgns2vog $INSTALL_PATH/bin
 
-echo cp Loci.conf comp.conf sys.conf $INSTALL_PATH
+echo Copying config files: Loci.conf comp.conf sys.conf version.conf
 cp Loci.conf comp.conf sys.conf $INSTALL_PATH
+sed -e "s:^GIT_INFO.*:GIT_INFO = ${GIT_INFO}:" \
+    -e "s:^GIT_BRANCH.*:GIT_BRANCH = ${GIT_BRANCH}:" \
+	version.conf > $INSTALL_PATH/version.conf
 
 echo Installing \#include files
 mkdir -p $INSTALL_PATH/include

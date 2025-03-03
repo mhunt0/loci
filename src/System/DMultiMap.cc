@@ -26,6 +26,8 @@
 #include <DMultiMap.h>
 #include <multiMap.h>
 #include <Tools/hash_map.h>
+#include <cstring>
+
 using std::cerr ;
 using std::endl ;
 using std::ostream ;
@@ -394,12 +396,14 @@ namespace Loci
   
   int dmultiMapRepI::pack_size(const  entitySet &e ) 
   {
-    int size = 0 ;
+    int packsize = 0 ;
     FORALL(e,i) {
-      size  +=  attrib_data[i].size();
+      int size  =  attrib_data[i].size();
+      packsize += cpypacksize(&size,1) ;
+      packsize += cpypacksize(&size,size) ;
     } ENDFORALL ;
     
-    return( size*sizeof(int) + e.size()*sizeof(int) ) ;
+    return packsize ;
   }
   
  
@@ -411,12 +415,14 @@ namespace Loci
   int dmultiMapRepI::
   pack_size(const entitySet& e, entitySet& packed) {
     packed = domain() & e ;
-    int size = 0 ;
-    FORALL(packed, i) {
-      size += attrib_data[i].size() ;
+    int packsize = 0 ;
+    FORALL(packed,i) {
+      int size  =  attrib_data[i].size();
+      packsize += cpypacksize(&size,1) ;
+      packsize += cpypacksize(&size,size) ;
     } ENDFORALL ;
-
-    return (size * sizeof(int) + packed.size() * sizeof(int)) ;
+    
+    return packsize ;
   }
   
   //**************************************************************************/
@@ -428,10 +434,9 @@ namespace Loci
     std::vector<int,malloc_alloc<int> >   newVec;
     for( ci = eset.begin(); ci != eset.end(); ++ci) {
       vsize  = attrib_data[*ci].size();
-      MPI_Pack( &vsize, 1, MPI_INT, outbuf,outcount,
-                &position, MPI_COMM_WORLD) ;
-      MPI_Pack( &attrib_data[*ci][0], vsize, MPI_INT, outbuf,outcount,
-                &position, MPI_COMM_WORLD) ;
+
+      cpypack(outbuf,position,outcount,&vsize,1) ;
+      cpypack(outbuf,position,outcount,&attrib_data[*ci][0],vsize) ;
     }
 
   }
@@ -446,16 +451,15 @@ namespace Loci
 
     int vsize;
     for( ci = seq.begin(); ci != seq.end(); ++ci){
-      MPI_Unpack( inbuf, insize, &position, &vsize,
-                  1, MPI_INT, MPI_COMM_WORLD) ;
+      cpyunpack(inbuf,position,insize,&vsize,1) ;
+
       std::vector<int,malloc_alloc<int> >(vsize).swap(attrib_data[*ci]) ;
 
-      if(vsize != 0)
-        MPI_Unpack( inbuf, insize, &position, &attrib_data[*ci][0],
-                    vsize, MPI_INT, MPI_COMM_WORLD) ;
+      if(vsize != 0) {
+        cpyunpack(inbuf,position,insize,&attrib_data[*ci][0],vsize) ;
+      }
     }
-
-  }   
+  } 
       
   //**************************************************************************/
     

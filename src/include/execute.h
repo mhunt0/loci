@@ -51,36 +51,53 @@ using std::string;
 
 namespace Loci {
 
+  /** ************************************************************************
+   * @brief This class is used for timing a period of execution to the
+   * microsecond resolution in seconds
+   ***************************************************************************/
   class stopWatch {
-#ifdef PROFILER
-#ifdef USE_PAPI
-    long_long start_time ;
-#else
     double start_time ;
-#endif
-#endif
   public:
-    void start() { // This method resets the clock
+    /**
+     * @brief The constructor initializes the timer to record that the timer
+     * has not been started
+     **/
+    stopWatch() :start_time(-1.0) {}
+    /**
+     * @brief A static method that returns the current time with microsecond
+     * resolution.  This could be used as a portable way to access time, but
+     * generally this method would be used internally to the stopWatch class.
+     * @return double
+     **/
+    static double timer() {
 #ifdef PROFILER
 #ifdef USE_PAPI
-      start_time = PAPI_get_real_usec();
+      return 1e-6*double(PAPI_get_real_usec());
 #else
-      start_time = MPI_Wtime() ;
+      return MPI_Wtime() ;
 #endif
+#else
+      timeval tv ;
+      struct timezone tz ;
+      gettimeofday(&tv,&tz) ;
+      return double(tv.tv_sec)+1e-6*double(tv.tv_usec) ;
 #endif
     }
-    double stop() { // This method returns time since last start call
-#ifdef PROFILER
-#ifdef USE_PAPI
-      return 1e-6*double(PAPI_get_real_usec()-start_time) ;
-#else
-      return MPI_Wtime()-start_time ;
-#endif
-#else
-      return 0 ;
-#endif
+    /**
+     * @brief This method starts the timer.
+     **/
+    void start() { 
+      start_time = stopWatch::timer() ;
     }
-  } ;
+    /**
+     * @brief This method returns the time since the last call to start the
+     * timer.  If start has not been called, it returns a negative value.
+     * Method is declared a const as it does not change the state of the timer
+     **/
+    double stop() const { 
+      return start_time>0?stopWatch::timer()-start_time:start_time ;
+    }
+  } ; // end of class stopWatch
   
 
   // This object is responsible for counting time and events that occur for

@@ -27,7 +27,7 @@ list<string> include_dirs ;
 
 bool prettyOutput = false ;
 namespace {
-  const char *revision_name = "$Name:  $" ;
+  const char *revision_name = "$Name: " LOCI_BRANCH "-" LOCI_VERSION " $" ;
 
   std::string version() {
     const char *p = revision_name;
@@ -40,7 +40,7 @@ namespace {
     if(*p!= '\0')
       ++p ;
     std::string rn ;
-    while(*p!='$' &&  *p!=' ' && *p!='\0') 
+    while(*p!='$' &&  *p!=' ' && *p!='\0')
       rn += *p++ ;
 
     rn += " lpp compiled at " ;
@@ -62,7 +62,7 @@ bool no_cuda = false ;
 int main(int argc, char *argv[]) {
 
 
-  bool file_given = false; 
+  bool file_given = false;
   string filename ;
   bool out_given = false ;
   string outfile ;
@@ -104,9 +104,12 @@ int main(int argc, char *argv[]) {
     cerr << "no filename" << endl ;
     Usage(argc,argv) ;
   }
+  parseSharedInfo parseInfo ;
 #ifndef USE_CUDA_RT
   no_cuda = true ;
+  parseInfo.no_cuda = true ;
 #endif
+
   parseFile parser ;
   try {
     if(out_given) {
@@ -115,9 +118,9 @@ int main(int argc, char *argv[]) {
         cerr << "unable to open file " << outfile << " for writing!" << endl ;
         exit(-1) ;
       }
-      parser.processFile(filename,file) ;
+      parser.processFile(filename,file,parseInfo) ;
     } else {
-      parser.processFile(filename,cout) ;
+      parser.processFile(filename,cout,parseInfo) ;
     }
   } catch(parseError pe) {
     if(pe.error_type != "syntax error")
