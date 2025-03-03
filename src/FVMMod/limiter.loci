@@ -38,7 +38,6 @@ namespace Loci
 /** ****************************************************************************
  * @brief Default rule to allow the limiter for vectors to be determined from 
  *        the minimum for the vector such that the vector itself is not 'scaled' nonuniformly
- * @retval vecLimiter [-] user-input variable to normalize/scale vector limiters
  ******************************************************************************/
   $rule default(vecLimiter),
   comments("Flag to normalize/scale limiters for vector quantities along maximum direction. Default is 0 (not to)")
@@ -48,7 +47,6 @@ namespace Loci
 
 /** ****************************************************************************
  * @brief Unit rule to define first order cells
- * @retval firstOrderCells   [-] first-order cell list
  ******************************************************************************/
   $rule unit(firstOrderCells),constraint(geom_cells) 
   {
@@ -57,8 +55,6 @@ namespace Loci
 
 /** ****************************************************************************
  * @brief Apply rule to define first order cells, left/right faces
- * @retval (cl,cr)->firstOrderCells   [-] first-order cell list
- * @param  (cl,cr)->vol               [m^3] cell volume
  ******************************************************************************/
   $rule apply((cl,cr)->firstOrderCells<-(cl,cr)->vol)[Loci::Maximum],
         constraint((cl,cr)->geom_cells) 
@@ -72,9 +68,7 @@ namespace Loci
   }
 
 /** ****************************************************************************
- * @brief Apply rule to define first order cells, cell center
- * @retval ci->firstOrderCells   [-] first-order cell list
- * @param  ci->vol               [m^3] cell volume
+ * @brief Initialize firstOrderCell metrics
  ******************************************************************************/
   $rule apply(ci->firstOrderCells<-ci->vol)[Loci::Maximum], 
         constraint(ref->firstOrder_BCoption,ci->vol) 
@@ -84,10 +78,7 @@ namespace Loci
   }
 
 /** ****************************************************************************
- * @brief Apply rule to define first order cells, cell/face center metrics
- * @retval (cl,cr)->firstOrderCells  [-] first-order cell list
- * @param  (cl,cr)->cellcenter       [m] vect3d, cell center coordinates
- * @param  (cl,cr)->facecenter       [m] vect3d, face center coordinates
+ * @brief Build firstOrderCell metrics
  ******************************************************************************/
   $rule apply((cl,cr)->firstOrderCells<-(cl,cr)->cellcenter,facecenter)[Loci::Maximum],
         constraint((cl,cr)->geom_cells) 
@@ -111,7 +102,6 @@ namespace Loci
   
   /** **************************************************************************
    * @brief Default rule to define Venkatakrishnan limiter smoothness
-   * @retval Kl          [-] smoothness parameter
    ****************************************************************************/
   $rule default(Kl),comments("This parameter is a smoothness parameter for the "
                             "venkatakrishnan limiter.  A value of zero will not "
@@ -124,7 +114,6 @@ namespace Loci
 
   /** ****************************************************************************
    * @brief Default rule to define the order of the Nishikawa limiter
-   * @retval nisPow      [-] real, nishikawa order
    ******************************************************************************/
   $rule default(nisPow),
         comments("This parameter specifies the order of the Nishikawa Limter. "
@@ -135,7 +124,6 @@ namespace Loci
 
   /** **************************************************************************
    * @brief Default rule to define limiters
-   * @retval limiter     [-] string, limiter defintion
    ****************************************************************************/
   $rule default(limiter),comments("Limiter used in face extrapolations.  "
                                   "This function can take the values of 'venkatakrishnan', "
@@ -147,17 +135,6 @@ namespace Loci
 
   /** ****************************************************************************
    * @brief Constraint rule to define the limiter rules activiated by the scheduler
-   * @retval V_limiter
-   * @retval B_limiter
-   * @retval N_limiter
-   * @retval Z_limiter
-   * @retval NB_limiter
-   * @retval V2_limiter
-   * @retval NISc_limiter
-   * @retval NISf_limiter
-   * @retval Venka_limiter
-   * @retval NIS_limiter
-   * @param  limiter
    ******************************************************************************/
   $rule constraint(V_limiter,B_limiter,N_limiter,Z_limiter,NB_limiter,V2_limiter,
                     NISc_limiter,NISf_limiter,Venka_limiter,NIS_limiter<-limiter) 
@@ -222,30 +199,26 @@ namespace Loci
   $type X store<real> ;
 /**
  * @brief Limiters for scalars, no limiting
- * @retval limiters(X)        [-] limiter
- * @param  X                  [-] scalar
  */
   $rule pointwise(limiters(X)<-X),constraint(geom_cells,N_limiter) 
   {
     $limiters(X) = 1.0 ;
   }
 
+  $untype X ;
   $type X store<vect3d> ;
   /**
    * @brief Limiters for vect3d, no limiting
-   * @retval limiterv3d(X)      [-] limiter
-   * @param  X                  [-] vect3d
    */
   $rule pointwise(limiterv3d(X)<-X),constraint(geom_cells,N_limiter) 
   {
     $limiterv3d(X) = vect3d(1.0,1.0,1.0) ;
   }
-    
+
+  $untype X ;
   $type X storeVec<real> ;
   /**
    * @brief Limiters for vectors, no limiting
-   * @retval limiterv(X)        [-] limiter
-   * @param  X                  [-] vector
    */
   $rule pointwise(limiterv(X)<-X),constraint(geom_cells,N_limiter),prelude 
   {
@@ -256,33 +229,30 @@ namespace Loci
     $limiterv(X) = mk_Scalar(1.) ;
   }
 
+  $untype X ;
   $type X store<real> ;
 /**
  * @brief Limiters for scalars, full limiting (Zero limiter)
- * @retval limiters(X)         [-] limiter
- * @param  X                   [-] scalar
  */
   $rule pointwise(limiters(X)<-X),constraint(geom_cells,Z_limiter) 
   {
     $limiters(X) = 0.0 ;
   }
 
+  $untype X ;
   $type X store<vect3d> ;
 /**
  * @brief Limiters for vect3d, full limiting (Zero limiter)
- * @retval limiterv3d(X)       [-] limiter
- * @param  X                   [-] vect3d
  */
   $rule pointwise(limiterv3d(X)<-X),constraint(geom_cells,Z_limiter) 
   {
     $limiterv3d(X) = vect3d(0.0,0.0,0.0) ;
   }
     
+  $untype X ;
   $type X storeVec<real> ;
 /**
  * @brief Limiters for vector, full limiting (Zero limiter)
- * @retval limiterv(X)         [-] limiter
- * @param  X                   [-] vector
  */
   $rule pointwise(limiterv(X)<-X),constraint(geom_cells,Z_limiter),prelude 
   {
@@ -298,11 +268,10 @@ namespace Loci
   // Handle Periodic BC's
   //
   //==========================================================================
+  $untype X ;
   $type X store<real> ;
 /** ****************************************************************************
   * @brief Scalar parametric map for limiters on periodic boundaries
-  * @retval cr->limiters(X)       [-] right face limiter
-  * @param  pmap->cl->limiters(X) [-] left face limiter, periodic boundary
   ******************************************************************************/
   $rule pointwise(cr->limiters(X)<-pmap->cl->limiters(X)),
         constraint(periodicFaces,cl->X) 
@@ -310,12 +279,11 @@ namespace Loci
     $cr->$limiters(X) = $pmap->$cl->$limiters(X) ;
   }
 
+  $untype X ;
   $type X store<vect3d> ;
   $type periodicTransform store<rigid_transform> ;
 /** ****************************************************************************
  * @brief Vect3d parametric map for limiters on periodic boundaries
- * @retval cr->limiterv3d(X)       [-] right face limiter
- * @param  pmap->cl->limiterv3d(X) [-] left face limiter, periodic boundary
  ******************************************************************************/
   $rule pointwise(cr->limiterv3d(X)<-pmap->cl->limiterv3d(X),pmap->ref->periodicTransform),
         constraint(periodicFaces,cl->X) 
@@ -323,12 +291,11 @@ namespace Loci
     const rigid_transform &frame = $pmap->$ref->$periodicTransform ;
     $cr->$limiterv3d(X) = frame.rotate_vec($pmap->$cl->$limiterv3d(X)) ;
   }
-    
+
+  $untype X ;
   $type X storeVec<real> ;
 /** ****************************************************************************
  * @brief Vector parametric map for limiters on periodic boundaries
- * @retval cr->limiterv(X)       [-] right face limiter
- * @param  pmap->cl->limiterv(X) [-] left face limiter, periodic boundary
  ******************************************************************************/
   $rule pointwise(cr->limiterv(X)<-pmap->cl->limiterv(X)),
         constraint(periodicFaces,cl->X),prelude 
@@ -346,18 +313,10 @@ namespace Loci
   // Barth Limiter
   //
   //==========================================================================
-    
+  $untype X ;    
   $type X store<real>;
   /** ****************************************************************************
    * @brief Barth limiter for scalars
-   * @retval limiters(X)       [-] scalar limiter parametric
-   * @param  cellcenter        [-] cellcenter coordinates
-   * @param  X                 [-] scalar value at cell center
-   * @param  cellmaxmins(X)    [-] max and min for cell stencil
-   * @param  grads(X)          [-] cell center gradient
-   * @param  firstOrderCells   [-] flag for setting a cell to a locally zero limiter
-   * @param  upper-facecenter  [-] face center coordinates, upper face
-   * @param  lower->facecenter [-] face center coordinates, lower face
    ******************************************************************************/
   $rule pointwise(limiters(X)<-cellcenter,X,cellmaxmins(X),grads(X),firstOrderCells,
                   upper->facecenter,lower->facecenter),
@@ -390,18 +349,10 @@ namespace Loci
     $limiters(X) = realToDouble(limi);
   }
 
-  $type X store<vect3d>;
+$untype X ;  
+$type X store<vect3d>;
   /** ****************************************************************************
    * @brief Barth limiter for vect3d
-   * @retval limiterv3d(X)       [-] vect3d limiter parametric
-   * @param  cellcenter          [-] cellcenter coordinates
-   * @param  X                   [-] vect3d value at cell center
-   * @param  cellmaxminv3d(X)    [-] max and min for cell stencil
-   * @param  gradv3d(X)          [-] cell center gradient
-   * @param  firstOrderCells     [-] flag for setting a cell to a locally zero limiter
-   * @param  upper-facecenter    [-] face center coordinates, upper face
-   * @param  lower->facecenter   [-] face center coordinates, lower face
-   * @param  vecLimiter          [-] flag to limit vectors consistently
    ******************************************************************************/
   $rule pointwise(limiterv3d(X)<-cellcenter,X,cellmaxminv3d(X),gradv3d(X),
                   firstOrderCells,upper->facecenter,lower->facecenter,vecLimiter),
@@ -452,18 +403,10 @@ namespace Loci
     }
   }
 
-  $type X storeVec<real>;
+$untype X;  
+$type X st                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          oreVec<real>;
   /** ****************************************************************************
    * @brief Barth limiter for vectors
-   * @retval limiterv(X)         [-] vector limiter parametric
-   * @param  cellcenter          [-] cellcenter coordinates
-   * @param  X                   [-] vector value at cell center
-   * @param  cellmaxminv(X)      [-] max and min for cell stencil
-   * @param  gradv(X)            [-] cell center gradient
-   * @param  firstOrderCells     [-] flag for setting a cell to a locally zero limiter
-   * @param  upper-facecenter    [-] face center coordinates, upper face
-   * @param  lower->facecenter   [-] face center coordinates, lower face
-   * @param  vecLimiter          [-] flag to limit vectors consistently
    ******************************************************************************/
   $rule pointwise(limiterv(X)<-cellcenter,X,cellmaxminv(X),gradv(X),firstOrderCells,
                   upper->facecenter,lower->facecenter,vecLimiter),
@@ -526,18 +469,10 @@ namespace Loci
   // Like Barth except limiting to nodal max/min rather than at face centers
   //
   //==========================================================================
+  $untype X;
   $type X store<real>;
   /** ****************************************************************************
    * @brief Nodal Barth limiter for scalars
-   * @retval limiters(X)                                [-] scalar limiter parametric
-   * @param  cellcenter                                 [-] cellcenter coordinates
-   * @param  X                                          [-] scalar value at cell center
-   * @param  grads(X)                                   [-] cell center gradient
-   * @param  firstOrderCells                            [-] flag for setting a cell to a locally zero limiter
-   * @param  upper->face2node->pos                      [-] upper face nodal coordinates
-   * @param  lower->facecenter->pos                     [-] lower face nodal coordinates
-   * @param  upper->face2node->cell2nodemaxmins(X)      [-] upper face max/mins
-   * @param  lower->facecenter-cell2nodemaxmins(X)      [-] lower face max/mins
    ******************************************************************************/
   $rule pointwise(limiters(X)<-cellcenter,X,grads(X),firstOrderCells,
                   upper->face2node->(pos,cell2nodemaxmins(X)),
@@ -581,19 +516,10 @@ namespace Loci
     $limiters(X) = realToDouble(limi);
   }
 
+  $untype X;
   $type X store<vect3d>;
   /** ****************************************************************************
    * @brief Nodal Barth limiter for vect3d
-   * @retval limiterv3d(X)                              [-] vect3d limiter parametric
-   * @param  cellcenter                                 [-] cellcenter coordinates
-   * @param  X                                          [-] vect3d value at cell center
-   * @param  gradv3d(X)                                 [-] cell center gradient
-   * @param  firstOrderCells                            [-] flag for setting a cell to a locally zero limiter
-   * @param  upper->face2node->pos                      [-] upper face nodal coordinates
-   * @param  lower->facecenter->pos                     [-] lower face nodal coordinates
-   * @param  upper->face2node->cell2nodemaxminv3d(X)    [-] upper face max/mins
-   * @param  lower->facecenter-cell2nodemaxminv3d(X)    [-] lower face max/mins
-   * @param  vecLimiter                                 [-] flag to limit vectors consistently
    ******************************************************************************/
   $rule pointwise(limiterv3d(X)<-cellcenter,X,gradv3d(X),firstOrderCells,
                   upper->face2node->(pos,cell2nodemaxminv3d(X)),
@@ -659,19 +585,10 @@ namespace Loci
     }
   }
 
+  $untype X;
   $type X storeVec<real>;
   /** ****************************************************************************
    * @brief Nodal Barth limiter for vectors
-   * @retval limiterv(X)                                [-] vector limiter parametric
-   * @param  cellcenter                                 [-] cellcenter coordinates
-   * @param  X                                          [-] vector value at cell center
-   * @param  gradv(X)                                   [-] cell center gradient
-   * @param  firstOrderCells                            [-] flag for setting a cell to a locally zero limiter
-   * @param  upper->face2node->pos                      [-] upper face nodal coordinates
-   * @param  lower->facecenter->pos                     [-] lower face nodal coordinates
-   * @param  upper->face2node->cell2nodemaxminv(X)      [-] upper face max/mins
-   * @param  lower->facecenter-cell2nodemaxminv(X)      [-] lower face max/mins
-   * @param  vecLimiter                                 [-] flag to limit vectors consistently
    ******************************************************************************/
   $rule pointwise(limiterv(X)<-cellcenter,X,gradv(X),firstOrderCells,
                   upper->face2node->(pos,cell2nodemaxminv(X)),
@@ -738,18 +655,10 @@ namespace Loci
     //
     //==========================================================================
 
+  $untype X;
   $type X store<real>;
   /** ****************************************************************************
    * @brief Venkatakrishnan limiter for scalars
-   * @retval limiters(X)       [-] scalar limiter parametric
-   * @param  cellcenter        [-] cellcenter coordinates
-   * @param  X                 [-] scalar value at cell center
-   * @param  cellmaxmins(X)    [-] max and min for cell stencil
-   * @param  grads(X)          [-] cell center gradient
-   * @param  epsilon2s(X)      [-] Venkatakrishnan limiter parameter
-   * @param  firstOrderCells   [-] flag for setting a cell to a locally zero limiter
-   * @param  upper->facecenter [-] face center coordinates, upper face
-   * @param  lower->facecenter [-] face center coordinates, lower face
    ******************************************************************************/
   $rule pointwise(limiters(X)<-cellcenter,X,cellmaxmins(X),grads(X),epsilon2s(X),
                               firstOrderCells,upper->facecenter,lower->facecenter),
@@ -790,16 +699,6 @@ namespace Loci
   $type X store<vect3d>;
   /** ****************************************************************************
    * @brief Venkatakrishnan limiter for vect3d
-   * @retval limiterv3d(X)       [-] vect3d limiter parametric
-   * @param  cellcenter          [-] cellcenter coordinates
-   * @param  X                   [-] vect3d value at cell center
-   * @param  cellmaxminv3d(X)    [-] max and min for cell stencil
-   * @param  gradv3d(X)          [-] cell center gradient
-   * @param  epsilon2v3d(X)      [-] Venkatakrishnan limiter parameter
-   * @param  firstOrderCells     [-] flag for setting a cell to a locally zero limiter
-   * @param  upper->facecenter   [-] face center coordinates, upper face
-   * @param  lower->facecenter   [-] face center coordinates, lower face
-   * @param  vecLimiter          [-] flag to limit vectors consistently
    ******************************************************************************/
   $rule pointwise(limiterv3d(X)<-cellcenter,X,cellmaxminv3d(X),gradv3d(X),epsilon2v3d(X),
                                 firstOrderCells,upper->facecenter,lower->facecenter,
@@ -855,19 +754,10 @@ namespace Loci
     }
   }
 
+  $untype X;
   $type X storeVec<real>;
   /** ****************************************************************************
    * @brief Venkatakrishnan limiter for vectors
-   * @retval limiterv(X)         [-] vector limiter parametric
-   * @param  cellcenter          [-] cellcenter coordinates
-   * @param  X                   [-] vector value at cell center
-   * @param  cellmaxminv(X)      [-] max and min for cell stencil
-   * @param  gradv(X)            [-] cell center gradient
-   * @param  epsilon2v(X)        [-] Venkatakrishnan limiter parameter
-   * @param  firstOrderCells     [-] flag for setting a cell to a locally zero limiter
-   * @param  upper->facecenter   [-] face center coordinates, upper face
-   * @param  lower->facecenter   [-] face center coordinates, lower face
-   * @param  vecLimiter          [-] flag to limit vectors consistently
    ******************************************************************************/
   $rule pointwise(limiterv(X)<-cellcenter,X,cellmaxminv(X),gradv(X),epsilon2v(X),
                               firstOrderCells,upper->facecenter,lower->facecenter,
@@ -929,18 +819,10 @@ namespace Loci
   // Venkatakrishnan Limiter2 (Limit to cell centers)
   //
   //==========================================================================
+  $untype X;
   $type X store<real>;
   /** ****************************************************************************
    * @brief Venkatakrishnan limiter for scalars, cell center
-   * @retval limiters(X)            [-] scalar limiter parametric
-   * @param  cellcenter             [-] cellcenter coordinates
-   * @param  X                      [-] scalar value at cell center
-   * @param  cellmaxmins(X)         [-] max and min for cell stencil
-   * @param  grads(X)               [-] cell center gradient
-   * @param  epsilon2s(X)           [-] Venkatakrishnan limiter parameter
-   * @param  firstOrderCells        [-] flag for setting a cell to a locally zero limiter
-   * @param  upper->cr->cellcenter  [-] cell center coordinates, upper cell
-   * @param  lower->cl->cellcenter  [-] cell center coordinates, lower cell
    ******************************************************************************/
   $rule pointwise(limiters(X)<-cellcenter,X,cellmaxmins(X),grads(X),epsilon2s(X),
                               firstOrderCells,upper->cr->cellcenter,lower->cl->cellcenter),
@@ -976,19 +858,10 @@ namespace Loci
     $limiters(X) = realToDouble(limi);
   }
 
+  $untype X;
   $type X store<vect3d>;
   /** ****************************************************************************
    * @brief Venkatakrishnan limiter for vect3d, cell center
-   * @retval limiterv3d(X)         [-] vect3d limiter parametric
-   * @param  cellcenter            [-] cellcenter coordinates
-   * @param  X                     [-] vect3d value at cell center
-   * @param  cellmaxminv3d(X)      [-] max and min for cell stencil
-   * @param  gradv3d(X)            [-] cell center gradient
-   * @param  epsilon2v3d(X)        [-] Venkatakrishnan limiter parameter
-   * @param  firstOrderCells       [-] flag for setting a cell to a locally zero limiter
-   * @param  upper->cr->cellcenter [-] cell center coordinates, upper cell
-   * @param  lower->cl->cellcenter [-] cell center coordinates, lower cell
-   * @param  vecLimiter            [-] flag to limit vectors consistently
    ******************************************************************************/
   $rule pointwise(limiterv3d(X)<-cellcenter,X,cellmaxminv3d(X),gradv3d(X),epsilon2v3d(X),
                                 firstOrderCells,upper->cr->cellcenter,
@@ -1044,19 +917,10 @@ namespace Loci
     }
   }
 
+  $untype X;
   $type X storeVec<real>;
   /** ****************************************************************************
    * @brief Venkatakrishnan limiter for vectors, cell center
-   * @retval limiterv(X)             [-] vector limiter parametric
-   * @param  cellcenter              [-] cellcenter coordinates
-   * @param  X                       [-] vector value at cell center
-   * @param  cellmaxminv(X)          [-] max and min for cell stencil
-   * @param  gradv(X)                [-] cell center gradient
-   * @param  epsilon2v(X)            [-] Venkatakrishnan limiter parameter
-   * @param  firstOrderCells         [-] flag for setting a cell to a locally zero limiter
-   * @param  upper->cr->cellcenter   [-] face center coordinates, upper face
-   * @param  lower->cl->cellcenter   [-] face center coordinates, lower face
-   * @param  vecLimiter              [-] flag to limit vectors consistently
    ******************************************************************************/
   $rule pointwise(limiterv(X)<-cellcenter,X,cellmaxminv(X),gradv(X),epsilon2v(X),
                               firstOrderCells,upper->cr->cellcenter,
@@ -1120,17 +984,10 @@ namespace Loci
   // Venkatakrishnan V2 -- alternate stencil version
   //
   //-------------------------------------------------------------------
+  $untype X;
   $type X store<real>;
   /** ****************************************************************************
    * @brief Venkatakrishnan limiter for scalars, special stencil
-   * @retval limiters(X)             [-] scalar limiter parametric
-   * @param  cellcenter              [-] cellcenter coordinates
-   * @param  X                       [-] scalar value at cell center
-   * @param  cellmaxmins(X)          [-] max and min for cell stencil
-   * @param  grads(X)                [-] cell center gradient
-   * @param  epsilon2s(X)            [-] Venkatakrishnan limiter parameter
-   * @param  firstOrderCells         [-] flag for setting a cell to a locally zero limiter
-   * @param  cellStencil->cellcenter [-] cell center coordinates, neighbor cells
    ******************************************************************************/
   $rule pointwise(stencil::limiters(X)<-cellcenter,X,cellmaxmins(X),grads(X),
                                         epsilon2s(X),firstOrderCells,
@@ -1160,6 +1017,7 @@ namespace Loci
     $limiters(X) = realToDouble(limi);
   }
 
+  $untype X;
   $type X store<vect3d>;
   /** ****************************************************************************
    * @brief Venkatakrishnan limiter for vect3d, special stencil
@@ -1218,18 +1076,10 @@ namespace Loci
     }
   }
 
+  $untype X;
   $type X storeVec<real>;
   /** ****************************************************************************
    * @brief Venkatakrishnan limiter for vectors, cell center
-   * @retval limiterv(X)             [-] vector limiter parametric
-   * @param  cellcenter              [-] cellcenter coordinates
-   * @param  X                       [-] vector value at cell center
-   * @param  cellmaxminv(X)          [-] max and min for cell stencil
-   * @param  gradv(X)                [-] cell center gradient
-   * @param  epsilon2v(X)            [-] Venkatakrishnan limiter parameter
-   * @param  firstOrderCells         [-] flag for setting a cell to a locally zero limiter
-   * @param  cellStencil->cellcenter [-] cell center coordinates, neighbor cells
-   * @param  vecLimiter              [-] flag to limit vectors consistently
    ******************************************************************************/
   $rule pointwise(stencil::limiterv(X)<-cellcenter,X,cellmaxminv(X),gradv(X),
                                         epsilon2v(X),firstOrderCells,
@@ -1284,19 +1134,10 @@ namespace Loci
   // Nishikawa Limiter, face center
   //
   //==========================================================================
+  $untype X;
   $type X store<real>;
   /** ****************************************************************************
    * @brief Nishikawa limiter for scalars
-   * @retval limiters(X)       [-] scalar limiter parametric
-   * @param  cellcenter        [-] cellcenter coordinates
-   * @param  X                 [-] scalar value at cell center
-   * @param  cellmaxmins(X)    [-] max and min for cell stencil
-   * @param  grads(X)          [-] cell center gradient
-   * @param  epsilon2s(X)      [-] Venkatakrishnan limiter parameter
-   * @param  nisPow            [-] Order of limiter
-   * @param  firstOrderCells   [-] flag for setting a cell to a locally zero limiter
-   * @param  upper->facecenter [-] face center coordinates, upper face
-   * @param  lower->facecenter [-] face center coordinates, lower face
    ******************************************************************************/
   $rule pointwise(limiters(X)<-cellcenter,X,cellmaxmins(X),grads(X),epsilon2s(X),
                               nisPow,firstOrderCells,upper->facecenter,lower->facecenter),
@@ -1334,20 +1175,10 @@ namespace Loci
     $limiters(X) = realToDouble(limi);
   }
 
+  $untype X;
   $type X store<vect3d>;
   /** ****************************************************************************
    * @brief Nishikawa limiter for vect3d
-   * @retval limiterv3d(X)       [-] vect3d limiter parametric
-   * @param  cellcenter          [-] cellcenter coordinates
-   * @param  X                   [-] vect3d value at cell center
-   * @param  cellmaxminv3d(X)    [-] max and min for cell stencil
-   * @param  gradv3d(X)          [-] cell center gradient
-   * @param  epsilon2v3d(X)      [-] Venkatakrishnan limiter parameter
-   * @param  nisPow              [-] order of limiter
-   * @param  firstOrderCells     [-] flag for setting a cell to a locally zero limiter
-   * @param  upper->facecenter   [-] face center coordinates, upper face
-   * @param  lower->facecenter   [-] face center coordinates, lower face
-   * @param  vecLimiter          [-] flag to limit vectors consistently
    ******************************************************************************/
   $rule pointwise(limiterv3d(X)<-cellcenter,X,gradv3d(X),cellmaxminv3d(X),
                                 epsilon2v3d(X),nisPow,firstOrderCells,upper->facecenter,
@@ -1404,20 +1235,10 @@ namespace Loci
     }
   }
 
+  $untype X;
   $type X storeVec<real>;
   /** ****************************************************************************
    * @brief Nishikawa limiter for vectors
-   * @retval limiterv(X)         [-] vector limiter parametric
-   * @param  cellcenter          [-] cellcenter coordinates
-   * @param  X                   [-] vector value at cell center
-   * @param  cellmaxminv(X)      [-] max and min for cell stencil
-   * @param  gradv(X)            [-] cell center gradient
-   * @param  epsilon2v(X)        [-] Venkatakrishnan limiter parameter
-   * @param  nisPow              [-] order of limiter
-   * @param  firstOrderCells     [-] flag for setting a cell to a locally zero limiter
-   * @param  upper->facecenter   [-] face center coordinates, upper face
-   * @param  lower->facecenter   [-] face center coordinates, lower face
-   * @param  vecLimiter          [-] flag to limit vectors consistently
    ******************************************************************************/
   $rule pointwise(limiterv(X)<-cellcenter,X,gradv(X),cellmaxminv(X),epsilon2v(X),
                                 nisPow,firstOrderCells,upper->facecenter,
@@ -1476,20 +1297,10 @@ namespace Loci
     }
   }
 
-
+  $untype X;
   $type X store<real>;
   /** ****************************************************************************
    * @brief Nishikawa limiter for scalars, cell center
-   * @retval limiters(X)            [-] scalar limiter parametric
-   * @param  cellcenter             [-] cellcenter coordinates
-   * @param  X                      [-] scalar value at cell center
-   * @param  cellmaxmins(X)         [-] max and min for cell stencil
-   * @param  grads(X)               [-] cell center gradient
-   * @param  epsilon2s(X)           [-] Venkatakrishnan limiter parameter
-   * @param  nisPow                 [-] order of limter
-   * @param  firstOrderCells        [-] flag for setting a cell to a locally zero limiter
-   * @param  upper->cr->cellcenter  [-] cell center coordinates, upper cell
-   * @param  lower->cl->cellcenter  [-] cell center coordinates, lower cell
    ******************************************************************************/
   $rule pointwise(limiters(X)<-cellcenter,X,cellmaxmins(X),grads(X),epsilon2s(X),
                               nisPow,firstOrderCells,upper->cr->cellcenter,
@@ -1527,20 +1338,10 @@ namespace Loci
     $limiters(X) = realToDouble(limi);
   }
 
+  $untype X;
   $type X store<vect3d>;
   /** ****************************************************************************
    * @brief Nishikawa limiter for vect3d, cell center
-   * @retval limiterv3d(X)         [-] vect3d limiter parametric
-   * @param  cellcenter            [-] cellcenter coordinates
-   * @param  X                     [-] vect3d value at cell center
-   * @param  cellmaxminv3d(X)      [-] max and min for cell stencil
-   * @param  gradv3d(X)            [-] cell center gradient
-   * @param  epsilon2v3d(X)        [-] Venkatakrishnan limiter parameter
-   * @param  nisPow                [-] order of limiter
-   * @param  firstOrderCells       [-] flag for setting a cell to a locally zero limiter
-   * @param  upper->cr->cellcenter [-] cell center coordinates, upper cell
-   * @param  lower->cl->cellcenter [-] cell center coordinates, lower cell
-   * @param  vecLimiter            [-] flag to limit vectors consistently
    ******************************************************************************/
   $rule pointwise(limiterv3d(X)<-cellcenter,X,cellmaxminv3d(X),gradv3d(X),
                                 epsilon2v3d(X),nisPow,firstOrderCells,
@@ -1598,20 +1399,10 @@ namespace Loci
     }
   }
 
+  $untype X;
   $type X storeVec<real>;
   /** ****************************************************************************
    * @brief Nishikawa limiter for vectors, cell center
-   * @retval limiterv(X)             [-] vector limiter parametric
-   * @param  cellcenter              [-] cellcenter coordinates
-   * @param  X                       [-] vector value at cell center
-   * @param  cellmaxminv(X)          [-] max and min for cell stencil
-   * @param  gradv(X)                [-] cell center gradient
-   * @param  epsilon2v(X)            [-] Venkatakrishnan limiter parameter
-   * @param  nisPow                  [-] order of limiter
-   * @param  firstOrderCells         [-] flag for setting a cell to a locally zero limiter
-   * @param  upper->cr->cellcenter   [-] face center coordinates, upper face
-   * @param  lower->cl->cellcenter   [-] face center coordinates, lower face
-   * @param  vecLimiter              [-] flag to limit vectors consistently
    ******************************************************************************/
   $rule pointwise(limiterv(X)<-cellcenter,X,gradv(X),cellmaxminv(X),epsilon2v(X),
                               nisPow,firstOrderCells,upper->cr->cellcenter,
@@ -1674,18 +1465,10 @@ namespace Loci
   // Nishikawa Limiter, cell center, alternate stencil
   //
   //==========================================================================
+  $untype X;
   $type X store<real>;
   /** ****************************************************************************
    * @brief Nishikawa limiter for scalars, special stencil
-   * @retval limiters(X)             [-] scalar limiter parametric
-   * @param  cellcenter              [-] cellcenter coordinates
-   * @param  X                       [-] scalar value at cell center
-   * @param  cellmaxmins(X)          [-] max and min for cell stencil
-   * @param  grads(X)                [-] cell center gradient
-   * @param  epsilon2s(X)            [-] Venkatakrishnan limiter parameter
-   * @param  nisPow                  [-] order of limiter
-   * @param  firstOrderCells         [-] flag for setting a cell to a locally zero limiter
-   * @param  cellStencil->cellcenter [-] cell center coordinates, neighbor cells
    ******************************************************************************/
   $rule pointwise(stencil::limiters(X)<-cellcenter,X,cellmaxmins(X),grads(X),
                                         epsilon2s(X),nisPow,firstOrderCells,
@@ -1715,19 +1498,10 @@ namespace Loci
     $limiters(X) = realToDouble(limi);
   }
 
+  $untype X;
   $type X store<vect3d>;
   /** ****************************************************************************
    * @brief Nishikawa limiter for vect3d, special stencil
-   * @retval limiterv3d(X)           [-] vect3d limiter parametric
-   * @param  cellcenter              [-] cellcenter coordinates
-   * @param  X                       [-] vect3d value at cell center
-   * @param  cellmaxminv3d(X)        [-] max and min for cell stencil
-   * @param  gradv3d(X)              [-] cell center gradient
-   * @param  epsilon2v3d(X)          [-] Venkatakrishnan limiter parameter
-   * @param  nisPow                  [-] order of limiter
-   * @param  firstOrderCells         [-] flag for setting a cell to a locally zero limiter
-   * @param  cellStencil->cellcenter [-] cell center coordinates, neighbor cells
-   * @param  vecLimiter              [-] flag to limit vectors consistently
    ******************************************************************************/
   $rule pointwise(limiterv3d(X)<-cellcenter,X,cellmaxminv3d(X),gradv3d(X),
                                 epsilon2v3d(X),nisPow,firstOrderCells,
@@ -1776,19 +1550,10 @@ namespace Loci
     }
   }
 
+  $untype X;
   $type X storeVec<real>;
   /** ****************************************************************************
    * @brief Nishikawa limiter for vectors, cell center
-   * @retval limiterv(X)             [-] vector limiter parametric
-   * @param  cellcenter              [-] cellcenter coordinates
-   * @param  X                       [-] vector value at cell center
-   * @param  cellmaxminv(X)          [-] max and min for cell stencil
-   * @param  gradv(X)                [-] cell center gradient
-   * @param  epsilon2v(X)            [-] Venkatakrishnan limiter parameter
-   * @param  nisPow                  [-] order of limiter
-   * @param  firstOrderCells         [-] flag for setting a cell to a locally zero limiter
-   * @param  cellStencil->cellcenter [-] cell center coordinates, neighbor cells
-   * @param  vecLimiter              [-] flag to limit vectors consistently
    ******************************************************************************/
   $rule pointwise(limiterv(X)<-cellcenter,X,cellmaxminv(X),gradv(X),epsilon2v(X),
                               nisPow,firstOrderCells,cellStencil->cellcenter,vecLimiter),

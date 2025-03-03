@@ -200,6 +200,7 @@ namespace Loci {
     use_parametric_variable = false ;
     use_prelude = false;
     use_postlude = false;
+    vardoc = 0 ;
     // setting the keyspace tag to "main"
     // this is a temporary solution. in the
     // future, we would need a more systematic

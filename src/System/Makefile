@@ -43,7 +43,7 @@ OBJS = Initialize.o Loci_Datatypes.o \
        visit_chomp.o dynamic_exec.o multiStoreIO.o mpi_containerIO.o\
        dist_tools.o distribute_io.o distribute_container.o dist_internal.o \
        FVMGridReader.o FVMGridWriter.o FVMStuff.o kd_tree.o pnn.o orb.o \
-       keyspace.o interpolate_tools.o thread.o gpusupport.o
+       keyspace.o interpolate_tools.o thread.o gpusupport.o docreport.o
 
 compile: $(TARGET)
 
