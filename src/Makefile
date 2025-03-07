@@ -84,6 +84,9 @@ test: default
 
 .PHONY: clean
 
+testclean:
+	$(MAKE) -C quickTest distclean LOCI_BASE="$(LOCI_BASE)"
+
 clean:
 	rm -f $(JUNK)
 	$(MAKE) -C Tools clean LOCI_BASE="$(LOCI_BASE)"
