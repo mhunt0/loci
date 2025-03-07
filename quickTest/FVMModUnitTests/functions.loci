@@ -24,7 +24,7 @@
 $include "FVM.lh"
 
 namespace flowPsi {
-
+  /// Test Gradients
   vect3d directions[] = {
     { 1., 0., 0.},
     { 0., 1., 0.},
@@ -47,35 +47,49 @@ namespace flowPsi {
   } ;
 
 
+  /// Variable used to test scalar input values
   $type testS store<real> ;
+  /// Variable used to test vect3d input values
   $type testV3d store<vect3d> ;
+  /// Variable used to test storeVec input values
   $type testV storeVec<real> ;
 
+  /// Scalar target gradient use to construct synthetic function
   $type baseGradS param<vect3d> ;
+  /// vect3d target gradient used to construct synthetic function
   $type baseGradV3d param<tensor3d<real> > ;
+  /// General vector gradient used to construct synthetic function
   $type baseGradv param<vector<vect3d> > ;
 
+  /// Number of test gradients
   $type numTests param<int> ;
+
+  /// Extract gradients from direction array
   $rule singleton(numTests),constraint(UNIVERSE) {
     $numTests = sizeof(directions)/sizeof(vect3d) ;
   }
 
+  /// Keep track of the test number
   $type iterNum param<int> ;
   $rule singleton(iterNum{n=0}<-numTests) {
     $iterNum{n=0} = 0 ;
   }
+  /// Advance test number
   $rule singleton(iterNum{n+1}<-iterNum{n}) {
     $iterNum{n+1} = $iterNum{n}+1 ;
   }
+
+  /// Extract target gradient from directions array with wraparound
   $rule singleton(baseGradS<-iterNum,numTests) {
     $baseGradS = directions[$iterNum%$numTests] ;
   }
+  /// Extract target 3-D vector gradient from directions array with wraparound
   $rule singleton(baseGradV3d<-iterNum,numTests) {
     $baseGradV3d.x = directions[($iterNum+0)%$numTests] ;
     $baseGradV3d.y = directions[($iterNum+1)%$numTests] ;
     $baseGradV3d.z = directions[($iterNum+2)%$numTests] ;
   }
-
+  /// Extract general vector gradient from directions array with wraparound
   $rule singleton(baseGradv<-iterNum,numTests) {
     int vsize = 5 ;
 
@@ -85,31 +99,40 @@ namespace flowPsi {
     }
     $baseGradv.swap(tmp) ;
   }
-  
+
+  /// Scalar field that will have grad()= baseGradS
   $type scalarVal store<real> ;
+  /// Compute function by inner product with target gradient
   $rule pointwise(scalarVal<-cellcenter,baseGradS) {
     $scalarVal = dot($cellcenter,$baseGradS) ;
   }
 
+  /// Scalar field for boundary faces that have grad() = baseGradS
   $type scalarVal_f store<real> ;
+  /// Compute function by inner product with target gradient
   $rule pointwise(scalarVal_f<-facecenter,baseGradS) {
     $scalarVal_f = dot($facecenter,$baseGradS) ;
   }
 
+  /// Vector field that has grad()=baseGradV3d
   $type v3dVal store<vect3d> ;
+  /// Compute vector field using linear dot product
   $rule pointwise(v3dVal<-cellcenter,baseGradV3d) {
     $v3dVal.x = dot($cellcenter,$baseGradV3d.x) ;
     $v3dVal.y = dot($cellcenter,$baseGradV3d.y) ;
     $v3dVal.z = dot($cellcenter,$baseGradV3d.z) ;
   }
 
+  /// Vector field at boundary that has grad()=baseGradV3d
   $type v3dVal_f store<vect3d> ;
+  /// Compute vector field using linear dot product
   $rule pointwise(v3dVal_f<-facecenter,baseGradV3d) {
     $v3dVal_f.x = dot($facecenter,$baseGradV3d.x) ;
     $v3dVal_f.y = dot($facecenter,$baseGradV3d.y) ;
     $v3dVal_f.z = dot($facecenter,$baseGradV3d.z) ;
   }
 
+  /// general vector field that has grad()=baseGradv
   $type vectVal storeVec<real> ;
   $rule pointwise(vectVal<-cellcenter,baseGradv), prelude {
     $vectVal.setVecSize($baseGradv->size()) ;
@@ -118,7 +141,7 @@ namespace flowPsi {
     for(int i=0;i<sz;++i)
       $vectVal[i] = dot($cellcenter,$baseGradv[i]) ;
   }
-
+  /// General vector field for boundary faces that has grad()=baseGradv
   $type vectVal_f storeVec<real> ;
   $rule pointwise(vectVal_f<-facecenter,baseGradv), prelude {
     $vectVal_f.setVecSize($baseGradv->size()) ;
@@ -128,34 +151,50 @@ namespace flowPsi {
       $vectVal_f[i] = dot($facecenter,$baseGradv[i]) ;
   }
 
+  /// Check that we have tested all of the test directions for loop termination
   $type checkFinished param<bool> ;
   $rule singleton(checkFinished<-$n,numTests) {
     $checkFinished = $$n == $numTests ;
   }
-  
+
+  /// This parametric variable will rune the TEST condition on the
+  /// FUNC operator applied to VAR field,  The boolean result of
+  /// TEST will be combined to provide the final test result
   $type checkFunction(TEST,FUNC,VAR) param<bool> ;
+
+  /// Collapse the result of the test loop
   $rule singleton(checkFunction(TEST,FUNC,VAR)<-
                   checkFunction(TEST,FUNC,VAR){n}),
   parametric(checkFunction(TEST,FUNC,VAR)),
   conditional(checkFinished{n}) {
     $checkFunction(TEST,FUNC,VAR) = $checkFunction(TEST,FUNC,VAR){n} ;
   }
-
+  /// Initialize the test to false,  The first test will set this to true
+  /// this will detect if the test was not scheduled properly as in that
+  /// case the result of checkFunction will be false
   $rule singleton(checkFunction(TEST,FUNC,VAR){n=0}),constraint(UNIVERSE),
   parametric(checkFunction(TEST,FUNC,VAR)) {
     $checkFunction(TEST,FUNC,VAR){n=0} = false ;
   }
+  /// parametric version of the test function
   $type TEST(FUNC(VAR)) param<bool> ;
+  /// Run the test for this iteration and combine with the previous test results
   $rule singleton(checkFunction(TEST,FUNC,VAR){n+1}<-
                   checkFunction(TEST,FUNC,VAR){n},TEST(FUNC(VAR)){n},$n{n}) {
-    if($$n{n} > 0) 
+    if($$n{n} > 0) // If a test has already run, combine
       $checkFunction(TEST,FUNC,VAR){n+1} =
         $checkFunction(TEST,FUNC,VAR){n} && $TEST(FUNC(VAR)){n} ;
-    else
+    else // first test sets the starting result of the test iteration
       $checkFunction(TEST,FUNC,VAR){n+1} = $TEST(FUNC(VAR)){n} ;      
   }
 
+  /// Compute the maximum error between the expected gradient and target
+  /// gradient.  For second order accurate schemes, the gradient should be
+  /// reconstructed exactly for linear functions.
   $type errScalarGrad(X) param<real> ;
+  /// Initialize to -1 so that if the error is less than 0
+  /// we know that no function evaluations were added and the test
+  /// did not construct properly
   $rule unit(errScalarGrad(X)),constraint(UNIVERSE) {
     $errScalarGrad(X) = -1 ;
   }
@@ -165,6 +204,8 @@ namespace flowPsi {
     join($errScalarGrad(X),dot(diff,diff)) ;
   }
 
+  /// The test for the gradient function is that the error between the
+  /// target gradient and the given gradient is small.
   $type testScalarGrad(FUNC) param<bool> ;
   $rule singleton(testScalarGrad(FUNC)<-errScalarGrad(FUNC),baseGradS) {
     $testScalarGrad(FUNC) = ($errScalarGrad(FUNC)<1e-8) ;
@@ -183,6 +224,8 @@ namespace flowPsi {
   }
 
   $type D store<real> ;
+  /// Limiters for linear functions should evaluate to unity under the right
+  /// grid topologies.  This function is sued to evaluate scalar limiters
   $type errScalarUnity(D) param<real> ;
   $rule unit(errScalarUnity(D)),constraint(UNIVERSE) {
     $errScalarUnity(D) = -1 ;
@@ -192,6 +235,7 @@ namespace flowPsi {
     join($errScalarUnity(D),diff*diff) ;
   }
 
+  /// Test for limiter functions recovering unity when give linear functions
   $type testScalarUnity(FUNC) param<bool> ;
   $rule singleton(testScalarUnity(FUNC)<-errScalarUnity(FUNC),baseGradS) {
     $testScalarUnity(FUNC) = ($errScalarUnity(FUNC)<1e-8) ;
@@ -209,6 +253,7 @@ namespace flowPsi {
     }
   }
 
+  /// The 3-D vector reconstruction error function
   $type errv3dGrad(V) param<real> ;
   $rule unit(errv3dGrad(V)),constraint(UNIVERSE) {
     $errv3dGrad(V) = -1 ;
@@ -222,7 +267,9 @@ namespace flowPsi {
     join($errv3dGrad(V),dot(diffy,diffy)) ;
     join($errv3dGrad(V),dot(diffz,diffz)) ;
   }
-  
+
+
+  /// Test function for 3-D vector field gradients
   $type testv3dGrad(FUNC) param<bool> ;
   $rule singleton(testv3dGrad(FUNC)<-errv3dGrad(FUNC),baseGradV3d) {
     $testv3dGrad(FUNC) = ($errv3dGrad(FUNC)<1e-8) ;
@@ -240,6 +287,7 @@ namespace flowPsi {
     }
   }
 
+  /// Error for generalized vector field gradients
   $type errvGrad(M) param<real> ;
   $rule unit(errvGrad(M)),constraint(UNIVERSE) {
     $errvGrad(M) = -1 ;
@@ -252,7 +300,8 @@ namespace flowPsi {
       join($errvGrad(M),dot(diff,diff)) ;
     }
   }
-  
+
+  /// Test function for generalized gradient field
   $type testvGrad(FUNC) param<bool> ;
   $rule singleton(testvGrad(FUNC)<-errvGrad(FUNC),baseGradv) {
     $testvGrad(FUNC) = ($errvGrad(FUNC)<1e-8) ;
@@ -269,12 +318,6 @@ namespace flowPsi {
       }
     }
   }
-
   
-  $type solution param<bool> ;
-
-  //  $rule singleton(solution<-checkFunction(testScalarGrad,grads,scalarVal)) {
-  //    $solution = $checkFunction(testScalarGrad,grads,scalarVal) ;
-  //  }
 }
     
