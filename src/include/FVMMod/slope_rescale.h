@@ -44,7 +44,27 @@ typedef real_t real;
  * @param[out] slopes  real, rescaled slope for reconstuction
  * @param[in]  vs      int, size of vector
  ******************************************************************************/
-void slope_rescale(real *slopes, int vs);
+inline void slope_rescale(real *slopes, int vs)
+{
+  real sum = 0.0, sumn = 0.0, sump = 0.0 ;
+  for(int i=0;i<vs;++i)
+  {
+    sum += slopes[i] ;
+    sumn += min(real(0.0),slopes[i]) ;
+    sump += max(real(0.0),slopes[i]) ;
+  }
+  if(sum < 0.0) 
+  {
+  for(int i=0;i<vs;++i)
+    slopes[i] = slopes[i]*((slopes[i]<0.0)?(sumn-sum)/(sumn-1e-30):1.0) ;
+  }
+  if(sum > 0.0) 
+  {
+    for(int i=0;i<vs;++i)
+    {
+      slopes[i] = slopes[i]*((slopes[i]>0.0)?(sump-sum)/(sump-1e-30):1.0) ;
+    }
+  }    
 }
-
+}
 #endif

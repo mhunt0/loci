@@ -129,8 +129,11 @@ $type leftv3d(X) store<Loci::vector3d<Loci::real_t> > ;
 /** MUSCL 3-D vector extrapolation for right side of face */
 $type rightv3d(X) store<Loci::vector3d<Loci::real_t> > ;
 
-/** UMUSCL parameter */
-$type kUMUSCL      param<Loci::real_t>;    // [-] UMUSCL Parameter
+/** 
+ * Parameter for Unstructured MUSCL reconstruction scheme according to Nishikawa, 
+ * default 0, which uses the standard UMUSCL scheme. 1/3 is recommended for Nishikawa 
+ */
+$type kUMUSCL      param<Loci::real_t>;
 /** Nishikawa's LP-UMUSCL Scheme */
 $type nUMUSCL      constraint;   
 /** Standard MUSCL Scheme */  
