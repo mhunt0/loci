@@ -19,22 +19,24 @@
  * along with the Loci Framework.  If not, see <http://www.gnu.org/licenses>
  ******************************************************************************/
 $type firstOrderCells store<char> ;           // [-] first order cell marker
-$type Kl param<real> ;                        // [-] Venkatakrishnan constant
-$type limiter param<std::string> ;            // [-] limiter 
-$type V_limiter Constraint ;                  // [-] constraint for Venkatakrishnan limiter, face center
-$type B_limiter Constraint ;                  // [-] constraint for Barth limiter
-$type N_limiter Constraint ;                  // [-] constraint for no limiting
-$type Z_limiter Constraint ;                  // [-] constraint for full limiting
-$type NB_limiter Constraint ;                 // [-] constraint for nodal barth limiter
-$type V2_limiter Constraint ;                 // [-] constraint for Venkatakrishnan limiter, cell center
-$type NIS_limiter Constraint;                 // [-] constraint for Nishikawa limiter
-$type NISc_limiter Constraint;                // [-] constraint for Nishikawa limiter, face center
-$type NISf_limiter Constraint;                // [-] constraint for Nishikawa limiter, cell center
-$type Venka_limiter Constraint;               // [-] constraint for Venkatakrishnan limiter functions
-$type NIS_limiter   Constraint;               // [-] constraint for Nishikawa limiter functions
-$type venkaFac store<Loci::real_t>;           // [-] Venkatakrishnan geometric factor
-$type nisPow        param<int>;               // [-] order of Nishikawa limiter
-$type vecLimiter    param<int>;               // [-] input variable to set limiter for vectors based on highest gradient
-$type epsilon2s(X)  store<Loci::real_t>;      // [-] grid/max/min parameter for Venkatakrishnan limiter, scalar
-$type epsilon2v3d(X) store<Loci::real_t>;     // [-] grid/max/min parameter for Venkatkrishnan limiter, vect3d
-$type epsilon2v(X)   storeVec<Loci::real_t>;  // [-] grid max/min parameter for Venkatakrishnan limiter, vector
+$type Kl              param<real> ;                        // [-] Venkatakrishnan constant
+$type limiter         param<std::string> ;            // [-] limiter 
+$type V_limiter       Constraint ;                  // [-] constraint for Venkatakrishnan limiter, face center
+$type B_limiter       Constraint ;                  // [-] constraint for Barth limiter
+$type N_limiter       Constraint ;                  // [-] constraint for no limiting
+$type Z_limiter       Constraint ;                  // [-] constraint for full limiting
+$type NB_limiter      Constraint ;                 // [-] constraint for nodal barth limiter
+$type V2_limiter      Constraint ;                 // [-] constraint for Venkatakrishnan limiter, cell center
+$type NIS_limiter     Constraint;                 // [-] constraint for Nishikawa limiter
+$type NISc_limiter    Constraint;                // [-] constraint for Nishikawa limiter, face center
+$type NISf_limiter    Constraint;                // [-] constraint for Nishikawa limiter, cell center
+$type Venka_limiter   Constraint;               // [-] constraint for Venkatakrishnan limiter functions
+$type NIS_limiter     Constraint;               // [-] constraint for Nishikawa limiter functions
+$type venkaFac        store<Loci::real_t>;           // [-] Venkatakrishnan geometric factor
+$type nisPow          param<int>;               // [-] order of Nishikawa limiter
+$type vecLimiter      param<int>;               // [-] input variable to set limiter for vectors based on highest gradient
+$type epsilon2s(X)    store<Loci::real_t>;      // [-] grid/max/min parameter for Venkatakrishnan limiter, scalar
+$type epsilon2v3d(X)  store<Loci::real_t>;     // [-] grid/max/min parameter for Venkatkrishnan limiter, vect3d
+$type epsilon2v(X)    storeVec<Loci::real_t>;  // [-] grid max/min parameter for Venkatakrishnan limiter, vector
+$type vecNormLimiter  Constraint;
+$type vecStandLimiter Constraint;

@@ -169,19 +169,17 @@ namespace Loci {
   */
   inline real vlimit(real Xcc, real qmin, real qmax, real qdif, real eps2) 
   {
-    /////////////////////////////////
     // delta +
-    const real delp = (qdif>=0.0)?qmax-Xcc:qmin-Xcc;
+    const real delp = (qdif>0.0)?qmax-Xcc:qmin-Xcc;
     // delta -
-    const real delm = (qdif > 0)?qdif+1e-30:qdif-1e-30;
+    const real delm = -qdif;
     // numerator of limiter
     const real num = ((delp*delp+eps2)*delm+ 2.0*delm*delm*delp)  ;
     // denominator of limiter
     const real den = (delm*(delp*delp+2.0*delm*delm+delm*delp+eps2)) ;
     // make the limiting case of 0/0 work as expected
-    //const real e = (den >= 0.0?1.0e-30:-1.0e-30) ;
-    real lim = num/den; //(num+e)/(den+e);
-    return max<real>(0.0,min<real>(1.0,lim)) ;
+    const real e = (den >= 0.0?1.0e-30:-1.0e-30) ;
+    return (num+e)/(den+e) ;
   }
 
   /**
@@ -197,11 +195,11 @@ namespace Loci {
   {
     real lim;
     if (qdif > 0){
-      lim = (qmax-Xcc)/(qdif+1e-30);
+      lim = (qmax-Xcc)/(qdif+1e-100);
     } else {
-      lim = (qmin-Xcc)/(qdif-1e-30);
+      lim = (qmin-Xcc)/(qdif-1e-100);
     }
-    return max<real>(0.0,min<real>(1.0,lim));
+    return lim;
   }
 
   /**
@@ -223,7 +221,7 @@ namespace Loci {
     const real delm = qdif ;
     const real a = abs(delp);
     const real b = abs(delm) + 1e-30;
-    if (a > 2*b) return 1.0; // save on computation 
+//    if (a > 2*b) return 1.0; // save on computation 
     // numerator of limiter
     const real fun1 = pow(a,nisPow) + epsp;
     real Sp = 2.0*b*b; // nisPow = 2
@@ -234,7 +232,7 @@ namespace Loci {
       Sp = 2.0*b*(a*a - 2.0*b*(a-2*b));
     } else if (nisPow == 5) {
       Sp = 8.0*b*b*(a*a - 2.0*b*(a-b));
-    }
+    } // can add additional powers if desired
     const real num = fun1 + a*Sp ;
     // denominator of limiter
     const real den =  fun1 + b*(pow(delp,nisPow-1) + Sp);

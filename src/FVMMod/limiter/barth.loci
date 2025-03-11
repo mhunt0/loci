@@ -1,0 +1,382 @@
+//#############################################################################
+//#
+//# Copyright 2008-2019, Mississippi State University
+//#
+//# This file is part of the Loci Framework.
+//#
+//# The Loci Framework is free software: you can redistribute it and/or modify
+//# it under the terms of the Lesser GNU General Public License as published by
+//# the Free Software Foundation, either version 3 of the License, or
+//# (at your option) any later version.
+//#
+//# The Loci Framework is distributed in the hope that it will be useful,
+//# but WITHOUT ANY WARRANTY; without even the implied warranty of
+//# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//# Lesser GNU General Public License for more details.
+//#
+//# You should have received a copy of the Lesser GNU General Public License
+//# along with the Loci Framework.  If not, see <http://www.gnu.org/licenses>
+//#
+//#############################################################################
+#include <Loci.h>
+#include <FVMMod/limiter_support.h>
+$include "FVM.lh"
+$include "FVMMod/limiter.lh"
+
+using std::cerr ;
+using std::endl ;
+
+namespace Loci {
+  typedef vector3d<real_t> vect3d ;
+  typedef tensor3d<real_t> tens3d ;
+  typedef real_t real ;
+
+  $type firstOrderCells store<char> ;
+
+  //==========================================================================
+  //
+  // Barth Limiter
+  //
+  //==========================================================================
+  $type S store<real> ;
+  $type S_f store<real> ;
+  /**
+   * @brief Barth limiter for scalar quantities
+   */
+  $rule pointwise(limiters(S)<-cellcenter,S,grads(S),firstOrderCells,
+                                upper->cr->S,upper->facecenter,
+                                lower->cl->S,lower->facecenter,
+                                boundary_map->S_f,boundary_map->facecenter),
+                                constraint(geom_cells,B_limiter) 
+  {
+    const real Xcc = $S ;
+    real qmax = Xcc ;
+    real qmin = qmax ;
+    const vect3d Xgr = $grads(S) ;
+
+    const int usz = $upper.size() ;
+    for(int i=0;i<usz;++i) {
+      const real Xi = $upper[i]->$cr->$S ;
+      qmin = min(qmin,Xi) ;
+      qmax = max(qmax,Xi) ;
+    }
+    const int lsz= $lower.size() ;
+    for(int i=0;i<lsz;++i) {
+      const real Xi = $lower[i]->$cl->$S ;
+      qmin = min(qmin,Xi) ;
+      qmax = max(qmax,Xi) ;
+    }
+    const int bsz = $boundary_map.size() ;
+    for(int i=0;i<bsz;++i) {
+      const real Xi = $boundary_map[i]->$S_f ;
+      qmin = min(qmin,Xi) ;
+      qmax = max(qmax,Xi) ;
+    }      
+      
+    real limi = ($firstOrderCells != 0)?0.0:1.0 ;
+
+    for(int i=0;i<usz;++i) {
+      const vect3d drl = $upper[i]->$facecenter - $cellcenter ;
+      real Xf = Xcc + dot(Xgr,drl) ;
+      real qdif = Xf-Xcc ;
+      limi = min(limi,barth_limit(Xcc,qdif,qmax,qmin));
+    }
+
+    for(int i=0;i<lsz;++i) {
+      const vect3d drl = $lower[i]->$facecenter - $cellcenter ;
+      real Xf = Xcc + dot(Xgr,drl) ;
+      real qdif = Xf-Xcc ;
+      limi = min(limi,barth_limit(Xcc,qdif,qmax,qmin));
+    }
+    // Zero out the sensitivity portion of limiter
+    $limiters(S) = realToDouble(limi) ;
+  }
+
+
+  $type V3 store<vect3d> ;
+  $type V3_f store<vect3d> ;
+/**
+ * @brief Barth Limiter for 3D vectors (vect3d)
+ */
+  $rule pointwise(limiterv3d(V3)<-cellcenter,V3,gradv3d(V3),firstOrderCells,
+                                  upper->cr->V3,upper->facecenter,
+                                  lower->cl->V3,lower->facecenter,
+                                  boundary_map->V3_f,boundary_map->facecenter),
+                                  constraint(geom_cells,B_limiter,vecStandLimiter) 
+  {
+    const vect3d Xcc = $V3 ;
+    vect3d qmax = Xcc ;
+    vect3d qmin = qmax ;
+    const tens3d Xgr = $gradv3d(V3) ;
+
+    const int usz = $upper.size() ;
+    for(int i=0;i<usz;++i) {
+      const vect3d Xi = $upper[i]->$cr->$V3 ;
+      qmin.x = min(qmin.x,Xi.x) ;
+      qmax.x = max(qmax.x,Xi.x) ;
+      qmin.y = min(qmin.y,Xi.y) ;
+      qmax.y = max(qmax.y,Xi.y) ;
+      qmin.z = min(qmin.z,Xi.z) ;
+      qmax.z = max(qmax.z,Xi.z) ;
+    }
+    const int lsz= $lower.size() ;
+    for(int i=0;i<lsz;++i) {
+      const vect3d Xi = $lower[i]->$cl->$V3 ;
+      qmin.x = min(qmin.x,Xi.x) ;
+      qmax.x = max(qmax.x,Xi.x) ;
+      qmin.y = min(qmin.y,Xi.y) ;
+      qmax.y = max(qmax.y,Xi.y) ;
+      qmin.z = min(qmin.z,Xi.z) ;
+      qmax.z = max(qmax.z,Xi.z) ;
+    }
+    const int bsz = $boundary_map.size() ;
+    for(int i=0;i<bsz;++i) {
+      const vect3d Xi = $boundary_map[i]->$V3_f ;
+      qmin.x = min(qmin.x,Xi.x) ;
+      qmax.x = max(qmax.x,Xi.x) ;
+      qmin.y = min(qmin.y,Xi.y) ;
+      qmax.y = max(qmax.y,Xi.y) ;
+      qmin.z = min(qmin.z,Xi.z) ;
+      qmax.z = max(qmax.z,Xi.z) ;
+    }      
+      
+    vect3d limi = ($firstOrderCells != 0)?vect3d(0.,0.,0.):vect3d(1.,1.,1.) ;
+
+    for(int i=0;i<usz;++i) {
+      const vect3d drl = $upper[i]->$facecenter - $cellcenter ;
+      real Xfx = Xcc.x + dot(Xgr.x,drl) ;
+      real qdifx = Xfx-Xcc.x ;
+      limi.x = min(limi.x,barth_limit(Xcc.x,qdifx,qmax.x,qmin.x));
+
+      real Xfy = Xcc.y + dot(Xgr.y,drl) ;
+      real qdify = Xfy-Xcc.y ;
+      limi.y = min(limi.y,barth_limit(Xcc.y,qdify,qmax.y,qmin.y));
+
+      real Xfz = Xcc.z + dot(Xgr.z,drl) ;
+      real qdifz = Xfz-Xcc.z ;
+      limi.z = min(limi.z,barth_limit(Xcc.z,qdifz,qmax.z,qmin.z));
+    }
+
+    for(int i=0;i<lsz;++i) {
+      const vect3d drl = $lower[i]->$facecenter - $cellcenter ;
+      real Xfx = Xcc.x + dot(Xgr.x,drl) ;
+      real qdifx = Xfx-Xcc.x ;
+      limi.x = min(limi.x,barth_limit(Xcc.x,qdifx,qmax.x,qmin.x));
+
+      real Xfy = Xcc.y + dot(Xgr.y,drl) ;
+      real qdify = Xfy-Xcc.y ;
+      limi.y = min(limi.y,barth_limit(Xcc.y,qdify,qmax.y,qmin.y));
+
+      real Xfz = Xcc.z + dot(Xgr.z,drl) ;
+      real qdifz = Xfz-Xcc.z ;
+      limi.z = min(limi.z,barth_limit(Xcc.z,qdifz,qmax.z,qmin.z));
+    }
+    // Zero the sensitivity portion of the limiter
+    $limiterv3d(V3) = realToDouble(limi) ;
+  }
+
+  /**
+   * @brief Barth limiters, normalized 3D vector form
+   */
+  $rule pointwise(limiterv3d(V3)<-cellcenter,V3,gradv3d(V3),firstOrderCells,
+                                  upper->cr->V3,upper->facecenter,
+                                  lower->cl->V3,lower->facecenter,
+                                  boundary_map->V3_f,boundary_map->facecenter),
+                                  constraint(geom_cells,B_limiter,vecNormLimiter) 
+  {
+    const vect3d Xcc = $V3 ;
+    vect3d qmax = Xcc ;
+    vect3d qmin = qmax ;
+    const tens3d Xgr = $gradv3d(V3) ;
+
+    const int usz = $upper.size() ;
+    for(int i=0;i<usz;++i) {
+      const vect3d Xi = $upper[i]->$cr->$V3 ;
+      qmin.x = min(qmin.x,Xi.x) ;
+      qmax.x = max(qmax.x,Xi.x) ;
+      qmin.y = min(qmin.y,Xi.y) ;
+      qmax.y = max(qmax.y,Xi.y) ;
+      qmin.z = min(qmin.z,Xi.z) ;
+      qmax.z = max(qmax.z,Xi.z) ;
+    }
+    const int lsz= $lower.size() ;
+    for(int i=0;i<lsz;++i) {
+      const vect3d Xi = $lower[i]->$cl->$V3 ;
+      qmin.x = min(qmin.x,Xi.x) ;
+      qmax.x = max(qmax.x,Xi.x) ;
+      qmin.y = min(qmin.y,Xi.y) ;
+      qmax.y = max(qmax.y,Xi.y) ;
+      qmin.z = min(qmin.z,Xi.z) ;
+      qmax.z = max(qmax.z,Xi.z) ;
+    }
+    const int bsz = $boundary_map.size() ;
+    for(int i=0;i<bsz;++i) {
+      const vect3d Xi = $boundary_map[i]->$V3_f ;
+      qmin.x = min(qmin.x,Xi.x) ;
+      qmax.x = max(qmax.x,Xi.x) ;
+      qmin.y = min(qmin.y,Xi.y) ;
+      qmax.y = max(qmax.y,Xi.y) ;
+      qmin.z = min(qmin.z,Xi.z) ;
+      qmax.z = max(qmax.z,Xi.z) ;
+    }      
+      
+    vect3d limi = ($firstOrderCells != 0)?vect3d(0.,0.,0.):vect3d(1.,1.,1.) ;
+
+    for(int i=0;i<usz;++i) {
+      const vect3d drl = $upper[i]->$facecenter - $cellcenter ;
+      real Xfx = Xcc.x + dot(Xgr.x,drl) ;
+      real qdifx = Xfx-Xcc.x ;
+      limi.x = min(limi.x,barth_limit(Xcc.x,qdifx,qmax.x,qmin.x));
+
+      real Xfy = Xcc.y + dot(Xgr.y,drl) ;
+      real qdify = Xfy-Xcc.y ;
+      limi.y = min(limi.y,barth_limit(Xcc.y,qdify,qmax.y,qmin.y));
+
+      real Xfz = Xcc.z + dot(Xgr.z,drl) ;
+      real qdifz = Xfz-Xcc.z ;
+      limi.z = min(limi.z,barth_limit(Xcc.z,qdifz,qmax.z,qmin.z));
+    }
+
+    for(int i=0;i<lsz;++i) {
+      const vect3d drl = $lower[i]->$facecenter - $cellcenter ;
+      real Xfx = Xcc.x + dot(Xgr.x,drl) ;
+      real qdifx = Xfx-Xcc.x ;
+      limi.x = min(limi.x,barth_limit(Xcc.x,qdifx,qmax.x,qmin.x));
+   
+      real Xfy = Xcc.y + dot(Xgr.y,drl) ;
+      real qdify = Xfy-Xcc.y ;
+      limi.y = min(limi.y,barth_limit(Xcc.y,qdify,qmax.y,qmin.y));
+
+      real Xfz = Xcc.z + dot(Xgr.z,drl) ;
+      real qdifz = Xfz-Xcc.z ;
+      limi.z = min(limi.z,barth_limit(Xcc.z,qdifz,qmax.z,qmin.z));
+    }
+    
+    // Find the direction of maximum limiting
+    double limm = realToDouble(min(limi.x,min(limi.y,limi.z)));
+    // Zero the sensitivity portion of the limiter
+    $limiterv3d(V3) = vect3d(limm,limm,limm);
+}
+
+  $type V storeVec<real> ;
+  $type V_f storeVec<real> ;
+  /**
+   * @brief Barth limiter, vectors
+   */
+  $rule pointwise(limiterv(V)<-cellcenter,V,gradv(V),firstOrderCells,
+                                upper->cr->V,upper->facecenter,
+                                lower->cl->V,lower->facecenter,
+                                boundary_map->V_f,boundary_map->facecenter),
+    constraint(geom_cells,B_limiter,vecStandLimiter),prelude {
+    $limiterv(V).setVecSize($V.vecSize()) ;
+  } compute {
+    const int vs = $*V.vecSize() ;
+    for(int j=0;j<vs;++j) {
+      const real Xcc = $V[j] ;
+      real qmax = Xcc ;
+      real qmin = qmax ;
+      const vect3d Xgr = $gradv(V)[j] ;
+
+      const int usz = $upper.size() ;
+      for(int i=0;i<usz;++i) {
+        const real Xi = $upper[i]->$cr->$V[j] ;
+        qmin = min(qmin,Xi) ;
+        qmax = max(qmax,Xi) ;
+      }
+      const int lsz= $lower.size() ;
+      for(int i=0;i<lsz;++i) {
+        const real Xi = $lower[i]->$cl->$V[j] ;
+        qmin = min(qmin,Xi) ;
+        qmax = max(qmax,Xi) ;
+      }
+      const int bsz = $boundary_map.size() ;
+      for(int i=0;i<bsz;++i) {
+        const real Xi = $boundary_map[i]->$V_f[j] ;
+        qmin = min(qmin,Xi) ;
+        qmax = max(qmax,Xi) ;
+      }      
+      
+      real limi = ($firstOrderCells != 0)?0.0:1.0 ;
+
+      for(int i=0;i<usz;++i) {
+        const vect3d drl = $upper[i]->$facecenter - $cellcenter ;
+        real Xf = Xcc + dot(Xgr,drl) ;
+        real qdif = Xf-Xcc ;
+        limi = min(limi,barth_limit(Xcc,qdif,qmax,qmin));
+      }
+      
+      for(int i=0;i<lsz;++i) {
+        const vect3d drl = $lower[i]->$facecenter - $cellcenter ;
+        real Xf = Xcc + dot(Xgr,drl) ;
+        real qdif = Xf-Xcc ;
+        limi = min(limi,barth_limit(Xcc,qdif,qmax,qmin));
+      }
+    // Zero the sensitivity portion of the limiter
+      $limiterv(V)[j] = realToDouble(limi) ;
+    }
+  }
+
+  /**
+   * @brief Barth Limiter, normalized vector limiter
+   * 
+   */
+  $rule pointwise(limiterv(V)<-cellcenter,V,gradv(V),firstOrderCells,
+                                upper->cr->V,upper->facecenter,
+                                lower->cl->V,lower->facecenter,
+                                boundary_map->V_f,boundary_map->facecenter),
+                                constraint(geom_cells,B_limiter,vecNormLimiter),prelude 
+  {
+    $limiterv(V).setVecSize($V.vecSize()) ;
+  } compute {
+    const int vs = $*V.vecSize() ;
+    double limm = 1.0;
+    for(int j=0;j<vs;++j) {
+      const real Xcc = $V[j] ;
+      real qmax = Xcc ;
+      real qmin = qmax ;
+      const vect3d Xgr = $gradv(V)[j] ;
+
+      const int usz = $upper.size() ;
+      for(int i=0;i<usz;++i) {
+        const real Xi = $upper[i]->$cr->$V[j] ;
+        qmin = min(qmin,Xi) ;
+        qmax = max(qmax,Xi) ;
+      }
+      const int lsz= $lower.size() ;
+      for(int i=0;i<lsz;++i) {
+        const real Xi = $lower[i]->$cl->$V[j] ;
+        qmin = min(qmin,Xi) ;
+        qmax = max(qmax,Xi) ;
+      }
+      const int bsz = $boundary_map.size() ;
+      for(int i=0;i<bsz;++i) {
+        const real Xi = $boundary_map[i]->$V_f[j] ;
+        qmin = min(qmin,Xi) ;
+        qmax = max(qmax,Xi) ;
+      }      
+      
+      real limi = ($firstOrderCells != 0)?0.0:1.0 ;
+
+      for(int i=0;i<usz;++i) {
+        const vect3d drl = $upper[i]->$facecenter - $cellcenter ;
+        real Xf = Xcc + dot(Xgr,drl) ;
+        real qdif = Xf-Xcc ;
+        limi = min(limi,barth_limit(Xcc,qdif,qmax,qmin));
+      }
+      
+      for(int i=0;i<lsz;++i) {
+        const vect3d drl = $lower[i]->$facecenter - $cellcenter ;
+        real Xf = Xcc + dot(Xgr,drl) ;
+        real qdif = Xf-Xcc ;
+        limi = min(limi,barth_limit(Xcc,qdif,qmax,qmin));
+      }
+      // Zero the sensitivity portion of the limiter
+      $limiterv(V)[j] = realToDouble(limi) ;
+      limm = min(realToDouble(limi),limm);
+    }
+    // limit vector based on strongest gradient direction
+    for(int j=0;j<vs;++j) {
+      $limiterv(V)[j] = limm;
+    }
+  }
+}

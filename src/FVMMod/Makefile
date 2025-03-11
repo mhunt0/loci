@@ -33,7 +33,11 @@ OBJS =	bcstuff.o 			\
 		qminmax.o			\
 		qn2cminmax.o		\
 		spatialFilter.o		\
-		surfaceIntegrations.o 
+		surfaceIntegrations.o \
+		limiter/barth.o		\
+		limiter/nishikawa.o \
+		limiter/nodal_barth.o	\
+		limiter/venkata.o
 
 MODULE_NAME = fvm
 

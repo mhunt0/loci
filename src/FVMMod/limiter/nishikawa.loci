@@ -1,0 +1,685 @@
+//#############################################################################
+//#
+//# Copyright 2008-2019, Mississippi State University
+//#
+//# This file is part of the Loci Framework.
+//#
+//# The Loci Framework is free software: you can redistribute it and/or modify
+//# it under the terms of the Lesser GNU General Public License as published by
+//# the Free Software Foundation, either version 3 of the License, or
+//# (at your option) any later version.
+//#
+//# The Loci Framework is distributed in the hope that it will be useful,
+//# but WITHOUT ANY WARRANTY; without even the implied warranty of
+//# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//# Lesser GNU General Public License for more details.
+//#
+//# You should have received a copy of the Lesser GNU General Public License
+//# along with the Loci Framework.  If not, see <http://www.gnu.org/licenses>
+//#
+//#############################################################################
+#include <Loci.h>
+#include <FVMMod/limiter_support.h>
+$include "FVM.lh"
+$include "FVMMod/limiter.lh"
+$include "FVMMod/spatialFilter.lh"
+
+using std::cerr ;
+using std::endl ;
+
+namespace Loci {
+  typedef vector3d<real_t> vect3d ;
+  typedef tensor3d<real_t> tens3d ;
+  typedef real_t real ;
+
+  //==========================================================================
+  //
+  // Nishikawa Limiter, face center
+  //
+  //==========================================================================
+  $type S store<real>;
+  /** ****************************************************************************
+   * @brief Nishikawa limiter for scalars
+   ******************************************************************************/
+  $rule pointwise(limiters(S)<-cellcenter,S,cellmaxmins(S),grads(S),epsilon2s(S),
+                              nisPow,firstOrderCells,upper->facecenter,lower->facecenter),
+        constraint(geom_cells,NISf_limiter)
+  {
+    const real Xcc = $S;
+    const vect3d cctr = $cellcenter;
+
+    real qmax = $cellmaxmins(S).max;
+    real qmin = $cellmaxmins(S).min;
+    const vect3d Xgr = $grads(S);
+
+    const real epsilon2 = $epsilon2s(S);
+
+    real limi = ($firstOrderCells != 0)?0.0:1.0;
+
+    const int usz = $upper.size();
+    for(int i=0;i<usz;++i)
+    {
+      const vect3d drl = $upper[i]->$facecenter - cctr;
+      real qdif = dot(Xgr,drl);
+      limi = min(limi,nis_limit(Xcc,qmin,qmax,qdif,epsilon2,$nisPow));
+    }
+
+    const int lsz= $lower.size();
+    for(int i=0;i<lsz;++i)
+    {
+      const vect3d drl = $lower[i]->$facecenter - cctr;
+      real qdif = dot(Xgr,drl);
+      limi = min(limi,nis_limit(Xcc,qmin,qmax,qdif,epsilon2,$nisPow));
+    }
+
+  // Zero out the sensitivity contribution of the limiter, since the limiter
+  // function 'acts' more as a functional constant
+    $limiters(S) = realToDouble(limi);
+  }
+
+  $type V3 store<vect3d>;
+  /** ****************************************************************************
+   * @brief Nishikawa limiter for vect3d
+   ******************************************************************************/
+  $rule pointwise(limiterv3d(V3)<-cellcenter,V3,gradv3d(V3),cellmaxminv3d(V3),
+                                epsilon2v3d(V3),nisPow,firstOrderCells,upper->facecenter,
+                                lower->facecenter),
+        constraint(geom_cells,NISf_limiter,vecStandLimiter)
+    {
+    const vect3d Xcc = $V3;
+    vect3d qmax = $cellmaxminv3d(V3).max;
+    vect3d qmin = $cellmaxminv3d(V3).min;
+    const tens3d Xgr = $gradv3d(V3);
+    real epsilon2 = $epsilon2v3d(V3);
+
+    vect3d limi = ($firstOrderCells != 0)?vect3d(0.,0.,0.):vect3d(1.,1.,1.);
+
+    const int usz = $upper.size();
+    for(int i=0;i<usz;++i)
+    {
+      const vect3d drl = $upper[i]->$facecenter - $cellcenter;
+      real qdifx = dot(Xgr.x,drl);
+      limi.x = min(limi.x,nis_limit(Xcc.x,qmin.x,qmax.x,qdifx,epsilon2,$nisPow));
+      real qdify = dot(Xgr.y,drl);
+      limi.y = min(limi.y,nis_limit(Xcc.y,qmin.y,qmax.y,qdify,epsilon2,$nisPow));
+      real qdifz = dot(Xgr.z,drl);
+      limi.z = min(limi.z,nis_limit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2,$nisPow));
+    }
+
+    const int lsz= $lower.size();
+    for(int i=0;i<lsz;++i)
+    {
+      const vect3d drl = $lower[i]->$facecenter - $cellcenter;
+      real qdifx = dot(Xgr.x,drl);
+      limi.x = min(limi.x,nis_limit(Xcc.x,qmin.x,qmax.x,qdifx,epsilon2,$nisPow));
+      real qdify = dot(Xgr.y,drl);
+      limi.y = min(limi.y,nis_limit(Xcc.y,qmin.y,qmax.y,qdify,epsilon2,$nisPow));
+      real qdifz = dot(Xgr.z,drl);
+      limi.z = min(limi.z,nis_limit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2,$nisPow));
+    }
+
+  // Zero out the sensitivity contribution of the limiter, since the limiter
+  // function 'acts' more as a functional constant
+    $limiterv3d(V3) = realToDouble(limi);
+  }
+
+    /** ****************************************************************************
+   * @brief Nishikawa limiter for vect3d
+   ******************************************************************************/
+  $rule pointwise(limiterv3d(V3)<-cellcenter,V3,gradv3d(V3),cellmaxminv3d(V3),
+                                epsilon2v3d(V3),nisPow,firstOrderCells,upper->facecenter,
+                                lower->facecenter),
+        constraint(geom_cells,NISf_limiter,vecNormLimiter)
+    {
+    const vect3d Xcc = $V3;
+    vect3d qmax = $cellmaxminv3d(V3).max;
+    vect3d qmin = $cellmaxminv3d(V3).min;
+    const tens3d Xgr = $gradv3d(V3);
+    real epsilon2 = $epsilon2v3d(V3);
+
+    vect3d limi = ($firstOrderCells != 0)?vect3d(0.,0.,0.):vect3d(1.,1.,1.);
+
+    const int usz = $upper.size();
+    for(int i=0;i<usz;++i)
+    {
+      const vect3d drl = $upper[i]->$facecenter - $cellcenter;
+      real qdifx = dot(Xgr.x,drl);
+      limi.x = min(limi.x,nis_limit(Xcc.x,qmin.x,qmax.x,qdifx,epsilon2,$nisPow));
+      real qdify = dot(Xgr.y,drl);
+      limi.y = min(limi.y,nis_limit(Xcc.y,qmin.y,qmax.y,qdify,epsilon2,$nisPow));
+      real qdifz = dot(Xgr.z,drl);
+      limi.z = min(limi.z,nis_limit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2,$nisPow));
+    }
+
+    const int lsz= $lower.size();
+    for(int i=0;i<lsz;++i)
+    {
+      const vect3d drl = $lower[i]->$facecenter - $cellcenter;
+      real qdifx = dot(Xgr.x,drl);
+      limi.x = min(limi.x,nis_limit(Xcc.x,qmin.x,qmax.x,qdifx,epsilon2,$nisPow));
+      real qdify = dot(Xgr.y,drl);
+      limi.y = min(limi.y,nis_limit(Xcc.y,qmin.y,qmax.y,qdify,epsilon2,$nisPow));
+      real qdifz = dot(Xgr.z,drl);
+      limi.z = min(limi.z,nis_limit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2,$nisPow));
+    }
+
+    // Find the direction of maximum limiting
+    double limm = realToDouble(min(limi.x,min(limi.y,limi.z)));
+    // Zero the sensitivity portion of the limiter
+    $limiterv3d(V3) = vect3d(limm,limm,limm);
+  }
+
+
+  $type V storeVec<real>;
+  /** ****************************************************************************
+   * @brief Nishikawa limiter for vectors, standard vector limiter
+   ******************************************************************************/
+  $rule pointwise(limiterv(V)<-cellcenter,V,gradv(V),cellmaxminv(V),epsilon2v(V),
+                                nisPow,firstOrderCells,upper->facecenter,
+                                lower->facecenter),
+        constraint(geom_cells,NISf_limiter,vecStandLimiter),prelude
+  {
+    $limiterv(V).setVecSize($V.vecSize());
+  } 
+  compute 
+  {
+    const int vs = $*V.vecSize();
+    for(int j=0;j<vs;++j)
+    {
+      const real Xcc = $V[j];
+      real qmax = $cellmaxminv(V)[j].max;
+      real qmin = $cellmaxminv(V)[j].min;
+      real epsilon2 = $epsilon2v(V)[j];
+      const vect3d Xgr = $gradv(V)[j];
+
+      real limi = ($firstOrderCells != 0)?0.0:1.0;
+
+      const int usz = $upper.size();
+      for(int i=0;i<usz;++i)
+      {
+        const vect3d drl = $upper[i]->$facecenter - $cellcenter;
+        real qdif = dot(Xgr,drl);
+        limi = min(limi,nis_limit(Xcc,qmin,qmax,qdif,epsilon2,$nisPow));
+      }
+
+      const int lsz= $lower.size();
+      for(int i=0;i<lsz;++i)
+      {
+        const vect3d drl = $lower[i]->$facecenter - $cellcenter;
+        real qdif = dot(Xgr,drl);
+        limi = min(limi,nis_limit(Xcc,qmin,qmax,qdif,epsilon2,$nisPow));
+      }
+
+  // Zero out the sensitivity contribution of the limiter, since the limiter
+  // function 'acts' more as a functional constant
+      $limiterv(V)[j] = realToDouble(limi);
+    }
+  }
+
+  /** ****************************************************************************
+   * @brief Nishikawa limiter for vectors, normalized form
+   ******************************************************************************/
+  $rule pointwise(limiterv(V)<-cellcenter,V,gradv(V),cellmaxminv(V),epsilon2v(V),
+                                nisPow,firstOrderCells,upper->facecenter,
+                                lower->facecenter),
+        constraint(geom_cells,NISf_limiter,vecNormLimiter),prelude
+  {
+    $limiterv(V).setVecSize($V.vecSize());
+  } 
+  compute 
+  {
+    const int vs = $*V.vecSize();
+
+    double limm = 1.0;
+    for(int j=0;j<vs;++j)
+    {
+      const real Xcc = $V[j];
+      real qmax = $cellmaxminv(V)[j].max;
+      real qmin = $cellmaxminv(V)[j].min;
+      real epsilon2 = $epsilon2v(V)[j];
+      const vect3d Xgr = $gradv(V)[j];
+
+      real limi = ($firstOrderCells != 0)?0.0:1.0;
+
+      const int usz = $upper.size();
+      for(int i=0;i<usz;++i)
+      {
+        const vect3d drl = $upper[i]->$facecenter - $cellcenter;
+        real qdif = dot(Xgr,drl);
+        limi = min(limi,nis_limit(Xcc,qmin,qmax,qdif,epsilon2,$nisPow));
+      }
+
+      const int lsz= $lower.size();
+      for(int i=0;i<lsz;++i)
+      {
+        const vect3d drl = $lower[i]->$facecenter - $cellcenter;
+        real qdif = dot(Xgr,drl);
+        limi = min(limi,nis_limit(Xcc,qmin,qmax,qdif,epsilon2,$nisPow));
+      }
+      // Zero the sensitivity portion of the limiter
+      $limiterv(V)[j] = realToDouble(limi) ;
+      limm = min(realToDouble(limi),limm);
+    }
+    // limit vector based on strongest gradient direction
+    for(int j=0;j<vs;++j) {
+      $limiterv(V)[j] = limm;
+    }
+  }
+
+
+  /** ****************************************************************************
+   * @brief Nishikawa limiter for scalars, cell center
+   ******************************************************************************/
+  $rule pointwise(limiters(S)<-cellcenter,S,cellmaxmins(S),grads(S),epsilon2s(S),
+                              nisPow,firstOrderCells,upper->cr->cellcenter,
+                              lower->cl->cellcenter),
+        constraint(geom_cells,NISc_limiter)
+  {
+    const real Xcc = $S;
+    const vect3d cctr = $cellcenter;
+
+    real qmax = $cellmaxmins(S).max;
+    real qmin = $cellmaxmins(S).min;
+    const vect3d Xgr = $grads(S);
+
+    const real epsilon2 = $epsilon2s(S);
+
+    real limi = ($firstOrderCells != 0)?0.0:1.0;
+
+    const int usz = $upper.size();
+    for(int i=0;i<usz;++i)
+    {
+      const vect3d drl = $upper[i]->$cr->$cellcenter - cctr;
+      real qdif = dot(Xgr,drl);
+      limi = min(limi,nis_limit(Xcc,qmin,qmax,qdif,epsilon2,$nisPow));
+    }
+
+    const int lsz= $lower.size();
+    for(int i=0;i<lsz;++i)
+    {
+      const vect3d drl = $lower[i]->$cl->$cellcenter - cctr;
+      real qdif = dot(Xgr,drl);
+      limi = min(limi,nis_limit(Xcc,qmin,qmax,qdif,epsilon2,$nisPow));
+    }
+  // Zero out the sensitivity contribution of the limiter, since the limiter
+  // function 'acts' more as a functional constant
+    $limiters(S) = realToDouble(limi);
+  }
+
+  /** ****************************************************************************
+   * @brief Nishikawa limiter for vect3d, cell center, standard form
+   ******************************************************************************/
+  $rule pointwise(limiterv3d(V3)<-cellcenter,V3,cellmaxminv3d(V3),gradv3d(V3),
+                                epsilon2v3d(V3),nisPow,firstOrderCells,
+                                upper->cr->cellcenter,
+                                lower->cl->cellcenter),
+        constraint(geom_cells,NISc_limiter,vecStandLimiter)
+  {
+    const vect3d Xcc = $V3;
+    vect3d qmax = $cellmaxminv3d(V3).max;
+    vect3d qmin = $cellmaxminv3d(V3).min;
+    const tens3d Xgr = $gradv3d(V3);
+    real epsilon2 = $epsilon2v3d(V3);
+
+    vect3d limi = ($firstOrderCells != 0)?vect3d(0.,0.,0.):vect3d(1.,1.,1.);
+
+    const int usz = $upper.size();
+    for(int i=0;i<usz;++i)
+    {
+      const vect3d drl = $upper[i]->$cr->$cellcenter - $cellcenter;
+      real qdifx = dot(Xgr.x,drl);
+      limi.x = min(limi.x,nis_limit(Xcc.x,qmin.x,qmax.x,qdifx,epsilon2,$nisPow));
+      real qdify = dot(Xgr.y,drl);
+      limi.y = min(limi.y,nis_limit(Xcc.y,qmin.y,qmax.y,qdify,epsilon2,$nisPow));
+      real qdifz = dot(Xgr.z,drl);
+      limi.z = min(limi.z,nis_limit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2,$nisPow));
+    }
+
+    const int lsz= $lower.size();
+    for(int i=0;i<lsz;++i)
+    {
+      const vect3d drl = $lower[i]->$cl->$cellcenter - $cellcenter;
+      real qdifx = dot(Xgr.x,drl);
+      limi.x = min(limi.x,nis_limit(Xcc.x,qmin.x,qmax.x,qdifx,epsilon2,$nisPow));
+      real qdify = dot(Xgr.y,drl);
+      limi.y = min(limi.y,nis_limit(Xcc.y,qmin.y,qmax.y,qdify,epsilon2,$nisPow));
+      real qdifz = dot(Xgr.z,drl);
+      limi.z = min(limi.z,nis_limit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2,$nisPow));
+    }
+
+  // Zero out the sensitivity contribution of the limiter, since the limiter
+  // function 'acts' more as a functional constant
+      $limiterv3d(V3) = realToDouble(limi);
+  }
+
+    /** ****************************************************************************
+   * @brief Nishikawa limiter for vect3d, cell center, normalized form
+   ******************************************************************************/
+  $rule pointwise(limiterv3d(V3)<-cellcenter,V3,cellmaxminv3d(V3),gradv3d(V3),
+                                epsilon2v3d(V3),nisPow,firstOrderCells,
+                                upper->cr->cellcenter,
+                                lower->cl->cellcenter),
+        constraint(geom_cells,NISc_limiter,vecNormLimiter)
+  {
+    const vect3d Xcc = $V3;
+    vect3d qmax = $cellmaxminv3d(V3).max;
+    vect3d qmin = $cellmaxminv3d(V3).min;
+    const tens3d Xgr = $gradv3d(V3);
+    real epsilon2 = $epsilon2v3d(V3);
+
+    vect3d limi = ($firstOrderCells != 0)?vect3d(0.,0.,0.):vect3d(1.,1.,1.);
+
+    const int usz = $upper.size();
+    for(int i=0;i<usz;++i)
+    {
+      const vect3d drl = $upper[i]->$cr->$cellcenter - $cellcenter;
+      real qdifx = dot(Xgr.x,drl);
+      limi.x = min(limi.x,nis_limit(Xcc.x,qmin.x,qmax.x,qdifx,epsilon2,$nisPow));
+      real qdify = dot(Xgr.y,drl);
+      limi.y = min(limi.y,nis_limit(Xcc.y,qmin.y,qmax.y,qdify,epsilon2,$nisPow));
+      real qdifz = dot(Xgr.z,drl);
+      limi.z = min(limi.z,nis_limit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2,$nisPow));
+    }
+
+    const int lsz= $lower.size();
+    for(int i=0;i<lsz;++i)
+    {
+      const vect3d drl = $lower[i]->$cl->$cellcenter - $cellcenter;
+      real qdifx = dot(Xgr.x,drl);
+      limi.x = min(limi.x,nis_limit(Xcc.x,qmin.x,qmax.x,qdifx,epsilon2,$nisPow));
+      real qdify = dot(Xgr.y,drl);
+      limi.y = min(limi.y,nis_limit(Xcc.y,qmin.y,qmax.y,qdify,epsilon2,$nisPow));
+      real qdifz = dot(Xgr.z,drl);
+      limi.z = min(limi.z,nis_limit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2,$nisPow));
+    }
+
+    // Find the direction of maximum limiting
+    double limm = realToDouble(min(limi.x,min(limi.y,limi.z)));
+    // Zero the sensitivity portion of the limiter
+    $limiterv3d(V3) = vect3d(limm,limm,limm);
+  }
+
+  /** ****************************************************************************
+   * @brief Nishikawa limiter for vectors, cell center, standard form
+   ******************************************************************************/
+  $rule pointwise(limiterv(V)<-cellcenter,V,gradv(V),cellmaxminv(V),epsilon2v(V),
+                              nisPow,firstOrderCells,upper->cr->cellcenter,
+                              lower->cl->cellcenter),
+        constraint(geom_cells,NISc_limiter,vecStandLimiter),prelude
+  {
+    $limiterv(V).setVecSize($V.vecSize());
+  } 
+  compute 
+  {
+    const int vs = $*V.vecSize();
+
+    for(int j=0;j<vs;++j) 
+    {
+      const real Xcc = $V[j];
+      real qmax = $cellmaxminv(V)[j].max;
+      real qmin = $cellmaxminv(V)[j].min;
+      real epsilon2 = $epsilon2v(V)[j];
+      const vect3d Xgr = $gradv(V)[j];
+
+      real limi = ($firstOrderCells != 0)?0.0:1.0;
+
+      const int usz = $upper.size();
+      for(int i=0;i<usz;++i)
+      {
+        const vect3d drl = $upper[i]->$cr->$cellcenter - $cellcenter;
+        real qdif = dot(Xgr,drl);
+        limi = min(limi,nis_limit(Xcc,qmin,qmax,qdif,epsilon2,$nisPow));
+      }
+
+      const int lsz= $lower.size();
+      for(int i=0;i<lsz;++i)
+      {
+        const vect3d drl = $lower[i]->$cl->$cellcenter - $cellcenter;
+        real qdif = dot(Xgr,drl);
+        limi = min(limi,nis_limit(Xcc,qmin,qmax,qdif,epsilon2,$nisPow));
+      }
+
+  // Zero out the sensitivity contribution of the limiter, since the limiter
+  // function 'acts' more as a functional constant
+      $limiterv(V)[j] = realToDouble(limi);
+    }
+  }
+
+   /** ****************************************************************************
+   * @brief Nishikawa limiter for vectors, cell center, normalized form
+   ******************************************************************************/
+  $rule pointwise(limiterv(V)<-cellcenter,V,gradv(V),cellmaxminv(V),epsilon2v(V),
+                              nisPow,firstOrderCells,upper->cr->cellcenter,
+                              lower->cl->cellcenter),
+        constraint(geom_cells,NISc_limiter,vecNormLimiter),prelude
+  {
+    $limiterv(V).setVecSize($V.vecSize());
+  } 
+  compute 
+  {
+    const int vs = $*V.vecSize();
+    double limm = 1.0;
+    for(int j=0;j<vs;++j) 
+    {
+      const real Xcc = $V[j];
+      real qmax = $cellmaxminv(V)[j].max;
+      real qmin = $cellmaxminv(V)[j].min;
+      real epsilon2 = $epsilon2v(V)[j];
+      const vect3d Xgr = $gradv(V)[j];
+
+      real limi = ($firstOrderCells != 0)?0.0:1.0;
+
+      const int usz = $upper.size();
+      for(int i=0;i<usz;++i)
+      {
+        const vect3d drl = $upper[i]->$cr->$cellcenter - $cellcenter;
+        real qdif = dot(Xgr,drl);
+        limi = min(limi,nis_limit(Xcc,qmin,qmax,qdif,epsilon2,$nisPow));
+      }
+
+      const int lsz= $lower.size();
+      for(int i=0;i<lsz;++i)
+      {
+        const vect3d drl = $lower[i]->$cl->$cellcenter - $cellcenter;
+        real qdif = dot(Xgr,drl);
+        limi = min(limi,nis_limit(Xcc,qmin,qmax,qdif,epsilon2,$nisPow));
+      }
+      // Zero the sensitivity portion of the limiter
+      $limiterv(V)[j] = realToDouble(limi) ;
+      limm = min(realToDouble(limi),limm);
+    }
+    // limit vector based on strongest gradient direction
+    for(int j=0;j<vs;++j) {
+      $limiterv(V)[j] = limm;
+    }
+  }
+
+  //==========================================================================
+  //
+  // Nishikawa Limiter, cell center, alternate stencil
+  //
+  //==========================================================================
+  /** ****************************************************************************
+   * @brief Nishikawa limiter for scalars, special stencil
+   ******************************************************************************/
+  $rule pointwise(stencil::limiters(S)<-cellcenter,S,cellmaxmins(S),grads(S),
+                                        epsilon2s(S),nisPow,firstOrderCells,
+                                        cellStencil->cellcenter),
+        constraint(geom_cells,NISc_limiter)
+  {
+    const real Xcc = $S;
+    const vect3d cctr = $cellcenter;
+
+    real qmax = $cellmaxmins(S).max;
+    real qmin = $cellmaxmins(S).min;
+    const vect3d Xgr = $grads(S);
+
+    const real epsilon2 = $epsilon2s(S);
+
+    real limi = ($firstOrderCells != 0)?0.0:1.0;
+
+    const int ssz = $cellStencil.size();
+    for(int i=0;i<ssz;++i)
+    {
+      const vect3d drl = $cellStencil[i]->$cellcenter - cctr;
+      real qdif = dot(Xgr,drl);
+      limi = min(limi,nis_limit(Xcc,qmin,qmax,qdif,epsilon2,$nisPow));
+    }
+  // Zero out the sensitivity contribution of the limiter, since the limiter
+  // function 'acts' more as a functional constant
+    $limiters(S) = realToDouble(limi);
+  }
+
+  /** ****************************************************************************
+   * @brief Nishikawa limiter for vect3d, special stencil, standard form
+   ******************************************************************************/
+  $rule pointwise(limiterv3d(V3)<-cellcenter,V3,cellmaxminv3d(V3),gradv3d(V3),
+                                epsilon2v3d(V3),nisPow,firstOrderCells,
+                                cellStencil->cellcenter),
+        constraint(geom_cells,NISc_limiter,vecStandLimiter)
+  {
+    const vect3d Xcc = $V3;
+    const vect3d cctr = $cellcenter;
+
+    vect3d qmax = $cellmaxminv3d(V3).max;
+    vect3d qmin = $cellmaxminv3d(V3).min;
+    const tens3d Xgr = $gradv3d(V3);
+
+    real epsilon2 = $epsilon2v3d(V3);
+
+    vect3d limi = ($firstOrderCells != 0)?vect3d(0.,0.,0.):vect3d(1.,1.,1.);
+
+    const int ssz = $cellStencil.size();
+    for(int i=0;i<ssz;++i)
+    {
+      const vect3d drl = $cellStencil[i]->$cellcenter - cctr;
+      real qdifx = dot(Xgr.x,drl);
+      limi.x = min(limi.x,nis_limit(Xcc.x,qmin.x,qmax.x,qdifx,epsilon2,$nisPow));
+      real qdify = dot(Xgr.y,drl);
+      limi.y = min(limi.y,nis_limit(Xcc.y,qmin.y,qmax.y,qdify,epsilon2,$nisPow));
+      real qdifz = dot(Xgr.z,drl);
+      limi.z = min(limi.z,nis_limit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2,$nisPow));
+    }
+
+  // Zero out the sensitivity contribution of the limiter, since the limiter
+  // function 'acts' more as a functional constant
+    $limiterv3d(V3) = realToDouble(limi);
+  }
+
+    /** ****************************************************************************
+   * @brief Nishikawa limiter for vect3d, special stencil, normalized form
+   ******************************************************************************/
+  $rule pointwise(limiterv3d(V3)<-cellcenter,V3,cellmaxminv3d(V3),gradv3d(V3),
+                                epsilon2v3d(V3),nisPow,firstOrderCells,
+                                cellStencil->cellcenter),
+        constraint(geom_cells,NISc_limiter,vecNormLimiter)
+  {
+    const vect3d Xcc = $V3;
+    const vect3d cctr = $cellcenter;
+
+    vect3d qmax = $cellmaxminv3d(V3).max;
+    vect3d qmin = $cellmaxminv3d(V3).min;
+    const tens3d Xgr = $gradv3d(V3);
+
+    real epsilon2 = $epsilon2v3d(V3);
+
+    vect3d limi = ($firstOrderCells != 0)?vect3d(0.,0.,0.):vect3d(1.,1.,1.);
+
+    const int ssz = $cellStencil.size();
+    for(int i=0;i<ssz;++i)
+    {
+      const vect3d drl = $cellStencil[i]->$cellcenter - cctr;
+      real qdifx = dot(Xgr.x,drl);
+      limi.x = min(limi.x,nis_limit(Xcc.x,qmin.x,qmax.x,qdifx,epsilon2,$nisPow));
+      real qdify = dot(Xgr.y,drl);
+      limi.y = min(limi.y,nis_limit(Xcc.y,qmin.y,qmax.y,qdify,epsilon2,$nisPow));
+      real qdifz = dot(Xgr.z,drl);
+      limi.z = min(limi.z,nis_limit(Xcc.z,qmin.z,qmax.z,qdifz,epsilon2,$nisPow));
+    }
+
+    // Find the direction of maximum limiting
+    double limm = realToDouble(min(limi.x,min(limi.y,limi.z)));
+    // Zero the sensitivity portion of the limiter
+    $limiterv3d(V3) = vect3d(limm,limm,limm);
+  }
+
+  /** ****************************************************************************
+   * @brief Nishikawa limiter for vectors, cell center, standard form
+   ******************************************************************************/
+  $rule pointwise(limiterv(V)<-cellcenter,V,cellmaxminv(V),gradv(V),epsilon2v(V),
+                              nisPow,firstOrderCells,cellStencil->cellcenter),
+        constraint(geom_cells,NISc_limiter,vecStandLimiter),prelude
+  {
+    $limiterv(V).setVecSize($V.vecSize());
+  } 
+  compute 
+  {
+    const int vs = $*V.vecSize();
+    const vect3d cctr = $cellcenter;
+
+    for(int j=0;j<vs;++j) 
+    {
+      const real Xcc = $V[j];
+      real qmax = $cellmaxminv(V)[j].max;
+      real qmin = $cellmaxminv(V)[j].min;
+      real epsilon2 = $epsilon2v(V)[j];
+
+      const vect3d Xgr = $gradv(V)[j];
+
+      real limi = ($firstOrderCells != 0)?0.0:1.0;
+
+      const int ssz = $cellStencil.size();
+      for(int i=0;i<ssz;++i)
+      {
+        const vect3d drl = $cellStencil[i]->$cellcenter - cctr;
+        real qdif = dot(Xgr,drl);
+        limi = min(limi,nis_limit(Xcc,qmin,qmax,qdif,epsilon2,$nisPow));
+      }
+  // Zero out the sensitivity contribution of the limiter, since the limiter
+  // function 'acts' more as a functional constant
+      $limiterv(V)[j] = realToDouble(limi);
+    }
+  }
+
+   /** ****************************************************************************
+   * @brief Nishikawa limiter for vectors, cell center, standard form
+   ******************************************************************************/
+  $rule pointwise(limiterv(V)<-cellcenter,V,cellmaxminv(V),gradv(V),epsilon2v(V),
+                              nisPow,firstOrderCells,cellStencil->cellcenter),
+        constraint(geom_cells,NISc_limiter,vecNormLimiter),prelude
+  {
+    $limiterv(V).setVecSize($V.vecSize());
+  } 
+  compute 
+  {
+    const int vs = $*V.vecSize();
+    const vect3d cctr = $cellcenter;
+    double limm = 1.0;
+    for(int j=0;j<vs;++j) 
+    {
+      const real Xcc = $V[j];
+      real qmax = $cellmaxminv(V)[j].max;
+      real qmin = $cellmaxminv(V)[j].min;
+      real epsilon2 = $epsilon2v(V)[j];
+
+      const vect3d Xgr = $gradv(V)[j];
+
+      real limi = ($firstOrderCells != 0)?0.0:1.0;
+
+      const int ssz = $cellStencil.size();
+      for(int i=0;i<ssz;++i)
+      {
+        const vect3d drl = $cellStencil[i]->$cellcenter - cctr;
+        real qdif = dot(Xgr,drl);
+        limi = min(limi,nis_limit(Xcc,qmin,qmax,qdif,epsilon2,$nisPow));
+      }
+      // Zero the sensitivity portion of the limiter
+      $limiterv(V)[j] = realToDouble(limi) ;
+      limm = min(realToDouble(limi),limm);
+    }
+    // limit vector based on strongest gradient direction
+    for(int j=0;j<vs;++j) {
+      $limiterv(V)[j] = limm;
+    }
+  }
+}
