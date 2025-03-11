@@ -21,8 +21,24 @@
 # This is the Loci base directory
 LOCI_BASE ?= /usr/tmp/lush/Loci
 # Put objects in the module here
-OBJS =	metrics.o cellgradient.o facegradient.o limiter.o muscl.o\
-	node_values.o bcstuff.o surfaceIntegrations.o petsc.o misc.o
+OBJS =	bcstuff.o 			\
+		cellgradient.o 		\
+		facegradient.o 		\
+		limiter.o			\
+		metrics.o			\
+		misc.o				\
+		muscl.o				\
+		node_values.o 		\
+		petsc.o				\
+		qminmax.o			\
+		qn2cminmax.o		\
+		spatialFilter.o		\
+		surfaceIntegrations.o \
+		limiter/barth.o		\
+		limiter/nishikawa.o \
+		limiter/nodal_barth.o	\
+		limiter/venkata.o
+
 MODULE_NAME = fvm
 
 #############################################################################

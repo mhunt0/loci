@@ -1,0 +1,377 @@
+/** ****************************************************************************
+ * @file      qminmax.cc
+ * @authors   Ed Luke (MS State)
+ *            Raymond Fontenot (CFDRC)
+ * @date      LICENSE Date: 12-30-2023
+ * @copyright MS State/CFDRC
+ * @brief     Cell min/max and related rules for limiters
+ * @details   This file is a part of the Loci Framework, a free software.
+ * You can redistribute it and/or modify it under the terms of the Lesser
+ * GNU General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * The Loci Framework is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * Lesser GNU General Public License for more details.
+ *
+ * You should have received a copy of the Lesser GNU General Public License
+ * along with the Loci Framework.  If not, see <http://www.gnu.org/licenses>
+ ******************************************************************************/
+#include <Loci>
+#include "FVMMod/limiter_support.h"
+$include "FVM.lh"
+$include "FVMMod/limiter.lh"
+$include "FVMMod/spatialFilter.lh"
+
+
+namespace Loci {
+  typedef vector3d<real_t> vect3d ;
+  typedef tensor3d<real_t> tens3d ;
+  typedef real_t real ;
+
+  $type S store<real>;
+  $type S_f store<real>; 
+/** ****************************************************************************
+ * @brief Scalar cell max/mins for non-MLP limiters
+ ******************************************************************************/
+$rule pointwise(cellmaxmins(S)<-S,upper->cr->S,lower->cl->S,boundary_map->S_f),
+      constraint(geom_cells)
+{
+  const real Xcc = $S;
+  real qmax = Xcc;
+  real qmin = qmax;
+  real refsq = Xcc*Xcc;
+  int nref = 1.0;
+
+  const int usz = $upper.size();
+  nref += usz;
+  for(int i=0;i<usz;++i)
+  {
+    const real Xi = $upper[i]->$cr->$S;
+    qmin = min(qmin,Xi);
+    qmax = max(qmax,Xi);
+    refsq += Xi*Xi;
+  }
+  const int lsz= $lower.size();
+  nref +=lsz;
+  for(int i=0;i<lsz;++i)
+  {
+    const real Xi = $lower[i]->$cl->$S;
+    qmin = min(qmin,Xi);
+    qmax = max(qmax,Xi);
+    refsq += Xi*Xi;
+  }
+  const int bsz = $boundary_map.size();
+  nref += bsz;
+  for(int i=0;i<bsz;++i)
+  {
+    const real Xi = $boundary_map[i]->$S_f;
+    qmin = min(qmin,Xi);
+    qmax = max(qmax,Xi);
+    refsq += Xi*Xi;
+  }
+
+  $cellmaxmins(S).norm = sqrt(refsq)/nref + 1e-20;
+  $cellmaxmins(S).max = qmax;
+  $cellmaxmins(S).min = qmin;
+}
+
+/** ****************************************************************************
+ * @brief Scalar cell max/mins for non-MLP limiters
+ *        on special stencils
+ ******************************************************************************/
+$rule pointwise(stencil::cellmaxmins(S)<-S,cellStencil->S,boundary_map->S_f),
+     constraint(geom_cells)
+{
+  const real Xcc = $S;
+  real qmax = Xcc;
+  real qmin = qmax;
+  real refsq = Xcc*Xcc;
+  int nref = 1.0;
+
+  const int ssz = $cellStencil.size();
+  nref += ssz;
+  for(int i=0;i<ssz;++i)
+  {
+    const real Xi = $cellStencil[i]->$S;
+    refsq += Xi*Xi;
+    qmin = min(qmin,Xi);
+    qmax = max(qmax,Xi);
+  }
+
+  const int bsz = $boundary_map.size();
+  nref += bsz;
+  for(int i=0;i<bsz;++i)
+  {
+    const real Xi = $boundary_map[i]->$S_f;
+    qmin = min(qmin,Xi);
+    qmax = max(qmax,Xi);
+    refsq += Xi*Xi;
+  }
+
+  $cellmaxmins(S).norm = sqrt(refsq)/nref + 1e-20;
+  $cellmaxmins(S).max = qmax;
+  $cellmaxmins(S).min = qmin;
+}
+
+$type V3   store<vect3d>;
+$type V3_f store<vect3d>;
+/** ****************************************************************************
+ * @brief Vect3d cell max/mins for non-MLP limiters
+ ******************************************************************************/
+$rule pointwise(cellmaxminv3d(V3)<-V3,upper->cr->V3,lower->cl->V3,
+                boundary_map->V3_f),
+      constraint(geom_cells)
+{
+  const vect3d Xcc = $V3;
+  vect3d qmax = Xcc;
+  vect3d qmin = qmax;
+  real refsq = dot(Xcc,Xcc);
+  real nref = 1;
+
+  const int usz = $upper.size();
+  nref += usz;
+  for(int i=0;i<usz;++i)
+  {
+    const vect3d Xi = $upper[i]->$cr->$V3;
+    refsq += dot(Xi,Xi);
+    qmin.x = min(qmin.x,Xi.x);
+    qmax.x = max(qmax.x,Xi.x);
+    qmin.y = min(qmin.y,Xi.y);
+    qmax.y = max(qmax.y,Xi.y);
+    qmin.z = min(qmin.z,Xi.z);
+    qmax.z = max(qmax.z,Xi.z);
+  }
+
+  const int lsz= $lower.size();
+  nref += lsz;
+  for(int i=0;i<lsz;++i)
+  {
+    const vect3d Xi = $lower[i]->$cl->$V3;
+    refsq += dot(Xi,Xi);
+    qmin.x = min(qmin.x,Xi.x);
+    qmax.x = max(qmax.x,Xi.x);
+    qmin.y = min(qmin.y,Xi.y);
+    qmax.y = max(qmax.y,Xi.y);
+    qmin.z = min(qmin.z,Xi.z);
+    qmax.z = max(qmax.z,Xi.z);
+  }
+
+  const int bsz = $boundary_map.size();
+  nref += bsz;
+  for(int i=0;i<bsz;++i)
+  {
+    const vect3d Xi = $boundary_map[i]->$V3_f;
+    refsq += dot(Xi,Xi);
+    qmin.x = min(qmin.x,Xi.x);
+    qmax.x = max(qmax.x,Xi.x);
+    qmin.y = min(qmin.y,Xi.y);
+    qmax.y = max(qmax.y,Xi.y);
+    qmin.z = min(qmin.z,Xi.z);
+    qmax.z = max(qmax.z,Xi.z);
+  }
+
+  real norm = sqrt(refsq)/nref + 1e-20;
+  $cellmaxminv3d(V3).norm = norm;
+  $cellmaxminv3d(V3).max = qmax;
+  $cellmaxminv3d(V3).min = qmin;
+}
+
+/** ****************************************************************************
+ * @brief Vect3d cell max/mins for non-MLP limiters
+ *        on special stencils
+ ******************************************************************************/
+$rule pointwise(stencil::cellmaxminv3d(V3)<-V3,cellStencil->V3,boundary_map->V3_f),
+      constraint(geom_cells)
+ {
+  const vect3d Xcc = $V3;
+  vect3d qmax = Xcc;
+  vect3d qmin = qmax;
+  real refsq = dot(Xcc,Xcc);
+  real nref = 1;
+
+  const int ssz = $cellStencil.size();
+  nref += ssz;
+  for(int i=0;i<ssz;++i)
+  {
+    const vect3d Xi = $cellStencil[i]->$V3;
+    refsq += dot(Xi,Xi);
+    qmin.x = min(qmin.x,Xi.x);
+    qmax.x = max(qmax.x,Xi.x);
+    qmin.y = min(qmin.y,Xi.y);
+    qmax.y = max(qmax.y,Xi.y);
+    qmin.z = min(qmin.z,Xi.z);
+    qmax.z = max(qmax.z,Xi.z);
+  }
+
+  const int bsz = $boundary_map.size();
+  nref += bsz;
+  for(int i=0;i<bsz;++i)
+  {
+    const vect3d Xi = $boundary_map[i]->$V3_f;
+    refsq += dot(Xi,Xi);
+    qmin.x = min(qmin.x,Xi.x);
+    qmax.x = max(qmax.x,Xi.x);
+    qmin.y = min(qmin.y,Xi.y);
+    qmax.y = max(qmax.y,Xi.y);
+    qmin.z = min(qmin.z,Xi.z);
+    qmax.z = max(qmax.z,Xi.z);
+  }
+
+  real norm = sqrt(refsq)/nref + 1e-20;
+  $cellmaxminv3d(V3).norm = norm;
+  $cellmaxminv3d(V3).max = qmax;
+  $cellmaxminv3d(V3).min = qmin;
+}
+
+$type V storeVec<real>;
+$type V_f storeVec<real>;
+  /** ****************************************************************************
+ * @brief Vector cell max/mins for non-MLP limiters
+ ******************************************************************************/
+$rule pointwise(cellmaxminv(V)<-V,upper->cr->V,lower->cl->V,boundary_map->V_f),
+      constraint(geom_cells),prelude
+{
+  $cellmaxminv(V).setVecSize($V.vecSize());
+} compute {
+  const int vs = $*V.vecSize();
+
+  for(int j=0;j<vs;++j) {
+    const real Xcc = $V[j];
+    real qmax = Xcc;
+    real qmin = qmax;
+    real refsq = Xcc*Xcc;
+    int nref = 1;
+
+    const int usz = $upper.size();
+    nref += usz;
+    for(int i=0;i<usz;++i)
+    {
+      const real Xi = $upper[i]->$cr->$V[j];
+      refsq += Xi*Xi;
+      qmin = min(qmin,Xi);
+      qmax = max(qmax,Xi);
+    }
+
+    const int lsz= $lower.size();
+    nref += lsz;
+    for(int i=0;i<lsz;++i)
+    {
+      const real Xi = $lower[i]->$cl->$V[j];
+      refsq += Xi*Xi;
+      qmin = min(qmin,Xi);
+      qmax = max(qmax,Xi);
+    }
+
+    const int bsz = $boundary_map.size();
+    nref += bsz;
+    for(int i=0;i<bsz;++i)
+    {
+      const real Xi = $boundary_map[i]->$V_f[j];
+      refsq += Xi*Xi;
+      qmin = min(qmin,Xi);
+      qmax = max(qmax,Xi);
+    }
+
+    $cellmaxminv(V)[j].max = qmax;
+    $cellmaxminv(V)[j].min = qmin;
+    $cellmaxminv(V)[j].norm = sqrt(refsq)/nref + 1e-20;
+  }
+}
+
+/** ****************************************************************************
+ * @brief Vector cell max/mins for non-MLP limiters on special stencils
+ ******************************************************************************/
+$rule pointwise(stencil::cellmaxminv(V)<-V,cellStencil->V,boundary_map->V_f),
+      constraint(geom_cells),prelude
+{
+  $cellmaxminv(V).setVecSize($V.vecSize());
+} compute {
+  const int vs = $*V.vecSize();
+
+  for(int j=0;j<vs;++j)
+  {
+    const real Xcc = $V[j];
+    real qmax = Xcc;
+    real qmin = qmax;
+    real refsq = Xcc*Xcc;
+    int nref = 1;
+
+    const int ssz = $cellStencil.size();
+    nref += ssz;
+    for(int i=0;i<ssz;++i)
+    {
+      const real Xi = $cellStencil[i]->$V[j];
+      refsq += Xi*Xi;
+      qmin = min(qmin,Xi);
+      qmax = max(qmax,Xi);
+    }
+
+    const int bsz = $boundary_map.size();
+    nref += bsz;
+    for(int i=0;i<bsz;++i)
+    {
+      const real Xi = $boundary_map[i]->$V_f[j];
+      refsq += Xi*Xi;
+      qmin = min(qmin,Xi);
+      qmax = max(qmax,Xi);
+    }
+
+    $cellmaxminv(V)[j].max = qmax;
+    $cellmaxminv(V)[j].min = qmin;
+    $cellmaxminv(V)[j].norm = sqrt(refsq)/nref + 1e-20;
+  }
+}
+
+/** ****************************************************************************
+ * @brief Compute the Venkatakrishnan geometric factor for Nishikawa Limiter
+ * @retval venkaFac    [-] Venkatakrishnan factor
+ ******************************************************************************/
+$rule pointwise(venkaFac<-vol,grid_vol,Kl,nisPow),
+      constraint(geom_cells,NIS_limiter)
+{
+  real pp1 = (real)$nisPow + 1;
+  $venkaFac = pow($Kl,pp1) * pow(6/(M_PI * $grid_vol)*$vol,pp1/3.0); // (K delta X)^p+1
+}
+
+/** ****************************************************************************
+ * @brief Venkatakrishnan grid factor for Nishikawa, scalar limiters
+ ******************************************************************************/
+$rule pointwise(epsilon2s(S)<-venkaFac,nisPow,cellmaxmins(S)),
+      constraint(geom_cells)
+{
+  const real ref = $cellmaxmins(S).norm;
+  $epsilon2s(S)  = $venkaFac*pow(ref,$nisPow);
+}
+
+/** ****************************************************************************
+ * @brief Venkatakrishnan grid factor for Nishikawa, vect3d limiters
+ * @retval epsilon2v3d(X)        [-] Venkatakrishnan grid factor
+ ******************************************************************************/
+$rule pointwise(epsilon2v3d(V3)<-venkaFac,nisPow,cellmaxminv3d(V3)),
+      constraint(geom_cells)
+{
+  const real ref = $cellmaxminv3d(V3).norm;
+  $epsilon2v3d(V3)  = $venkaFac*pow(ref,$nisPow);
+}
+
+/** ****************************************************************************
+ * @brief Venkatakrishnan grid factor for Nishikawa vector limiters
+ ******************************************************************************/
+$rule pointwise(epsilon2v(V)<-V,venkaFac,nisPow,cellmaxminv(V)),constraint(geom_cells),
+prelude
+{
+  $epsilon2v(V).setVecSize($V.vecSize());
+}
+  compute
+{
+  const int vs = $*V.vecSize();
+
+  for(int j=0;j<vs;++j)
+  {
+      const real ref = $cellmaxminv(V)[j].norm;
+      $epsilon2v(V)[j] = $venkaFac*pow(ref,$nisPow);
+  }
+}
+}
